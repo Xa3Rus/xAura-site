@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import Loader from '../components/Loader'
+import Select from '../components/Select'
 import { loadAnimeData, getRandomAnime } from '../utils/animeData'
 
 const SLIDERS = [
@@ -178,6 +179,8 @@ export default function Rate() {
     }, 100)
   }
 
+  const yearOptions = [{ value: '', label: 'любой' }, ...years.map((y) => ({ value: y, label: String(y) }))]
+
   return (
     <div className="min-h-screen pt-24 pb-12 px-5 sm:px-8 relative">
       <div className="absolute inset-0 pointer-events-none">
@@ -189,17 +192,11 @@ export default function Rate() {
           <div className="flex flex-col sm:flex-row gap-2.5 mb-5">
             <div className="flex items-center gap-2">
               <span className="label">С</span>
-              <select value={yearFrom} onChange={(e) => handleYearChange('from', e.target.value)} className="input w-28">
-                <option value="">любой</option>
-                {years.map((y) => <option key={y} value={y}>{y}</option>)}
-              </select>
+              <Select value={yearFrom} onChange={(v) => handleYearChange('from', v)} options={yearOptions} className="w-28" />
             </div>
             <div className="flex items-center gap-2">
               <span className="label">По</span>
-              <select value={yearTo} onChange={(e) => handleYearChange('to', e.target.value)} className="input w-28">
-                <option value="">любой</option>
-                {years.map((y) => <option key={y} value={y}>{y}</option>)}
-              </select>
+              <Select value={yearTo} onChange={(v) => handleYearChange('to', v)} options={yearOptions} className="w-28" />
             </div>
             <button onClick={() => setShowSearch(!showSearch)} className="btn-primary text-xs !py-2">
               {showSearch ? 'Закрыть' : 'Найти аниме'}

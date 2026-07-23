@@ -156,24 +156,22 @@ export default function TierMaker() {
   const [tierListName, setTierListName] = useState('Мой Tier List')
   const [savedLists, setSavedLists] = useState([])
   const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [addSearch, setAddSearch] = useState('')
+  const [showAddSearch, setShowAddSearch] = useState(false)
+  const [addResults, setAddResults] = useState([])
   const editingRef = useRef(null)
   const poolRef = useRef(null)
+  const addSearchRef = useRef(null)
 
   useEffect(() => {
     loadAnimeData().then(async (data) => {
       setAllAnime(data)
+      const top500 = data
+        .filter((a) => a.score > 0 && a.image?.original && !a.image.original.includes('missing_'))
+        .sort((a, b) => Number(b.score) - Number(a.score))
+        .slice(0, 500)
+      setPool(top500)
       if (user) {
-        const { data: ratings } = await supabase.from('ratings').select('anime_id, anime_name, anime_image').eq('user_id', user.id)
-        if (ratings?.length > 0) {
-          const ratedAnime = ratings.map((r) => {
-            const found = data.find((a) => a.id === r.anime_id)
-            return found || {
-              id: r.anime_id, name: r.anime_name, russian: r.anime_name,
-              image: r.anime_image ? { original: r.anime_image.replace('https://shikimori.io', '') } : null,
-            }
-          })
-          setPool(ratedAnime)
-        }
         const { data: lists } = await supabase.from('tier_lists').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
         setSavedLists(lists || [])
       }
@@ -191,6 +189,41 @@ export default function TierMaker() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [editingTier, editingName, editingColor])
+
+  useEffect(() => {
+    if (!showAddSearch) return
+    const handler = (e) => {
+      if (addSearchRef.current && !addSearchRef.current.contains(e.target)) {
+        setShowAddSearch(false)
+        setAddSearch('')
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showAddSearch])
+
+  useEffect(() => {
+    if (addSearch.length < 2 || !allAnime.length) { setAddResults([]); return }
+    const poolIds = new Set(pool.map((a) => a.id))
+    const tierIds = new Set(tiers.flatMap((t) => t.items.map((a) => a.id)))
+    const q = addSearch.toLowerCase()
+    const results = allAnime.filter((a) => {
+      if (poolIds.has(a.id) || tierIds.has(a.id)) return false
+      if (!a.image?.original || a.image.original.includes('missing_')) return false
+      return (a.name || '').toLowerCase().includes(q) || (a.russian || '').toLowerCase().includes(q)
+    }).slice(0, 12)
+    setAddResults(results)
+  }, [addSearch, allAnime, pool, tiers])
+
+  const addAnimeToPool = (anime) => {
+    setPool((p) => [...p, anime])
+    setAddSearch('')
+    setAddResults([])
+  }
+
+  const removeAnimeFromPool = (animeId) => {
+    setPool((p) => p.filter((a) => a.id !== animeId))
+  }
 
   const filteredPool = pool.filter((a) => {
     if (!search) return true
@@ -487,9 +520,54 @@ export default function TierMaker() {
         <div className="rounded-xl p-4 page-enter" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
           <div className="flex items-center gap-3 mb-3">
             <h3 className="font-bold text-sm" style={{ fontFamily: 'Space Grotesk' }}>Пул аниме</h3>
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Поиск..." className="input !py-1.5 text-xs flex-1 max-w-xs" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Фильтр..." className="input !py-1.5 text-xs flex-1 max-w-xs" />
             <span className="text-xs" style={{ color: 'rgba(255,255,255,0.12)', fontFamily: 'JetBrains Mono' }}>{filteredPool.length}</span>
           </div>
+
+          <div className="relative mb-3" ref={addSearchRef}>
+            <div className="flex items-center gap-2">
+              <input
+                value={addSearch}
+                onChange={(e) => { setAddSearch(e.target.value); setShowAddSearch(true) }}
+                onFocus={() => setShowAddSearch(true)}
+                placeholder="Добавить аниме из каталога..."
+                className="input !py-1.5 text-xs flex-1"
+              />
+              <button onClick={() => setShowAddSearch(!showAddSearch)} className="text-amber-400 hover:text-amber-300 text-xs transition-colors whitespace-nowrap">
+                + Из каталога
+              </button>
+            </div>
+            {showAddSearch && addResults.length > 0 && (
+              <div className="absolute top-full mt-1 left-0 right-0 max-h-64 overflow-y-auto rounded-xl z-50" style={{ background: 'rgba(17,17,20,0.97)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 16px 48px -12px rgba(0,0,0,0.7)' }}>
+                {addResults.map((a) => (
+                  <button
+                    key={a.id}
+                    onClick={() => { addAnimeToPool(a); setShowAddSearch(false) }}
+                    className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/[0.04] transition-colors text-left border-b border-white/[0.03] last:border-b-0"
+                  >
+                    {a.image?.original && !a.image.original.includes('missing_') ? (
+                      <img src={`https://shikimori.one${a.image.original}`} alt="" className="w-8 h-11 rounded-md object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-8 h-11 rounded-md bg-surface-3 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-bold" style={{ color: 'rgba(255,255,255,0.1)' }}>{(a.russian || a.name || '?')[0]}</span>
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-medium truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{a.russian || a.name}</div>
+                      <div className="text-[10px]" style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'JetBrains Mono' }}>{a.aired_on?.split('-')[0] || '—'} · ★ {Number(a.score).toFixed(2)}</div>
+                    </div>
+                    <span className="text-amber-400 text-xs">+</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {showAddSearch && addSearch.length >= 2 && addResults.length === 0 && (
+              <div className="absolute top-full mt-1 left-0 right-0 rounded-xl z-50 p-3 text-center" style={{ background: 'rgba(17,17,20,0.97)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.15)' }}>Ничего не найдено</span>
+              </div>
+            )}
+          </div>
+
           <div
             ref={poolRef}
             className="flex flex-wrap gap-1.5 min-h-[72px] p-2 rounded-xl"
@@ -519,6 +597,11 @@ export default function TierMaker() {
                 <div className="absolute bottom-0 left-0 right-0 text-center text-[8px] py-0.5 rounded-b-lg truncate px-0.5" style={{ background: 'rgba(0,0,0,0.7)' }}>
                   {item.russian || item.name}
                 </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); removeAnimeFromPool(item.id) }}
+                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-[8px] flex items-center justify-center opacity-0 group-hover/pool:opacity-100 transition-opacity"
+                  style={{ background: 'rgba(244,63,94,0.9)' }}
+                >×</button>
               </div>
             ))}
           </div>

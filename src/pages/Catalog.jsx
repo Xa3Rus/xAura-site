@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import Loader from '../components/Loader'
+import Select from '../components/Select'
 import { loadAnimeData, filterAnime } from '../utils/animeData'
 
 const GENRES = [
@@ -98,6 +99,14 @@ export default function Catalog() {
   }
 
   const years = Array.from({ length: 32 }, (_, i) => 2026 - i)
+  const yearOptions = [{ value: '', label: 'Год' }, ...years.map((y) => ({ value: y, label: String(y) }))]
+  const sortOptions = [
+    { value: 'score', label: 'По рейтингу' },
+    { value: 'name', label: 'По названию' },
+    { value: 'aired_on', label: 'По дате' },
+    { value: 'episodes', label: 'По эпизодам' },
+  ]
+  const genreOptions = [{ value: '', label: 'Все жанры' }, ...GENRES.map((g) => ({ value: g, label: g }))]
 
   return (
     <div className="min-h-screen pt-20 pb-12 px-5 sm:px-8">
@@ -114,20 +123,9 @@ export default function Catalog() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          <select value={sort} onChange={(e) => setSort(e.target.value)} className="input w-full sm:w-40">
-            <option value="score">По рейтингу</option>
-            <option value="name">По названию</option>
-            <option value="aired_on">По дате</option>
-            <option value="episodes">По эпизодам</option>
-          </select>
-          <select value={year} onChange={(e) => setYear(e.target.value)} className="input w-full sm:w-32">
-            <option value="">Год</option>
-            {years.map((y) => <option key={y} value={y}>{y}</option>)}
-          </select>
-          <select value={genre} onChange={(e) => setGenre(e.target.value)} className="input w-full sm:w-40">
-            <option value="">Все жанры</option>
-            {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
-          </select>
+          <Select value={sort} onChange={setSort} options={sortOptions} className="w-full sm:w-40" />
+          <Select value={year} onChange={setYear} options={yearOptions} className="w-full sm:w-32" />
+          <Select value={genre} onChange={setGenre} options={genreOptions} className="w-full sm:w-40" />
         </div>
 
         {loading ? (
