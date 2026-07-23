@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 
@@ -20,6 +20,7 @@ export default function Profile() {
   const [battleRank, setBattleRank] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('ratings')
+  const [confirmModal, setConfirmModal] = useState(null)
 
   useEffect(() => {
     if (user) loadData()
@@ -66,15 +67,23 @@ export default function Profile() {
   }
 
   const handleDeleteRating = async (ratingId) => {
-    if (!confirm('Удалить эту оценку?')) return
-    await supabase.from('ratings').delete().eq('id', ratingId)
-    setRatings((prev) => prev.filter((r) => r.id !== ratingId))
+    setConfirmModal({ type: 'rating', id: ratingId, text: 'Удалить эту оценку?' })
   }
 
   const handleDeleteTierList = async (listId) => {
-    if (!confirm('Удалить tier list?')) return
-    await supabase.from('tier_lists').delete().eq('id', listId)
-    setTierLists((prev) => prev.filter((l) => l.id !== listId))
+    setConfirmModal({ type: 'tierlist', id: listId, text: 'Удалить tier list?' })
+  }
+
+  const confirmAction = async () => {
+    if (!confirmModal) return
+    if (confirmModal.type === 'rating') {
+      await supabase.from('ratings').delete().eq('id', confirmModal.id)
+      setRatings((prev) => prev.filter((r) => r.id !== confirmModal.id))
+    } else if (confirmModal.type === 'tierlist') {
+      await supabase.from('tier_lists').delete().eq('id', confirmModal.id)
+      setTierLists((prev) => prev.filter((l) => l.id !== confirmModal.id))
+    }
+    setConfirmModal(null)
   }
 
   const getAvatarLetter = () => user?.username?.[0]?.toUpperCase() || 'U'
@@ -281,6 +290,38 @@ export default function Profile() {
           </>
         )}
       </div>
+
+      <AnimatePresence>
+        {confirmModal && (
+          <motion.div
+            className="fixed inset-0 z-[9999] flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmModal(null)} />
+            <motion.div
+              className="relative rounded-2xl p-5 w-[90%] max-w-xs"
+              style={{ background: 'rgba(17,17,20,0.97)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px -16px rgba(0,0,0,0.7)' }}
+              initial={{ scale: 0.95, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <p className="text-sm font-medium mb-5" style={{ color: 'rgba(255,255,255,0.7)' }}>{confirmModal.text}</p>
+              <div className="flex gap-2 justify-end">
+                <button onClick={() => setConfirmModal(null)} className="px-4 py-1.5 rounded-lg text-xs font-medium transition-colors" style={{ color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  Отмена
+                </button>
+                <button onClick={confirmAction} className="btn-primary text-xs !py-1.5">
+                  Удалить
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
