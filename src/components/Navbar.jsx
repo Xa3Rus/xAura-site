@@ -80,6 +80,7 @@ export default function Navbar() {
     { to: '/rate', label: 'Оценка', desc: '6 критериев' },
     { to: '/tiermaker', label: 'Tier List', desc: 'Сортируй по тирам' },
     { to: '/battle', label: 'Битва', desc: 'Угадывай рейтинг' },
+    { to: '/anime-oped', label: 'Угадай OP/ED', desc: 'По музыке' },
   ]
 
   return (
