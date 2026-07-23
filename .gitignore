@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.env
+*.log
+parse-err.txt
+parse-log.txt
