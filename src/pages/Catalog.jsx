@@ -26,7 +26,6 @@ export default function Catalog() {
   const [year, setYear] = useState('')
   const [genre, setGenre] = useState('')
   const [sort, setSort] = useState('score')
-  const [showNsfw, setShowNsfw] = useState(false)
   const [ratingsMap, setRatingsMap] = useState({})
   const [quickRatingId, setQuickRatingId] = useState(null)
 
@@ -51,8 +50,8 @@ export default function Catalog() {
   }
 
   const filtered = useMemo(() => {
-    return filterAnime(allAnime, { search, year, genre, sort, showNsfw })
-  }, [allAnime, search, year, genre, sort, showNsfw])
+    return filterAnime(allAnime, { search, year, genre, sort })
+  }, [allAnime, search, year, genre, sort])
 
   const displayAnime = useMemo(() => {
     return filtered.slice(0, page * ITEMS_PER_PAGE)
@@ -60,9 +59,8 @@ export default function Catalog() {
 
   const hasMore = displayAnime.length < filtered.length
 
-  useEffect(() => { setPage(1) }, [search, year, genre, sort, showNsfw])
+  useEffect(() => { setPage(1) }, [search, year, genre, sort])
 
-  const isNsfw = (item) => item.rating === 'r_plus' || item.rating === 'rx' || item.genres?.some((g) => g.name === 'Hentai')
   const getGenres = (item) => (item.genres || []).slice(0, 3).map((g) => g.name)
 
   const handleRate = (anime) => {
@@ -90,7 +88,7 @@ export default function Catalog() {
     setQuickRatingId(null)
   }
 
-  const years = Array.from({ length: 26 }, (_, i) => 2025 - i)
+  const years = Array.from({ length: 32 }, (_, i) => 2026 - i)
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4">
@@ -114,12 +112,6 @@ export default function Catalog() {
             <option value="">Все жанры</option>
             {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
           </select>
-          <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
-            <div className={`relative w-10 h-6 rounded-full transition-colors duration-200 ${showNsfw ? 'bg-purple-500' : 'bg-dark-600'}`} onClick={() => setShowNsfw(!showNsfw)}>
-              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform duration-200 ${showNsfw ? 'translate-x-5' : 'translate-x-1'}`} />
-            </div>
-            <span className="text-sm text-gray-400">NSFW</span>
-          </label>
         </div>
 
         {loading ? <Loader text="Загрузка каталога..." /> : (
@@ -142,9 +134,6 @@ export default function Catalog() {
                       <div className={`w-full h-full bg-dark-600 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
                         <span className="text-gray-500 text-4xl font-bold">{(item.russian || item.name || '?')[0]}</span>
                       </div>
-                      {isNsfw(item) && (
-                        <div className="absolute top-2 right-2 bg-red-500/90 text-white text-xs px-2 py-1 rounded-lg font-medium">NSFW</div>
-                      )}
                       {myRating && (
                         <div className="absolute top-2 left-2 bg-purple-500/90 text-white text-xs px-2 py-1 rounded-lg font-bold">
                           {myRating.average_score?.toFixed(1)}

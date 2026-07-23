@@ -60,10 +60,16 @@ export function filterAnime(data, { search = '', year = '', genre = '', sort = '
   return filtered
 }
 
-export function getRandomAnime(data, year = '') {
+export function getRandomAnime(data, yearFrom = '', yearTo = '') {
   let pool = data
-  if (year) {
-    pool = data.filter((a) => a.aired_on && a.aired_on.startsWith(String(year)))
+  if (yearFrom || yearTo) {
+    pool = data.filter((a) => {
+      if (!a.aired_on) return false
+      const y = Number(a.aired_on.split('-')[0])
+      if (yearFrom && y < Number(yearFrom)) return false
+      if (yearTo && y > Number(yearTo)) return false
+      return true
+    })
   }
   if (pool.length === 0) pool = data
   return pool[Math.floor(Math.random() * pool.length)]

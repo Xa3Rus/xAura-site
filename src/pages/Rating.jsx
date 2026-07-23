@@ -29,7 +29,8 @@ export default function Rate() {
   const [anime, setAnime] = useState(null)
   const [loading, setLoading] = useState(true)
   const [ratingLoading, setRatingLoading] = useState(false)
-  const [year, setYear] = useState('')
+  const [yearFrom, setYearFrom] = useState('')
+  const [yearTo, setYearTo] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   const [searchResults, setSearchResults] = useState([])
@@ -86,11 +87,11 @@ export default function Rate() {
     setLoading(true)
     let attempts = 0
     let random
-    do { random = getRandomAnime(allAnime, year); attempts++ } while (ratedIds.has(random?.id) && attempts < 20)
+    do { random = getRandomAnime(allAnime, yearFrom, yearTo); attempts++ } while (ratedIds.has(random?.id) && attempts < 20)
     setAnime(random)
     setScores({ drawing: 5, idea: 5, realization: 5, characters: 5, story: 5, emotional: 5 })
     setLoading(false)
-  }, [allAnime, year, ratedIds])
+  }, [allAnime, yearFrom, yearTo, ratedIds])
 
   const selectAnime = (a) => {
     setAnime(a)
@@ -152,21 +153,51 @@ export default function Rate() {
     setRatingLoading(false)
   }
 
-  const years = Array.from({ length: 26 }, (_, i) => 2025 - i)
+  const years = Array.from({ length: 32 }, (_, i) => 2026 - i)
+
+  const handleYearChange = (type, value) => {
+    if (type === 'from') setYearFrom(value)
+    else setYearTo(value)
+    setLoading(true)
+    setTimeout(() => {
+      const from = type === 'from' ? value : yearFrom
+      const to = type === 'to' ? value : yearTo
+      let attempts = 0
+      let random
+      do { random = getRandomAnime(allAnime, from, to); attempts++ } while (ratedIds.has(random?.id) && attempts < 20)
+      setAnime(random)
+      setScores({ drawing: 5, idea: 5, realization: 5, characters: 5, story: 5, emotional: 5 })
+      setLoading(false)
+    }, 100)
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="glass-card p-6 animate-fade-in">
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <select
-              value={year}
-              onChange={(e) => { setYear(e.target.value); setLoading(true); setTimeout(() => { fetchRandomAnime(); setLoading(false) }, 100) }}
-              className="input-field w-full sm:w-40"
-            >
-              <option value="">Все годы</option>
-              {years.map((y) => <option key={y} value={y}>{y}</option>)}
-            </select>
+          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">С</span>
+              <select
+                value={yearFrom}
+                onChange={(e) => handleYearChange('from', e.target.value)}
+                className="input-field w-32"
+              >
+                <option value="">любой</option>
+                {years.map((y) => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">По</span>
+              <select
+                value={yearTo}
+                onChange={(e) => handleYearChange('to', e.target.value)}
+                className="input-field w-32"
+              >
+                <option value="">любой</option>
+                {years.map((y) => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
             <button onClick={() => setShowSearch(!showSearch)} className="gradient-btn text-sm !py-2">
               {showSearch ? 'Закрыть поиск' : 'Найти аниме'}
             </button>
