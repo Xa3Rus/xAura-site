@@ -51,7 +51,7 @@ export default function Profile() {
       setBattleStats({
         best,
         total: scores.length,
-        avg: (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1),
+        avg: (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2),
       })
 
       const { data: allGames } = await supabase
@@ -101,7 +101,7 @@ export default function Profile() {
   }
 
   const avgScore = ratings.length > 0
-    ? (ratings.reduce((sum, r) => sum + (r.average_score || 0), 0) / ratings.length).toFixed(1)
+    ? (ratings.reduce((sum, r) => sum + (r.average_score || 0), 0) / ratings.length).toFixed(2)
     : '—'
 
   const stats = [
@@ -212,7 +212,7 @@ export default function Profile() {
                             className="absolute top-2 left-2 text-white text-sm font-bold px-2 py-1 rounded-lg"
                             style={{ backgroundColor: getScoreColor(rating.average_score) + 'cc' }}
                           >
-                            {rating.average_score?.toFixed(1)}
+                            {rating.average_score?.toFixed(2)}
                           </div>
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 gap-2">
                             {rating.drawing > 0 && (
@@ -238,7 +238,7 @@ export default function Profile() {
                             {rating.anime_name || `Anime #${rating.anime_id}`}
                           </h3>
                           <div className="flex items-center gap-2 text-xs text-gray-400">
-                            <span className={getScoreTextClass(rating.average_score)}>★ {rating.average_score?.toFixed(1)}</span>
+                            <span className={getScoreTextClass(rating.average_score)}>★ {rating.average_score?.toFixed(2)}</span>
                           </div>
                         </div>
                       </motion.div>

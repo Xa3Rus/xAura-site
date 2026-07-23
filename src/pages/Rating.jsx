@@ -239,7 +239,7 @@ export default function Rate() {
                 <div className="flex items-center gap-2 mb-4 flex-wrap">
                   <span className="text-sm text-gray-400 bg-dark-600/60 px-3 py-1 rounded-lg">{anime.aired_on?.split('-')[0] || '—'}</span>
                   {anime.rating && <span className="text-sm text-gray-400 bg-dark-600/60 px-3 py-1 rounded-lg">{anime.rating}</span>}
-                  {anime.score > 0 && <span className="text-sm text-purple-400 bg-dark-600/60 px-3 py-1 rounded-lg">★ {anime.score}</span>}
+                  {anime.score > 0 && <span className="text-sm text-purple-400 bg-dark-600/60 px-3 py-1 rounded-lg">★ {Number(anime.score).toFixed(2)}</span>}
                 </div>
                 <div className="flex flex-wrap gap-2 mb-6">
                   {(anime.genres || []).map((g) => <span key={g.id || g.name} className="text-xs bg-purple-500/10 text-purple-400 px-3 py-1 rounded-lg">{g.name}</span>)}

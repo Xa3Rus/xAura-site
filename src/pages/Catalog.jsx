@@ -136,7 +136,7 @@ export default function Catalog() {
                       </div>
                       {myRating && (
                         <div className="absolute top-2 left-2 bg-purple-500/90 text-white text-xs px-2 py-1 rounded-lg font-bold">
-                          {myRating.average_score?.toFixed(1)}
+                          {myRating.average_score?.toFixed(2)}
                         </div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-3 gap-1.5">
@@ -177,7 +177,7 @@ export default function Catalog() {
                       <h3 className="font-semibold text-sm truncate mb-2">{item.russian || item.name}</h3>
                       <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
                         <span>{item.aired_on?.split('-')[0] || '—'}</span>
-                        {item.score > 0 && <span className="text-purple-400">★ {item.score}</span>}
+                        {item.score > 0 && <span className="text-purple-400">★ {Number(item.score).toFixed(2)}</span>}
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {getGenres(item).map((g) => (
