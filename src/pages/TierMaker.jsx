@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import Loader from '../components/Loader'
@@ -159,9 +160,12 @@ export default function TierMaker() {
   const [addSearch, setAddSearch] = useState('')
   const [showAddSearch, setShowAddSearch] = useState(false)
   const [addResults, setAddResults] = useState([])
+  const [poolItemMenu, setPoolItemMenu] = useState(null)
+  const [poolItemMenuPos, setPoolItemMenuPos] = useState({ x: 0, y: 0 })
   const editingRef = useRef(null)
   const poolRef = useRef(null)
   const addSearchRef = useRef(null)
+  const poolItemMenuRef = useRef(null)
 
   useEffect(() => {
     loadAnimeData().then(async (data) => {
@@ -201,6 +205,25 @@ export default function TierMaker() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [showAddSearch])
+
+  useEffect(() => {
+    if (!poolItemMenu) return
+    const handler = (e) => {
+      if (poolItemMenuRef.current && !poolItemMenuRef.current.contains(e.target)) {
+        setPoolItemMenu(null)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [poolItemMenu])
+
+  const sendToTier = (anime, tierId) => {
+    setPool((p) => p.filter((a) => a.id !== anime.id))
+    setTiers((prev) => prev.map((t) =>
+      t.id === tierId ? { ...t, items: [...t.items, anime] } : t
+    ))
+    setPoolItemMenu(null)
+  }
 
   useEffect(() => {
     if (addSearch.length < 2 || !allAnime.length) { setAddResults([]); return }
@@ -458,7 +481,7 @@ export default function TierMaker() {
               </div>
 
               <div
-                className="flex-1 min-h-[60px] rounded-xl p-1.5 flex items-center gap-1.5 overflow-x-auto"
+                className="flex-1 min-h-[60px] rounded-xl p-1.5 flex flex-wrap items-center gap-1.5"
                 style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}
                 onDragOver={handleDragOver}
                 onDragLeave={() => { setDragOverTierId(null); setDragOverIndex(null) }}
@@ -602,9 +625,50 @@ export default function TierMaker() {
                   className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-[8px] flex items-center justify-center opacity-0 group-hover/pool:opacity-100 transition-opacity"
                   style={{ background: 'rgba(244,63,94,0.9)' }}
                 >×</button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); setPoolItemMenuPos({ x: r.left, y: r.bottom + 4 }); setPoolItemMenu(poolItemMenu === item.id ? null : item.id) }}
+                  className="absolute -top-1 -left-1 w-4 h-4 rounded-full text-[8px] flex items-center justify-center opacity-0 group-hover/pool:opacity-100 transition-opacity"
+                  style={{ background: 'rgba(251,191,36,0.9)' }}
+                >↓</button>
               </div>
             ))}
           </div>
+
+          {poolItemMenu && (() => {
+            const item = filteredPool.find((a) => a.id === poolItemMenu)
+            if (!item) return null
+            return createPortal(
+              <div
+                ref={poolItemMenuRef}
+                className="fixed rounded-xl p-3 z-[9999]"
+                style={{
+                  background: 'rgba(17,17,20,0.97)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  boxShadow: '0 12px 40px -8px rgba(0,0,0,0.7)',
+                  left: poolItemMenuPos.x,
+                  top: poolItemMenuPos.y,
+                  maxWidth: '320px',
+                }}
+              >
+                <p className="text-[10px] mb-2" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                  Отправить <span className="text-white/50">{item.russian || item.name}</span> в тир:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {tiers.map((tier) => (
+                    <button
+                      key={tier.id}
+                      onClick={() => sendToTier(item, tier.id)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:opacity-80"
+                      style={{ backgroundColor: tier.color + '20', color: tier.color, border: `1px solid ${tier.color}30` }}
+                    >
+                      {tier.name}
+                    </button>
+                  ))}
+                </div>
+              </div>,
+              document.body
+            )
+          })()}
         </div>
 
         {savedLists.length > 0 && (
