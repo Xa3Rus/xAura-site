@@ -1,6 +1,5 @@
 import { useState, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { AuthContext } from '../context/AuthContext'
 
 export default function Login() {
@@ -16,76 +15,54 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      await login(email, password)
-      navigate('/rate')
-    } catch (err) {
-      setError(err.response?.data?.message || 'Ошибка входа')
-    } finally {
-      setLoading(false)
+      const result = await login(email, password)
+      if (result?.error) setError(result.error.message)
+      else navigate('/profile')
+    } catch (e) {
+      setError(e?.message || 'Неверный email или пароль')
     }
+    setLoading(false)
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 pt-20">
-      <motion.div
-        className="w-full max-w-md"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="glass-card p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-black mb-4 tracking-tight">
-              <span className="text-gradient-static">x</span>Aura
-            </h1>
-            <h2 className="text-xl font-bold mb-1">Вход</h2>
-            <p className="text-gray-500 text-sm">Войдите в свой аккаунт</p>
-          </div>
+    <div className="min-h-screen flex items-center justify-center px-5 pt-16 pb-12 relative">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-amber-500/[0.02] rounded-full blur-[150px]" />
+      </div>
 
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl mb-6 text-sm">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input-field"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Пароль</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input-field"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="gradient-btn w-full disabled:opacity-50 disabled:cursor-not-allowed !py-3.5"
-            >
-              {loading ? 'Вход...' : 'Войти'}
-            </button>
-          </form>
-
-          <p className="text-center text-gray-500 text-sm mt-6">
-            Нет аккаунта?{' '}
-            <Link to="/register" className="text-purple-400 hover:text-purple-300 transition-colors font-medium">
-              Зарегистрироваться
-            </Link>
-          </p>
+      <div className="w-full max-w-sm relative z-10">
+        <div className="mb-10 text-center page-enter">
+          <h1 className="text-2xl font-bold tracking-tight mb-1" style={{ fontFamily: 'Space Grotesk' }}>Вход</h1>
+          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Войдите в свой аккаунт</p>
         </div>
-      </motion.div>
+
+        {error && (
+          <div className="mb-4 p-3.5 rounded-xl text-xs text-center" style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.15)', color: '#fb7185' }}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-3 page-enter" style={{ animationDelay: '0.05s' }}>
+          <div>
+            <label className="label mb-1.5 block">Почта</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input" required />
+          </div>
+          <div>
+            <label className="label mb-1.5 block">Пароль</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" required />
+          </div>
+          <button type="submit" disabled={loading} className="btn-primary w-full !py-3 !text-sm mt-2">
+            {loading ? 'Вход...' : 'Войти'}
+          </button>
+        </form>
+
+        <p className="text-center text-xs mt-10 page-enter" style={{ color: 'rgba(255,255,255,0.15)', animationDelay: '0.1s' }}>
+          Нет аккаунта?{' '}
+          <Link to="/register" className="text-amber-400 hover:text-amber-300 font-medium transition-colors">
+            Регистрация
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }

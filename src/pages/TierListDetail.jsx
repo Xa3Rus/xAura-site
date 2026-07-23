@@ -3,15 +3,6 @@ import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../utils/supabase'
 import { loadAnimeData } from '../utils/animeData'
 
-function getScoreColor(score) {
-  if (score >= 9) return '#a855f7'
-  if (score >= 7.5) return '#7c3aed'
-  if (score >= 6) return '#6366f1'
-  if (score >= 4.5) return '#3b82f6'
-  if (score >= 3) return '#06b6d4'
-  return '#64748b'
-}
-
 export default function TierListDetail() {
   const { listId } = useParams()
   const [list, setList] = useState(null)
@@ -40,53 +31,53 @@ export default function TierListDetail() {
   if (notFound) return (
     <div className="min-h-screen pt-24 flex items-center justify-center">
       <div className="text-center">
-        <p className="text-gray-400 mb-4">Tier List не найден</p>
-        <Link to="/" className="text-purple-400 hover:text-purple-300">На главную</Link>
+        <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.2)' }}>Tier List не найден</p>
+        <Link to="/" className="text-amber-400 hover:text-amber-300 text-xs">На главную</Link>
       </div>
     </div>
   )
 
   if (loading) return (
     <div className="min-h-screen pt-24 flex items-center justify-center">
-      <p className="text-gray-400">Загрузка...</p>
+      <p className="text-sm" style={{ color: 'rgba(255,255,255,0.15)' }}>Загрузка...</p>
     </div>
   )
 
   const tiers = typeof list.tiers === 'string' ? JSON.parse(list.tiers) : list.tiers
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-4">
-      <div className="max-w-5xl mx-auto">
-        <div className="glass-card p-6 mb-8 animate-slide-up">
-          <h1 className="text-2xl font-black mb-2">{list.name}</h1>
+    <div className="min-h-screen pt-24 pb-12 px-5 sm:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="rounded-2xl p-5 mb-6 page-enter" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <h1 className="text-xl font-bold mb-1" style={{ fontFamily: 'Space Grotesk' }}>{list.name}</h1>
           {owner && (
-            <Link to={`/user/${owner.id}`} className="text-purple-400 hover:text-purple-300 text-sm">
+            <Link to={`/user/${owner.id}`} className="text-amber-400 hover:text-amber-300 text-xs">
               {owner.username}
             </Link>
           )}
-          <p className="text-gray-500 text-xs mt-1">{new Date(list.created_at).toLocaleDateString('ru')}</p>
+          <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.12)', fontFamily: 'JetBrains Mono' }}>{new Date(list.created_at).toLocaleDateString('ru')}</p>
         </div>
 
-        <div className="space-y-2">
-          {tiers.map((tier, idx) => {
+        <div className="space-y-1.5">
+          {tiers.map((tier) => {
             const items = (tier.items || []).map((id) => animeMap[id]).filter(Boolean)
             if (items.length === 0) return null
             return (
-              <div key={tier.id} className="flex items-stretch gap-2 animate-slide-up" style={{ animationDelay: `${idx * 0.03}s` }}>
-                <div className="w-14 h-14 rounded-xl flex items-center justify-center font-black text-lg flex-shrink-0" style={{ backgroundColor: tier.color }}>
+              <div key={tier.id} className="flex items-stretch gap-2">
+                <div className="tier-badge flex-shrink-0" style={{ backgroundColor: tier.color + '18', border: `1px solid ${tier.color}30`, color: tier.color }}>
                   {tier.name}
                 </div>
-                <div className="flex-1 min-h-[70px] bg-dark-700/40 rounded-xl border border-white/5 p-2 flex items-center gap-2 overflow-x-auto">
+                <div className="flex-1 min-h-[60px] rounded-xl p-1.5 flex items-center gap-1.5 overflow-x-auto" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
                   {items.map((item) => (
-                    <div key={item.id} className="flex-shrink-0 w-[70px] relative group">
+                    <div key={item.id} className="flex-shrink-0 w-14 relative group">
                       {item.image?.original && !item.image.original.includes('missing_') ? (
-                        <img src={`https://shikimori.io${item.image.original}`} alt="" className="w-[70px] h-[100px] rounded-lg object-cover" />
+                        <img src={`https://shikimori.one${item.image.original}`} alt="" className="w-14 h-[72px] rounded-lg object-cover" />
                       ) : (
-                        <div className="w-[70px] h-[100px] rounded-lg bg-dark-600 flex items-center justify-center">
-                          <span className="text-gray-500 text-xl font-bold">{(item.russian || item.name || '?')[0]}</span>
+                        <div className="w-14 h-[72px] rounded-lg bg-surface-3 flex items-center justify-center">
+                          <span className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.1)' }}>{(item.russian || item.name || '?')[0]}</span>
                         </div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-center text-[9px] py-0.5 rounded-b-lg truncate px-1">
+                      <div className="absolute bottom-0 left-0 right-0 text-center text-[8px] py-0.5 rounded-b-lg truncate px-0.5" style={{ background: 'rgba(0,0,0,0.7)' }}>
                         {item.russian || item.name}
                       </div>
                     </div>

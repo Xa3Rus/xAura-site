@@ -15,7 +15,7 @@ import BattlePage from './pages/BattlePage'
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-dark-900 flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ background: '#0a0a0c', color: '#e4e4e8' }}>
       <Navbar />
       <div className="flex-1">
         <Routes>

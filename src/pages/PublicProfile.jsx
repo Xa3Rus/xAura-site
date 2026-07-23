@@ -3,22 +3,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { supabase } from '../utils/supabase'
 
-function getScoreColor(score) {
-  if (score >= 8) return '#22d3ee'
-  if (score >= 7) return '#c084fc'
-  if (score >= 5.6) return '#22c55e'
-  if (score >= 4.5) return '#4ade80'
-  if (score >= 3) return '#fde047'
-  return '#fca5a5'
-}
-
-function getScoreTextClass(score) {
-  if (score >= 8) return 'text-cyan-400'
-  if (score >= 7) return 'text-purple-300'
-  if (score >= 5.6) return 'text-green-500'
-  if (score >= 4.5) return 'text-green-400'
-  if (score >= 3) return 'text-yellow-300'
-  return 'text-red-300'
+function scoreColor(score) {
+  if (score >= 8) return 'bg-mint-500/15 text-mint-400 border-mint-500/20'
+  if (score >= 7) return 'bg-amber-500/15 text-amber-400 border-amber-500/20'
+  if (score >= 5.5) return 'bg-white/[0.06] text-white/50 border-white/[0.06]'
+  return 'bg-coral-500/15 text-coral-400 border-coral-500/20'
 }
 
 export default function PublicProfile() {
@@ -81,25 +70,17 @@ export default function PublicProfile() {
   if (notFound) return (
     <div className="min-h-screen pt-24 flex items-center justify-center">
       <div className="text-center">
-        <p className="text-gray-400 mb-4">Пользователь не найден</p>
-        <Link to="/" className="gradient-btn">На главную</Link>
+        <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.2)' }}>Пользователь не найден</p>
+        <Link to="/" className="text-amber-400 hover:text-amber-300 text-xs">На главную</Link>
       </div>
     </div>
   )
 
   if (!profileUser) return (
     <div className="min-h-screen pt-24 flex items-center justify-center">
-      <p className="text-gray-400">Загрузка...</p>
+      <p className="text-sm" style={{ color: 'rgba(255,255,255,0.15)' }}>Загрузка...</p>
     </div>
   )
-
-  const avgScore = ratings.length > 0
-    ? (ratings.reduce((sum, r) => sum + (r.average_score || 0), 0) / ratings.length).toFixed(2)
-    : '—'
-
-  const stats = [
-    { label: 'В рейтинге', value: battleRank ? `#${battleRank}` : '—', color: 'text-yellow-300' },
-  ]
 
   const tabs = [
     { id: 'ratings', label: 'Оценки', count: ratings.length },
@@ -108,59 +89,50 @@ export default function PublicProfile() {
   if (battleStats) tabs.push({ id: 'battle', label: 'Битва', count: battleStats.total })
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-4">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          className="mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="glass-card p-8 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+    <div className="min-h-screen pt-24 pb-12 px-5 sm:px-8">
+      <div className="max-w-[1400px] mx-auto">
+        <motion.div className="mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
+          <div className="rounded-2xl p-6 sm:p-8 relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/[0.03] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
 
-            <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-6">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-cyan-500 p-[2px]">
-                <div className="w-full h-full rounded-2xl bg-dark-800 flex items-center justify-center">
-                  <span className="text-3xl font-black text-purple-400">{getAvatarLetter()}</span>
-                </div>
+            <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-5">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, rgba(251,191,36,0.12) 0%, rgba(249,115,22,0.06) 100%)', border: '1px solid rgba(251,191,36,0.2)' }}>
+                <span className="text-2xl font-bold text-amber-400" style={{ fontFamily: 'Space Grotesk' }}>{getAvatarLetter()}</span>
               </div>
-
               <div className="flex-1 text-center sm:text-left">
-                <h1 className="text-2xl font-black mb-1">{profileUser.username}</h1>
+                <h1 className="text-xl font-bold tracking-tight" style={{ fontFamily: 'Space Grotesk' }}>{profileUser.username}</h1>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 mt-8 relative">
-              {stats.map((s, i) => (
-                <motion.div
-                  key={s.label}
-                  className="bg-white/[0.03] border border-white/5 rounded-xl px-4 py-3 flex items-center gap-3"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 + i * 0.05 }}
-                >
-                  <div className={`text-xl font-black ${s.color}`}>{s.value}</div>
-                  <div className="text-xs text-gray-500 leading-tight">{s.label}</div>
-                </motion.div>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 relative">
+              <div className="rounded-xl px-4 py-3.5 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                <div className="text-xl font-bold text-amber-400" style={{ fontFamily: 'JetBrains Mono', textShadow: '0 0 15px rgba(251,191,36,0.15)' }}>{ratings.length}</div>
+                <div className="label">Оценок</div>
+              </div>
+              <div className="rounded-xl px-4 py-3.5 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                <div className="text-xl font-bold text-mint-400" style={{ fontFamily: 'JetBrains Mono', textShadow: '0 0 15px rgba(52,211,153,0.15)' }}>{battleRank ? `#${battleRank}` : '—'}</div>
+                <div className="label">В рейтинге</div>
+              </div>
             </div>
           </div>
         </motion.div>
 
-        <div className="flex gap-1 mb-6 bg-dark-800/40 p-1 rounded-xl w-fit">
+        <div className="flex gap-1 mb-6 p-1 rounded-xl w-fit" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.04)' }}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === tab.id
-                  ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
+              className="px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-300"
+              style={activeTab === tab.id ? {
+                color: '#fbbf24',
+                background: 'rgba(251,191,36,0.08)',
+                border: '1px solid rgba(251,191,36,0.12)',
+              } : {
+                color: 'rgba(255,255,255,0.25)',
+                border: '1px solid transparent',
+              }}
             >
-              {tab.label}
-              <span className="ml-1.5 text-xs opacity-60">({tab.count})</span>
+              {tab.label} <span style={{ fontFamily: 'JetBrains Mono', opacity: 0.5 }}>({tab.count})</span>
             </button>
           ))}
         </div>
@@ -168,52 +140,31 @@ export default function PublicProfile() {
         {activeTab === 'ratings' && (
           <div>
             {ratings.length === 0 ? (
-              <div className="text-center py-16 glass-card animate-fade-in">
-                <p className="text-gray-400">Пока нет оценок</p>
+              <div className="text-center py-16 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.2)' }}>Пока нет оценок</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
                 {ratings.map((rating, index) => (
                   <motion.div
                     key={rating.id}
-                    className="glass-card overflow-hidden group hover:border-purple-500/30 transition-all duration-300 hover:scale-[1.02]"
-                    initial={{ opacity: 0, y: 20 }}
+                    className="card-hover overflow-hidden group"
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.03 }}
+                    transition={{ delay: index * 0.02, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    <div className="aspect-[3/4] relative overflow-hidden">
+                    <div className="aspect-[3/4] relative overflow-hidden rounded-t-2xl bg-surface-3">
                       {rating.anime_image ? (
-                        <img
-                          src={rating.anime_image}
-                          alt={rating.anime_name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          loading="lazy"
-                        />
+                        <img src={rating.anime_image} alt={rating.anime_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" loading="lazy" />
                       ) : (
-                        <div className="w-full h-full bg-dark-600 flex items-center justify-center text-gray-500 text-sm">Нет постера</div>
+                        <div className="w-full h-full flex items-center justify-center" style={{ color: 'rgba(255,255,255,0.08)' }}>Нет</div>
                       )}
-                      <div
-                        className="absolute top-2 left-2 text-white text-sm font-bold px-2 py-1 rounded-lg"
-                        style={{ backgroundColor: getScoreColor(rating.average_score) + 'cc' }}
-                      >
+                      <div className={`absolute top-2 left-2 score-badge border backdrop-blur-md ${scoreColor(rating.average_score)}`} style={{ fontFamily: 'JetBrains Mono' }}>
                         {rating.average_score?.toFixed(2)}
                       </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4">
-                        {rating.drawing > 0 && (
-                          <div className="text-[10px] text-gray-300 text-center px-2 leading-tight">
-                            🎨 {rating.drawing} · 💡 {rating.idea} · ⚙️ {rating.realization}<br/>
-                            👥 {rating.characters} · 📖 {rating.story} · 🔥 {rating.emotional}
-                          </div>
-                        )}
-                      </div>
                     </div>
-                    <div className="p-3">
-                      <h3 className="font-semibold text-sm truncate mb-1">
-                        {rating.anime_name || `Anime #${rating.anime_id}`}
-                      </h3>
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                        <span className={getScoreTextClass(rating.average_score)}>★ {rating.average_score?.toFixed(2)}</span>
-                      </div>
+                    <div className="p-2.5">
+                      <h3 className="font-medium text-xs truncate" style={{ color: 'rgba(255,255,255,0.65)' }}>{rating.anime_name || `#${rating.anime_id}`}</h3>
                     </div>
                   </motion.div>
                 ))}
@@ -225,43 +176,33 @@ export default function PublicProfile() {
         {activeTab === 'tierlists' && (
           <div>
             {tierLists.length === 0 ? (
-              <div className="text-center py-16 glass-card animate-fade-in">
-                <p className="text-gray-400">Пока нет Tier List</p>
+              <div className="text-center py-16 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.2)' }}>Пока нет Tier List</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {tierLists.map((list, index) => {
                   const tiers = typeof list.tiers === 'string' ? JSON.parse(list.tiers) : list.tiers
                   return (
                     <motion.div
                       key={list.id}
-                      className="glass-card p-4 flex items-center gap-4 cursor-pointer hover:border-purple-500/30 transition-all"
+                      className="rounded-xl px-4 py-3.5 flex items-center gap-3 cursor-pointer group transition-all duration-300"
+                      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
                       onClick={() => navigate(`/tierlist/${list.id}`)}
-                      initial={{ opacity: 0, y: 15 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
+                      transition={{ delay: index * 0.04, duration: 0.3 }}
                     >
-                      <div className="flex gap-1 flex-shrink-0">
+                      <div className="flex gap-0.5 flex-shrink-0">
                         {tiers.filter((t) => t.items.length > 0).slice(0, 6).map((t) => (
-                          <div key={t.id} className="flex -space-x-2">
-                            {t.items.slice(0, 3).map((itemId, i) => (
-                              <div key={i} className="w-8 h-8 rounded border-2 flex items-center justify-center text-[8px] font-bold" style={{ borderColor: t.color, backgroundColor: t.color + '20', color: t.color, zIndex: 3 - i }}>
-                                {t.name}
-                              </div>
-                            ))}
+                          <div key={t.id} className="w-6 h-6 rounded-lg flex items-center justify-center text-[7px] font-bold" style={{ backgroundColor: t.color + '15', color: t.color, border: `1px solid ${t.color}30` }}>
+                            {t.name}
                           </div>
                         ))}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold truncate">{list.name}</h3>
-                        <p className="text-xs text-gray-500">{new Date(list.created_at).toLocaleDateString('ru')}</p>
-                      </div>
-                      <div className="flex gap-1 flex-shrink-0">
-                        {tiers.filter((t) => t.items.length > 0).map((t) => (
-                          <span key={t.id} className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: t.color + '20', color: t.color }}>
-                            {t.name}:{t.items.length}
-                          </span>
-                        ))}
+                        <h3 className="font-medium text-sm truncate group-hover:text-amber-400 transition-colors" style={{ color: 'rgba(255,255,255,0.7)' }}>{list.name}</h3>
+                        <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'JetBrains Mono' }}>{new Date(list.created_at).toLocaleDateString('ru')}</p>
                       </div>
                     </motion.div>
                   )
@@ -272,19 +213,19 @@ export default function PublicProfile() {
         )}
 
         {activeTab === 'battle' && battleStats && (
-          <div className="glass-card p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="text-center">
-                <div className="text-4xl font-black text-purple-400 mb-2">{battleStats.best}</div>
-                <div className="text-sm text-gray-400">Лучший результат</div>
+                <div className="text-3xl font-bold text-amber-400 mb-1" style={{ fontFamily: 'JetBrains Mono', textShadow: '0 0 20px rgba(251,191,36,0.2)' }}>{battleStats.best}</div>
+                <div className="label">Лучший результат</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-black text-cyan-400 mb-2">{battleStats.total}</div>
-                <div className="text-sm text-gray-400">Всего игр</div>
+                <div className="text-3xl font-bold text-mint-400 mb-1" style={{ fontFamily: 'JetBrains Mono', textShadow: '0 0 20px rgba(52,211,153,0.2)' }}>{battleStats.total}</div>
+                <div className="label">Всего игр</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-black text-green-400 mb-2">{battleStats.avg}</div>
-                <div className="text-sm text-gray-400">Средний счёт</div>
+                <div className="text-3xl font-bold mb-1" style={{ fontFamily: 'JetBrains Mono', color: 'rgba(255,255,255,0.4)' }}>{battleStats.avg}</div>
+                <div className="label">Средний счёт</div>
               </div>
             </div>
           </div>

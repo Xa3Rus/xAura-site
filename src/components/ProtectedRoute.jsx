@@ -8,7 +8,7 @@ export default function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-dark-900">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0c' }}>
         <Loader size="lg" text="Загрузка..." />
       </div>
     )

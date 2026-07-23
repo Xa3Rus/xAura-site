@@ -17,12 +17,12 @@ const GENRES = [
 
 const ITEMS_PER_PAGE = 30
 
-function getScoreBadge(score) {
-  if (score >= 8) return { bg: 'from-cyan-500/90 to-cyan-600/90', text: 'text-white' }
-  if (score >= 7) return { bg: 'from-purple-500/90 to-purple-600/90', text: 'text-white' }
-  if (score >= 5.5) return { bg: 'from-green-500/90 to-green-600/90', text: 'text-white' }
-  if (score >= 4) return { bg: 'from-yellow-500/90 to-yellow-600/90', text: 'text-dark-900' }
-  return { bg: 'from-red-500/90 to-red-600/90', text: 'text-white' }
+function scoreColor(score) {
+  if (score >= 8) return 'bg-mint-500/25 text-mint-400 border-mint-500/30'
+  if (score >= 7) return 'bg-amber-500/25 text-amber-400 border-amber-500/30'
+  if (score >= 5.5) return 'bg-white/10 text-white/60 border-white/10'
+  if (score >= 4) return 'bg-amber-500/15 text-amber-500/70 border-amber-500/15'
+  return 'bg-coral-500/25 text-coral-400 border-coral-500/30'
 }
 
 export default function Catalog() {
@@ -70,7 +70,7 @@ export default function Catalog() {
 
   useEffect(() => { setPage(1) }, [search, year, genre, sort])
 
-  const getGenres = (item) => (item.genres || []).slice(0, 3).map((g) => g.name)
+  const getGenres = (item) => (item.genres || []).slice(0, 2).map((g) => g.name)
 
   const handleRate = (anime) => {
     navigate('/rate', { state: { selectedAnime: anime } })
@@ -100,31 +100,31 @@ export default function Catalog() {
   const years = Array.from({ length: 32 }, (_, i) => 2026 - i)
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen pt-20 pb-12 px-5 sm:px-8">
+      <div className="max-w-[1400px] mx-auto">
         <div className="mb-8 page-enter">
-          <h1 className="text-3xl sm:text-4xl font-black mb-2 tracking-tight">Каталог аниме</h1>
-          <p className="text-gray-500 text-sm">{filtered.length.toLocaleString()} тайтлов</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1" style={{ fontFamily: 'Space Grotesk' }}>Каталог</h1>
+          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>{filtered.length.toLocaleString()} тайтлов</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-8 page-enter" style={{ animationDelay: '0.1s' }}>
+        <div className="flex flex-col sm:flex-row gap-2.5 mb-8 page-enter" style={{ animationDelay: '0.05s' }}>
           <div className="relative flex-1">
-            <input type="text" placeholder="Поиск по названию..." value={search} onChange={(e) => setSearch(e.target.value)} className="input-field !pl-10" />
-            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <input type="text" placeholder="Поиск..." value={search} onChange={(e) => setSearch(e.target.value)} className="input !pl-9" />
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: 'rgba(255,255,255,0.15)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          <select value={sort} onChange={(e) => setSort(e.target.value)} className="input-field w-full sm:w-44">
+          <select value={sort} onChange={(e) => setSort(e.target.value)} className="input w-full sm:w-40">
             <option value="score">По рейтингу</option>
             <option value="name">По названию</option>
             <option value="aired_on">По дате</option>
             <option value="episodes">По эпизодам</option>
           </select>
-          <select value={year} onChange={(e) => setYear(e.target.value)} className="input-field w-full sm:w-36">
-            <option value="">Все годы</option>
+          <select value={year} onChange={(e) => setYear(e.target.value)} className="input w-full sm:w-32">
+            <option value="">Год</option>
             {years.map((y) => <option key={y} value={y}>{y}</option>)}
           </select>
-          <select value={genre} onChange={(e) => setGenre(e.target.value)} className="input-field w-full sm:w-44">
+          <select value={genre} onChange={(e) => setGenre(e.target.value)} className="input w-full sm:w-40">
             <option value="">Все жанры</option>
             {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
           </select>
@@ -132,75 +132,85 @@ export default function Catalog() {
 
         {loading ? (
           <div className="flex items-center justify-center py-32">
-            <Loader text="Загрузка каталога..." />
+            <Loader text="Загрузка..." />
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-3.5">
               {displayAnime.map((item, index) => {
                 const myRating = ratingsMap[item.id]
-                const badge = getScoreBadge(item.score)
                 return (
                   <motion.div
                     key={item.id}
-                    className="catalog-card group"
-                    initial={{ opacity: 0, y: 20 }}
+                    className="card-hover overflow-hidden group"
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: Math.min(index * 0.02, 0.5) }}
+                    transition={{ duration: 0.3, delay: Math.min(index * 0.012, 0.35), ease: [0.16, 1, 0.3, 1] }}
                   >
-                    <div className="aspect-[3/4] relative overflow-hidden rounded-t-2xl">
+                    <div className="aspect-[3/4] relative overflow-hidden rounded-t-2xl bg-surface-3">
                       {item.image?.original && !item.image.original.includes('missing_') ? (
                         <img
                           src={`https://shikimori.io${item.image.original}`}
                           alt={item.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                           loading="lazy"
                           onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
                         />
                       ) : null}
-                      <div className={`w-full h-full bg-dark-700 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
-                        <span className="text-gray-500 text-4xl font-bold">{(item.russian || item.name || '?')[0]}</span>
+                      <div className={`w-full h-full bg-surface-3 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
+                        <span style={{ color: 'rgba(255,255,255,0.08)' }} className="text-3xl font-bold">{(item.russian || item.name || '?')[0]}</span>
                       </div>
 
                       {item.score > 0 && (
-                        <div className={`absolute top-2 left-2 bg-gradient-to-r ${badge.bg} ${badge.text} text-[11px] px-2 py-0.5 rounded-md font-bold backdrop-blur-sm`}>
+                        <div className={`absolute top-2 left-2 score-badge border backdrop-blur-md ${scoreColor(item.score)}`} style={{ fontFamily: 'JetBrains Mono' }}>
                           {Number(item.score).toFixed(2)}
                         </div>
                       )}
 
                       {myRating && (
-                        <div className="absolute top-2 right-2 bg-purple-500/90 text-white text-[11px] px-2 py-0.5 rounded-md font-bold backdrop-blur-sm">
+                        <div className="absolute top-2 right-2 score-badge bg-amber-500/20 text-amber-400 border border-amber-500/20 backdrop-blur-md" style={{ fontFamily: 'JetBrains Mono' }}>
                           {myRating.average_score?.toFixed(2)}
                         </div>
                       )}
 
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-end pb-3 gap-1.5">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-400 flex flex-col items-center justify-end pb-3 gap-1.5">
                         {quickRatingId === item.id ? (
-                          <div className="flex flex-wrap justify-center gap-1 px-2">
-                            {[1,2,3,4,5,6,7,8,9,10].map((s) => (
-                              <button
-                                key={s}
-                                onClick={() => handleQuickRate(item, s)}
-                                className={`w-7 h-7 rounded-md text-xs font-bold transition-all ${
-                                  s <= 4 ? 'bg-red-500/80 hover:bg-red-500 text-white' :
-                                  s <= 6 ? 'bg-yellow-500/80 hover:bg-yellow-500 text-dark-900' :
-                                  'bg-green-500/80 hover:bg-green-500 text-dark-900'
-                                }`}
-                              >{s}</button>
-                            ))}
-                            <button onClick={() => setQuickRatingId(null)} className="w-7 h-7 rounded-md text-xs bg-white/10 hover:bg-white/20 text-white">✕</button>
+                          <div className="flex flex-wrap justify-center gap-0.5 px-2">
+                            {[1,2,3,4,5,6,7,8,9,10].map((s) => {
+                              const colors = {
+                                1: { bg: 'rgba(185,28,28,0.95)', text: '#fff' },
+                                2: { bg: 'rgba(220,38,38,0.9)', text: '#fff' },
+                                3: { bg: 'rgba(239,68,68,0.85)', text: '#fff' },
+                                4: { bg: 'rgba(248,113,113,0.7)', text: '#fff' },
+                                5: { bg: 'rgba(234,179,8,0.5)', text: '#fff' },
+                                6: { bg: 'rgba(234,179,8,0.65)', text: '#fff' },
+                                7: { bg: 'rgba(34,197,94,0.6)', text: '#fff' },
+                                8: { bg: 'rgba(34,197,94,0.75)', text: '#fff' },
+                                9: { bg: 'rgba(34,197,94,0.88)', text: '#fff' },
+                                10: { bg: 'rgba(22,163,74,0.95)', text: '#fff' },
+                              }
+                              return (
+                                <button
+                                  key={s}
+                                  onClick={() => handleQuickRate(item, s)}
+                                  className="w-7 h-7 rounded-lg text-[10px] font-bold transition-all duration-150 active:scale-90"
+                                  style={{ fontFamily: 'JetBrains Mono', background: colors[s].bg, color: colors[s].text }}
+                                >{s}</button>
+                              )
+                            })}
+                            <button onClick={() => setQuickRatingId(null)} className="w-7 h-7 rounded-lg text-[10px] bg-white/[0.06] hover:bg-white/10" style={{ color: 'rgba(255,255,255,0.4)' }}>✕</button>
                           </div>
                         ) : (
                           <div className="flex gap-1.5 px-2">
                             <button
                               onClick={() => setQuickRatingId(item.id)}
-                              className="text-xs !px-3 !py-1.5 !rounded-lg bg-purple-500/90 hover:bg-purple-500 text-white transition-all font-medium"
+                              className="text-[11px] !px-3 !py-1.5 !rounded-lg btn-primary"
                             >
                               {myRating ? 'Изменить' : 'Оценить'}
                             </button>
                             <button
                               onClick={() => handleRate(item)}
-                              className="text-xs !px-3 !py-1.5 !rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all font-medium backdrop-blur-sm"
+                              className="text-[11px] !px-3 !py-1.5 !rounded-lg btn-ghost"
                             >
                               Подробно
                             </button>
@@ -209,14 +219,14 @@ export default function Catalog() {
                       </div>
                     </div>
 
-                    <div className="p-2.5 sm:p-3">
-                      <h3 className="font-semibold text-xs sm:text-sm truncate mb-1.5 leading-tight">{item.russian || item.name}</h3>
-                      <div className="flex items-center gap-1.5 text-[11px] text-gray-500 mb-2">
+                    <div className="p-2.5">
+                      <h3 className="font-medium text-xs truncate mb-1" style={{ color: 'rgba(255,255,255,0.75)' }}>{item.russian || item.name}</h3>
+                      <div className="flex items-center gap-1.5 text-[10px] mb-2" style={{ color: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono' }}>
                         <span>{item.aired_on?.split('-')[0] || '—'}</span>
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {getGenres(item).map((g) => (
-                          <span key={g} className="text-[10px] bg-white/[0.04] text-gray-400 px-1.5 py-0.5 rounded-md">{g}</span>
+                          <span key={g} className="tag">{g}</span>
                         ))}
                       </div>
                     </div>
@@ -225,14 +235,14 @@ export default function Catalog() {
               })}
             </div>
             {hasMore && (
-              <div className="flex justify-center mt-10">
-                <button onClick={() => setPage((p) => p + 1)} className="gradient-btn">
+              <div className="flex justify-center mt-12">
+                <button onClick={() => setPage((p) => p + 1)} className="btn-primary">
                   Загрузить ещё
                 </button>
               </div>
             )}
             {!hasMore && displayAnime.length > 0 && (
-              <p className="text-center text-gray-600 text-sm mt-10">Показаны все {filtered.length.toLocaleString()} тайтлов</p>
+              <p className="text-center text-xs mt-12" style={{ color: 'rgba(255,255,255,0.1)' }}>Все {filtered.length.toLocaleString()} тайтлов загружены</p>
             )}
           </>
         )}

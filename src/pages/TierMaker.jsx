@@ -5,17 +5,17 @@ import Loader from '../components/Loader'
 import { loadAnimeData } from '../utils/animeData'
 
 const PRESET_COLORS = [
-  '#ff4444', '#ff8c00', '#ffd700', '#00cc44', '#00aaff', '#9b5cff',
-  '#ff69b4', '#00ffcc', '#ff6347', '#7b68ee', '#32cd32', '#ff1493',
+  '#f87171', '#fb923c', '#facc15', '#4ade80', '#60a5fa', '#a78bfa',
+  '#f472b6', '#34d399', '#f97316', '#818cf8', '#22c55e', '#ec4899',
 ]
 
 const DEFAULT_TIERS = [
-  { id: 's', name: 'S', color: '#ff4444', items: [] },
-  { id: 'a', name: 'A', color: '#ff8c00', items: [] },
-  { id: 'b', name: 'B', color: '#ffd700', items: [] },
-  { id: 'c', name: 'C', color: '#00cc44', items: [] },
-  { id: 'd', name: 'D', color: '#00aaff', items: [] },
-  { id: 'f', name: 'F', color: '#999999', items: [] },
+  { id: 's', name: 'S', color: '#f87171', items: [] },
+  { id: 'a', name: 'A', color: '#fb923c', items: [] },
+  { id: 'b', name: 'B', color: '#facc15', items: [] },
+  { id: 'c', name: 'C', color: '#4ade80', items: [] },
+  { id: 'd', name: 'D', color: '#60a5fa', items: [] },
+  { id: 'f', name: 'F', color: '#6b7280', items: [] },
 ]
 
 export default function TierMaker() {
@@ -185,41 +185,35 @@ export default function TierMaker() {
   if (loading) return <div className="min-h-screen pt-24 flex items-center justify-center"><Loader text="Загрузка..." /></div>
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6 animate-slide-up">
+    <div className="min-h-screen pt-24 pb-12 px-5 sm:px-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-6 page-enter">
           <input
             value={tierListName}
             onChange={(e) => setTierListName(e.target.value)}
-            className="text-2xl font-black bg-transparent border-b border-white/10 focus:border-purple-500 outline-none pb-1"
+            className="text-xl font-bold bg-transparent outline-none pb-1 transition-colors"
+            style={{ fontFamily: 'Space Grotesk', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
           />
-          <div className="flex gap-2">
-            <button onClick={() => setShowSaveDialog(true)} className="gradient-btn text-sm !py-2">Сохранить</button>
-          </div>
+          <button onClick={() => setShowSaveDialog(true)} className="btn-primary text-xs !py-2">Сохранить</button>
         </div>
 
         {showSaveDialog && (
-          <div className="glass-card p-4 mb-6 animate-fade-in">
+          <div className="rounded-xl p-4 mb-6 page-enter" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
             <div className="flex items-center gap-3">
-              <input
-                value={tierListName}
-                onChange={(e) => setTierListName(e.target.value)}
-                className="input-field flex-1"
-                placeholder="Название tier list"
-              />
-              <button onClick={saveTierList} className="gradient-btn text-sm">Сохранить</button>
-              <button onClick={() => setShowSaveDialog(false)} className="text-gray-400 hover:text-white text-sm">Отмена</button>
+              <input value={tierListName} onChange={(e) => setTierListName(e.target.value)} className="input flex-1" placeholder="Название" />
+              <button onClick={saveTierList} className="btn-primary text-xs">Сохранить</button>
+              <button onClick={() => setShowSaveDialog(false)} className="text-xs hover:text-white/40" style={{ color: 'rgba(255,255,255,0.2)' }}>Отмена</button>
             </div>
           </div>
         )}
 
-        <div className="space-y-2 mb-8">
-          {tiers.map((tier, tierIdx) => (
-            <div key={tier.id} className="flex items-stretch gap-2 animate-slide-up" style={{ animationDelay: `${tierIdx * 0.03}s` }}>
-              <div className="flex flex-col items-center gap-1 flex-shrink-0">
+        <div className="space-y-1.5 mb-6">
+          {tiers.map((tier) => (
+            <div key={tier.id} className="flex items-stretch gap-2">
+              <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
                 <div
-                  className="w-14 h-14 rounded-xl flex items-center justify-center font-black text-lg cursor-pointer hover:opacity-80 transition-opacity relative"
-                  style={{ backgroundColor: tier.color }}
+                  className="tier-badge cursor-pointer hover:opacity-80 transition-opacity relative"
+                  style={{ backgroundColor: tier.color + '18', border: `1px solid ${tier.color}30`, color: tier.color }}
                   onClick={() => startEditTier(tier)}
                 >
                   {editingTier === tier.id ? (
@@ -228,43 +222,45 @@ export default function TierMaker() {
                       onChange={(e) => setEditingName(e.target.value)}
                       onBlur={saveEditTier}
                       onKeyDown={(e) => e.key === 'Enter' && saveEditTier()}
-                      className="w-10 h-8 bg-black/30 text-center text-sm font-black rounded outline-none"
+                      className="w-8 h-6 bg-black/30 text-center text-xs font-bold rounded outline-none"
                       autoFocus
                       maxLength={4}
+                      style={{ color: tier.color }}
                     />
                   ) : (
                     tier.name
                   )}
                 </div>
                 <div className="flex gap-0.5">
-                  <button onClick={() => moveTier(tier.id, 'up')} className="text-gray-600 hover:text-white text-xs">▲</button>
-                  <button onClick={() => moveTier(tier.id, 'down')} className="text-gray-600 hover:text-white text-xs">▼</button>
+                  <button onClick={() => moveTier(tier.id, 'up')} className="text-[10px] hover:text-white/40 transition-colors" style={{ color: 'rgba(255,255,255,0.1)' }}>▲</button>
+                  <button onClick={() => moveTier(tier.id, 'down')} className="text-[10px] hover:text-white/40 transition-colors" style={{ color: 'rgba(255,255,255,0.1)' }}>▼</button>
                 </div>
               </div>
 
               <div
-                className="flex-1 min-h-[70px] bg-dark-700/40 rounded-xl border border-white/5 p-2 flex items-center gap-2 overflow-x-auto"
+                className="flex-1 min-h-[60px] rounded-xl p-1.5 flex items-center gap-1.5 overflow-x-auto"
+                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}
                 onDragOver={handleDragOver}
                 onDrop={() => handleDropOnTier(tier.id)}
               >
                 {tier.items.length === 0 && (
-                  <span className="text-gray-600 text-sm mx-auto">Перетащи сюда</span>
+                  <span className="text-[10px] mx-auto" style={{ color: 'rgba(255,255,255,0.08)' }}>Перетащи сюда</span>
                 )}
                 {tier.items.map((item) => (
                   <div
                     key={item.id}
                     draggable
                     onDragStart={() => handleDragStart(item, `tier-${tier.id}`)}
-                    className="flex-shrink-0 w-[70px] cursor-grab active:cursor-grabbing group/item relative"
+                    className="flex-shrink-0 w-14 cursor-grab active:cursor-grabbing group/item relative"
                   >
                     <img
-                      src={item.image?.original && !item.image.original.includes('missing_') ? `https://shikimori.io${item.image.original}` : ''}
+                      src={item.image?.original && !item.image.original.includes('missing_') ? `https://shikimori.one${item.image.original}` : ''}
                       alt=""
-                      className="w-[70px] h-[100px] rounded-lg object-cover group-hover/item:ring-2 ring-purple-500 transition-all"
+                      className="w-14 h-[72px] rounded-lg object-cover group-hover/item:ring-1 ring-amber-500/50 transition-all"
                       onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
                     />
-                    <div className={`w-[70px] h-[100px] rounded-lg bg-dark-600 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
-                      <span className="text-gray-500 text-xl font-bold">{(item.russian || item.name || '?')[0]}</span>
+                    <div className={`w-14 h-[72px] rounded-lg bg-surface-3 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
+                      <span className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.1)' }}>{(item.russian || item.name || '?')[0]}</span>
                     </div>
                     <button
                       onClick={(e) => {
@@ -274,43 +270,35 @@ export default function TierMaker() {
                         ))
                         setPool((p) => [...p, item])
                       }}
-                      className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity"
+                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-[8px] flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity"
+                      style={{ background: 'rgba(244,63,94,0.9)' }}
                     >×</button>
                   </div>
                 ))}
               </div>
 
-              <button
-                onClick={() => removeTier(tier.id)}
-                className="text-gray-600 hover:text-red-400 text-sm px-1 self-center transition-colors"
-              >✕</button>
+              <button onClick={() => removeTier(tier.id)} className="text-xs px-1 self-center hover:text-coral-400 transition-colors" style={{ color: 'rgba(255,255,255,0.1)' }}>✕</button>
             </div>
           ))}
         </div>
 
-        <button onClick={addTier} className="text-purple-400 hover:text-purple-300 text-sm mb-6 transition-colors">
-          + Добавить тир
-        </button>
+        <button onClick={addTier} className="text-amber-400 hover:text-amber-300 text-xs mb-6 transition-colors">+ Добавить тир</button>
 
-        <div className="glass-card p-4 animate-fade-in">
-          <div className="flex items-center gap-3 mb-4">
-            <h3 className="font-semibold">Пул аниме</h3>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Поиск..."
-              className="input-field !py-1.5 text-sm flex-1 max-w-xs"
-            />
-            <span className="text-gray-500 text-sm">{filteredPool.length}</span>
+        <div className="rounded-xl p-4 page-enter" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="flex items-center gap-3 mb-3">
+            <h3 className="font-bold text-sm" style={{ fontFamily: 'Space Grotesk' }}>Пул аниме</h3>
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Поиск..." className="input !py-1.5 text-xs flex-1 max-w-xs" />
+            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.12)', fontFamily: 'JetBrains Mono' }}>{filteredPool.length}</span>
           </div>
           <div
             ref={poolRef}
-            className="flex flex-wrap gap-2 min-h-[80px] p-2 bg-dark-800/40 rounded-xl border border-dashed border-white/10"
+            className="flex flex-wrap gap-1.5 min-h-[72px] p-2 rounded-xl"
+            style={{ background: 'rgba(255,255,255,0.015)', border: '1px dashed rgba(255,255,255,0.06)' }}
             onDragOver={handleDragOver}
             onDrop={handleDropOnPoolRef}
           >
             {filteredPool.length === 0 && (
-              <span className="text-gray-600 text-sm mx-auto self-center">Нет аниме в пуле</span>
+              <span className="text-xs mx-auto self-center" style={{ color: 'rgba(255,255,255,0.08)' }}>Нет аниме в пуле</span>
             )}
             {filteredPool.map((item) => (
               <div
@@ -320,15 +308,15 @@ export default function TierMaker() {
                 className="flex-shrink-0 cursor-grab active:cursor-grabbing group/pool relative"
               >
                 <img
-                  src={item.image?.original && !item.image.original.includes('missing_') ? `https://shikimori.io${item.image.original}` : ''}
+                  src={item.image?.original && !item.image.original.includes('missing_') ? `https://shikimori.one${item.image.original}` : ''}
                   alt=""
-                  className="w-[70px] h-[100px] rounded-lg object-cover hover:ring-2 ring-purple-500 transition-all"
+                  className="w-14 h-[72px] rounded-lg object-cover hover:ring-1 ring-amber-500/50 transition-all"
                   onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
                 />
-                <div className={`w-[70px] h-[100px] rounded-lg bg-dark-600 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
-                  <span className="text-gray-500 text-xl font-bold">{(item.russian || item.name || '?')[0]}</span>
+                <div className={`w-14 h-[72px] rounded-lg bg-surface-3 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
+                  <span className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.1)' }}>{(item.russian || item.name || '?')[0]}</span>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-center text-[9px] py-0.5 rounded-b-lg truncate px-1">
+                <div className="absolute bottom-0 left-0 right-0 text-center text-[8px] py-0.5 rounded-b-lg truncate px-0.5" style={{ background: 'rgba(0,0,0,0.7)' }}>
                   {item.russian || item.name}
                 </div>
               </div>
@@ -338,25 +326,25 @@ export default function TierMaker() {
 
         {savedLists.length > 0 && (
           <div className="mt-8">
-            <h3 className="font-bold text-lg mb-4">Сохранённые Tier List</h3>
-            <div className="space-y-3">
+            <h3 className="font-bold text-sm mb-3" style={{ fontFamily: 'Space Grotesk' }}>Сохранённые Tier List</h3>
+            <div className="space-y-1.5">
               {savedLists.map((list) => {
                 const tiersData = typeof list.tiers === 'string' ? JSON.parse(list.tiers) : list.tiers
                 return (
-                  <div key={list.id} className="glass-card p-4 flex items-center gap-4">
+                  <div key={list.id} className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold truncate">{list.name}</h4>
-                      <p className="text-xs text-gray-500">{new Date(list.created_at).toLocaleDateString('ru')}</p>
+                      <h4 className="font-medium text-sm truncate">{list.name}</h4>
+                      <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'JetBrains Mono' }}>{new Date(list.created_at).toLocaleDateString('ru')}</p>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-0.5">
                       {tiersData.filter((t) => t.items.length > 0).map((t) => (
-                        <span key={t.id} className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: t.color + '30', color: t.color }}>
-                          {t.name}: {t.items.length}
+                        <span key={t.id} className="text-[10px] px-1.5 py-0.5 rounded-lg" style={{ backgroundColor: t.color + '15', color: t.color, border: `1px solid ${t.color}20` }}>
+                          {t.name}:{t.items.length}
                         </span>
                       ))}
                     </div>
-                    <button onClick={() => loadTierList(list)} className="text-purple-400 hover:text-purple-300 text-sm">Загрузить</button>
-                    <button onClick={() => deleteTierList(list.id)} className="text-red-400 hover:text-red-300 text-sm">Удалить</button>
+                    <button onClick={() => loadTierList(list)} className="text-amber-400 hover:text-amber-300 text-xs transition-colors">Загрузить</button>
+                    <button onClick={() => deleteTierList(list.id)} className="hover:text-coral-400 text-xs transition-colors" style={{ color: 'rgba(255,255,255,0.15)' }}>Удалить</button>
                   </div>
                 )
               })}
