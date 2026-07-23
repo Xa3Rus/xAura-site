@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
+import Footer from './components/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
@@ -14,9 +15,10 @@ import BattlePage from './pages/BattlePage'
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-dark-900 flex flex-col">
       <Navbar />
-      <Routes>
+      <div className="flex-1">
+        <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -53,6 +55,8 @@ export default function App() {
           </ProtectedRoute>
         } />
       </Routes>
+      </div>
+      <Footer />
     </div>
   )
 }

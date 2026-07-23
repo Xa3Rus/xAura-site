@@ -109,3 +109,18 @@ body {
   background-size: 200% 100%;
   animation: shimmerCyan 3s linear infinite;
 }
+
+.glow-purple {
+  box-shadow: 0 0 30px rgba(123, 47, 247, 0.15), 0 0 60px rgba(123, 47, 247, 0.05);
+}
+
+.glass-card:hover {
+  border-color: rgba(123, 47, 247, 0.2);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #7b2ff7, #9b5cff, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
