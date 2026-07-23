@@ -1,5 +1,6 @@
 import { useState, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { AuthContext } from '../context/AuthContext'
 
 export default function Register() {
@@ -39,14 +40,19 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pt-20">
-      <div className="w-full max-w-md animate-fade-in">
+      <motion.div
+        className="w-full max-w-md"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="glass-card p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-black mb-2">
-              <span className="text-purple-500">x</span>Aura
+            <h1 className="text-2xl font-black mb-4 tracking-tight">
+              <span className="text-gradient-static">x</span>Aura
             </h1>
-            <h2 className="text-2xl font-bold mb-2">Регистрация</h2>
-            <p className="text-gray-400 text-sm">Создайте новый аккаунт</p>
+            <h2 className="text-xl font-bold mb-1">Регистрация</h2>
+            <p className="text-gray-500 text-sm">Создайте новый аккаунт</p>
           </div>
 
           {error && (
@@ -55,9 +61,9 @@ export default function Register() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Имя пользователя</label>
+              <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Имя пользователя</label>
               <input
                 type="text"
                 value={username}
@@ -67,7 +73,7 @@ export default function Register() {
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Email</label>
+              <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Email</label>
               <input
                 type="email"
                 value={email}
@@ -77,7 +83,7 @@ export default function Register() {
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Пароль</label>
+              <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Пароль</label>
               <input
                 type="password"
                 value={password}
@@ -87,7 +93,7 @@ export default function Register() {
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Повторите пароль</label>
+              <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Повторите пароль</label>
               <input
                 type="password"
                 value={confirmPassword}
@@ -99,20 +105,20 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading}
-              className="gradient-btn w-full disabled:opacity-50 disabled:cursor-not-allowed"
+              className="gradient-btn w-full disabled:opacity-50 disabled:cursor-not-allowed !py-3.5"
             >
               {loading ? 'Регистрация...' : 'Зарегистрироваться'}
             </button>
           </form>
 
-          <p className="text-center text-gray-400 text-sm mt-6">
+          <p className="text-center text-gray-500 text-sm mt-6">
             Уже есть аккаунт?{' '}
-            <Link to="/login" className="text-purple-400 hover:text-purple-300 transition-colors">
+            <Link to="/login" className="text-purple-400 hover:text-purple-300 transition-colors font-medium">
               Войти
             </Link>
           </p>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useState, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { AuthContext } from '../context/AuthContext'
 
 export default function Login() {
@@ -26,14 +27,19 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pt-20">
-      <div className="w-full max-w-md animate-fade-in">
+      <motion.div
+        className="w-full max-w-md"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="glass-card p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-black mb-2">
-              <span className="text-purple-500">x</span>Aura
+            <h1 className="text-2xl font-black mb-4 tracking-tight">
+              <span className="text-gradient-static">x</span>Aura
             </h1>
-            <h2 className="text-2xl font-bold mb-2">Вход</h2>
-            <p className="text-gray-400 text-sm">Войдите в свой аккаунт</p>
+            <h2 className="text-xl font-bold mb-1">Вход</h2>
+            <p className="text-gray-500 text-sm">Войдите в свой аккаунт</p>
           </div>
 
           {error && (
@@ -42,9 +48,9 @@ export default function Login() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Email</label>
+              <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Email</label>
               <input
                 type="email"
                 value={email}
@@ -54,7 +60,7 @@ export default function Login() {
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Пароль</label>
+              <label className="block text-xs text-gray-500 mb-1.5 uppercase tracking-wider">Пароль</label>
               <input
                 type="password"
                 value={password}
@@ -66,20 +72,20 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="gradient-btn w-full disabled:opacity-50 disabled:cursor-not-allowed"
+              className="gradient-btn w-full disabled:opacity-50 disabled:cursor-not-allowed !py-3.5"
             >
               {loading ? 'Вход...' : 'Войти'}
             </button>
           </form>
 
-          <p className="text-center text-gray-400 text-sm mt-6">
+          <p className="text-center text-gray-500 text-sm mt-6">
             Нет аккаунта?{' '}
-            <Link to="/register" className="text-purple-400 hover:text-purple-300 transition-colors">
+            <Link to="/register" className="text-purple-400 hover:text-purple-300 transition-colors font-medium">
               Зарегистрироваться
             </Link>
           </p>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect, useRef } from 'react'
+import { useContext, useState, useEffect, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
 import { AuthContext } from '../context/AuthContext'
@@ -25,33 +25,59 @@ function AnimatedCounter({ target, duration = 2 }) {
   return <span ref={ref}>{count.toLocaleString()}</span>
 }
 
-function FloatingOrbs() {
+function Particles() {
+  const particles = useMemo(() =>
+    Array.from({ length: 40 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 3 + 1,
+      duration: Math.random() * 20 + 15,
+      delay: Math.random() * 10,
+      opacity: Math.random() * 0.3 + 0.05,
+    })), [])
+
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/8 rounded-full blur-[120px] animate-pulse-slow" />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/8 rounded-full blur-[100px] animate-pulse-slow" style={{ animationDelay: '1.5s' }} />
-      <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-400/5 rounded-full blur-[80px] animate-pulse-slow" style={{ animationDelay: '3s' }} />
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="absolute rounded-full bg-purple-400"
+          style={{
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: p.size,
+            height: p.size,
+            opacity: p.opacity,
+            animation: `float ${p.duration}s ease-in-out ${p.delay}s infinite`,
+          }}
+        />
+      ))}
+      <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-purple-600/[0.07] rounded-full blur-[150px]" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-cyan-500/[0.05] rounded-full blur-[120px]" />
     </div>
   )
 }
 
 function AnimeStrip({ anime }) {
-  const topAnime = anime.slice(0, 20)
   return (
-    <div className="relative overflow-hidden py-4 mb-20">
-      <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-dark-900 to-transparent z-10" />
-      <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-dark-900 to-transparent z-10" />
+    <div className="relative overflow-hidden py-6 mb-20 -mx-4">
+      <div className="absolute left-0 top-0 bottom-0 w-40 bg-gradient-to-r from-[#0a0a14] to-transparent z-10" />
+      <div className="absolute right-0 top-0 bottom-0 w-40 bg-gradient-to-l from-[#0a0a14] to-transparent z-10" />
       <div className="flex gap-3 animate-scroll">
-        {[...topAnime, ...topAnime].map((a, i) => (
-          <div key={`${a.id}-${i}`} className="flex-shrink-0 w-28 h-40 rounded-xl overflow-hidden relative group">
+        {[...anime, ...anime].map((a, i) => (
+          <div key={`${a.id}-${i}`} className="flex-shrink-0 w-[120px] h-[170px] rounded-xl overflow-hidden relative group shadow-lg shadow-black/20">
             <img
               src={a.image?.original ? `https://shikimori.one${a.image.original}` : ''}
               alt={a.russian || a.name}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-2">
-              <span className="text-[10px] text-white font-medium truncate">{a.russian || a.name}</span>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-2.5">
+              <div>
+                <span className="text-[10px] text-white font-medium line-clamp-2 block leading-tight">{a.russian || a.name}</span>
+                <span className="text-[9px] text-purple-300 font-bold">★ {Number(a.score).toFixed(2)}</span>
+              </div>
             </div>
           </div>
         ))}
@@ -123,105 +149,119 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen relative">
-      <FloatingOrbs />
+      <Particles />
 
-      <div className="min-h-[85vh] flex flex-col items-center justify-center px-4 relative">
+      <div className="min-h-[90vh] flex flex-col items-center justify-center px-4 relative">
         <motion.div
           className="text-center max-w-3xl"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, type: 'spring' }}
+            initial={{ opacity: 0, y: 40, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
           >
-            <h1 className="text-7xl sm:text-9xl font-black mb-6 tracking-tight">
+            <h1 className="text-7xl sm:text-[120px] font-black mb-6 tracking-tighter leading-none">
               <span className="text-gradient">x</span>Aura
             </h1>
           </motion.div>
 
           <motion.p
-            className="text-lg sm:text-xl text-gray-400 mb-10 leading-relaxed max-w-xl mx-auto"
+            className="text-lg sm:text-xl text-gray-400/80 mb-12 leading-relaxed max-w-lg mx-auto font-light"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
           >
-            Платформа для оценки аниме.<br />
-            Tier List, Битва, Каталог — всё в одном месте.
+            Оценивай аниме. Составляй Tier List.<br />
+            Бросай вызов в Битве.
           </motion.p>
 
           <motion.div
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.5, duration: 0.6 }}
           >
             {user ? (
-              <Link to="/catalog" className="gradient-btn text-lg !px-10 !py-4">
-                Начать оценку
+              <Link to="/catalog" className="gradient-btn text-base !px-10 !py-4">
+                Перейти в каталог
               </Link>
             ) : (
               <>
-                <Link to="/register" className="gradient-btn text-lg !px-10 !py-4">
+                <Link to="/register" className="gradient-btn text-base !px-10 !py-4">
                   Начать бесплатно
                 </Link>
-                <Link to="/catalog" className="gradient-btn-outline text-lg !px-10 !py-4">
+                <Link to="/catalog" className="gradient-btn-outline text-base !px-10 !py-4">
                   Смотреть каталог
                 </Link>
               </>
             )}
           </motion.div>
         </motion.div>
+
+        <motion.div
+          className="absolute bottom-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+        >
+          <div className="w-5 h-8 border-2 border-white/20 rounded-full flex justify-center pt-1.5">
+            <motion.div
+              className="w-1 h-2 bg-white/40 rounded-full"
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
+          </div>
+        </motion.div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="grid grid-cols-2 gap-4 sm:gap-8 mb-16 max-w-2xl mx-auto">
+      <div className="max-w-6xl mx-auto px-4 relative z-10">
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-20 max-w-xl mx-auto">
           <motion.div
-            className="glass-card p-6 text-center glow-purple"
+            className="glass-card p-6 text-center"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <div className="text-3xl sm:text-4xl font-black text-purple-400 mb-2">
+            <div className="text-3xl sm:text-4xl font-black text-gradient-static mb-2">
               <AnimatedCounter target={animeCount} />
             </div>
-            <div className="text-sm text-gray-400">Тайтлов в каталоге</div>
+            <div className="text-xs text-gray-500 uppercase tracking-wider">Тайтлов</div>
           </motion.div>
           <motion.div
-            className="glass-card p-6 text-center glow-purple"
+            className="glass-card p-6 text-center"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
           >
-            <div className="text-3xl sm:text-4xl font-black text-cyan-400 mb-2">
+            <div className="text-3xl sm:text-4xl font-black text-gradient-static mb-2">
               <AnimatedCounter target={userCount} />
             </div>
-            <div className="text-sm text-gray-400">Пользователей</div>
+            <div className="text-xs text-gray-500 uppercase tracking-wider">Пользователей</div>
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-20">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mb-24">
           {[
-            { icon: '⭐', title: 'Оценка', desc: 'Детальная оценка по 6 критериям — рисунок, идея, реализация, персонажи, сюжет, эмоции', color: 'from-purple-500/20 to-transparent' },
-            { icon: '⚔️', title: 'Битва', desc: 'Угадывай какое аниме рейтинг выше. Соревнуйся с другими и бей рекорды', color: 'from-cyan-500/20 to-transparent' },
-            { icon: '📊', title: 'Tier List', desc: 'Составляй персональный рейтинг аниме в формате таблицы', color: 'from-green-500/20 to-transparent' },
+            { icon: '⭐', title: 'Оценка', desc: '6 критериев для детальной оценки каждого аниме', gradient: 'from-purple-500/10' },
+            { icon: '⚔️', title: 'Битва', desc: 'Угадывай рейтинг и соревнуйся с другими', gradient: 'from-cyan-500/10' },
+            { icon: '📊', title: 'Tier List', desc: 'Сортируй аниме по своим тирам', gradient: 'from-green-500/10' },
           ].map((item, i) => (
             <motion.div
               key={item.title}
-              className="glass-card p-8 text-center group hover:border-purple-500/30 transition-all duration-300 relative overflow-hidden"
+              className="glass-card-hover p-7 text-center relative overflow-hidden"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              whileHover={{ y: -4 }}
             >
-              <div className={`absolute inset-0 bg-gradient-to-b ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+              <div className={`absolute inset-0 bg-gradient-to-b ${item.gradient} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
               <div className="relative">
-                <div className="text-4xl mb-4">{item.icon}</div>
-                <h3 className="font-bold text-lg mb-2">{item.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
+                <div className="text-3xl mb-4 inline-block">{item.icon}</div>
+                <h3 className="font-bold mb-2">{item.title}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
               </div>
             </motion.div>
           ))}
@@ -231,46 +271,45 @@ export default function Landing() {
 
         {leaderboard.length > 0 && (
           <motion.div
-            className="mb-20"
+            className="mb-24"
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6 }}
           >
-            <div className="text-center mb-10">
-              <h2 className="text-3xl sm:text-4xl font-black mb-3">
-                🏆 Топ игроков
-              </h2>
-              <p className="text-gray-400">Лучшие в Битве аниме</p>
+            <div className="text-center mb-8">
+              <h2 className="text-2xl sm:text-3xl font-black mb-2">Топ игроков</h2>
+              <p className="text-gray-500 text-sm">Лучшие в Битве аниме</p>
             </div>
 
-            <div className="glass-card overflow-hidden max-w-2xl mx-auto">
-              <div className="divide-y divide-white/5">
-                {leaderboard.map((entry, i) => (
-                  <Link
-                    key={entry.user_id}
-                    to={`/user/${entry.user_id}`}
-                    className="flex items-center gap-4 px-6 py-4 hover:bg-white/5 transition-colors duration-200 group"
-                  >
-                    <span className="text-xl w-8 text-center font-bold">
-                      {i < 3 ? medals[i] : <span className="text-gray-500">{i + 1}</span>}
+            <div className="glass-card overflow-hidden max-w-xl mx-auto divide-y divide-white/[0.04]">
+              {leaderboard.map((entry, i) => (
+                <Link
+                  key={entry.user_id}
+                  to={`/user/${entry.user_id}`}
+                  className="flex items-center gap-4 px-5 py-3.5 hover:bg-white/[0.03] transition-all duration-200 group"
+                >
+                  <span className="text-base w-7 text-center font-bold">
+                    {i < 3 ? medals[i] : <span className="text-gray-600 text-sm">{i + 1}</span>}
+                  </span>
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-cyan-500/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-purple-300">{entry.username[0].toUpperCase()}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium group-hover:text-purple-400 transition-colors truncate block">
+                      {entry.username}
                     </span>
-                    <div className="flex-1 min-w-0">
-                      <span className="font-semibold group-hover:text-purple-400 transition-colors truncate block">
-                        {entry.username}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-purple-400 font-bold text-lg">{entry.best_score}</span>
-                      <span className="text-gray-500 text-sm">очков</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-purple-400 font-bold">{entry.best_score}</span>
+                    <span className="text-gray-600 text-xs">очк.</span>
+                  </div>
+                </Link>
+              ))}
             </div>
 
             <div className="text-center mt-8">
-              <Link to="/battle" className="gradient-btn-outline">
+              <Link to="/battle" className="gradient-btn-outline text-sm">
                 Присоединяйся к битве
               </Link>
             </div>
