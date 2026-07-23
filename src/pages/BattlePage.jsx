@@ -31,6 +31,11 @@ function generatePair(pool) {
   return [a, b]
 }
 
+const DIFFICULTIES = {
+  normal: { label: 'Нормальная', desc: 'Популярные тайтлы', filter: (a) => Number(a.score) >= 6.5 },
+  hard: { label: 'Сложная', desc: 'Все тайтлы включая нишевые', filter: () => true },
+}
+
 export default function BattlePage() {
   const { user } = useContext(AuthContext)
   const [allAnime, setAllAnime] = useState([])
@@ -43,14 +48,21 @@ export default function BattlePage() {
   const [disabled, setDisabled] = useState(false)
   const [isNewRecord, setIsNewRecord] = useState(false)
   const [started, setStarted] = useState(false)
+  const [difficulty, setDifficulty] = useState('normal')
+  const [battlePool, setBattlePool] = useState([])
 
   useEffect(() => {
     loadAnimeData().then((data) => {
-      const battlePool = data.filter((a) => a.score > 0 && a.image?.original && !a.image.original.includes('missing_') && Number(a.aired_on?.split('-')[0]) > 1990)
-      setAllAnime(battlePool)
+      const pool = data.filter((a) => a.score > 0 && a.image?.original && !a.image.original.includes('missing_') && Number(a.aired_on?.split('-')[0]) > 1990)
+      setAllAnime(pool)
+      setBattlePool(pool.filter(DIFFICULTIES.normal.filter))
       setLoading(false)
     })
   }, [])
+
+  useEffect(() => {
+    setBattlePool(allAnime.filter(DIFFICULTIES[difficulty].filter))
+  }, [difficulty, allAnime])
 
   useEffect(() => {
     if (user) {
@@ -66,12 +78,12 @@ export default function BattlePage() {
     setIsNewRecord(false)
     setStarted(true)
     setResult(null)
-    setPair(generatePair(allAnime))
-  }, [allAnime])
+    setPair(generatePair(battlePool))
+  }, [battlePool])
 
   useEffect(() => {
-    if (allAnime.length > 0 && !started) startGame()
-  }, [allAnime, started, startGame])
+    if (battlePool.length > 0 && !started) startGame()
+  }, [battlePool, started, startGame])
 
   const handleChoice = async (chosenAnime) => {
     if (disabled || !pair) return
@@ -97,7 +109,7 @@ export default function BattlePage() {
       setResult({ winner: chosenAnime.id, loser: other.id })
 
       setTimeout(() => {
-        const newPair = generatePair(allAnime)
+        const newPair = generatePair(battlePool)
         setPair(newPair)
         setResult(null)
         setDisabled(false)
@@ -118,13 +130,11 @@ export default function BattlePage() {
     await supabase.from('battle_games').insert({
       user_id: user.id,
       score: finalScore,
-      mode: 'rating',
+      mode: difficulty,
     })
   }
 
   if (loading) return <div className="min-h-screen pt-24 flex items-center justify-center"><Loader text="Загрузка..." /></div>
-
-  if (!pair) return <div className="min-h-screen pt-24 flex items-center justify-center"><p className="text-gray-400">Недостаточно аниме</p></div>
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4">
@@ -134,70 +144,122 @@ export default function BattlePage() {
           <p className="text-gray-400">Какое аниме имеет более высокий рейтинг?</p>
         </div>
 
-        <div className="text-center mb-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={score}
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.5, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-              className="inline-block"
-            >
-              <span className="text-5xl font-black text-purple-400">{score}</span>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 md:gap-8 mb-8">
-          <BattleCard
-            anime={pair[0]}
-            side="left"
-            result={
-              result?.winner === pair[0].id ? 'winner' :
-              result?.loser === pair[0].id ? 'loser' :
-              result?.wrong === pair[0].id ? 'wrong' :
-              result?.correct === pair[0].id && result?.wrong ? 'winner' : null
-            }
-            onClick={() => handleChoice(pair[0])}
-            disabled={disabled}
-          />
-
-          <BattleCard
-            anime={pair[1]}
-            side="right"
-            result={
-              result?.winner === pair[1].id ? 'winner' :
-              result?.loser === pair[1].id ? 'loser' :
-              result?.wrong === pair[1].id ? 'wrong' :
-              result?.correct === pair[1].id && result?.wrong ? 'winner' : null
-            }
-            onClick={() => handleChoice(pair[1])}
-            disabled={disabled}
-          />
-        </div>
-
-        <AnimatePresence>
-          {result && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="text-center mb-6"
-            >
-              <div className="glass-card inline-block px-6 py-3">
-                <span className="text-gray-400">Рейтинги: </span>
-                {pair.map((a) => (
-                  <span key={a.id} className={`font-bold mx-2 ${
-                    result.winner === a.id || result.correct === a.id ? 'text-green-400' : 'text-red-400'
-                  }`}>
-                    {a.russian || a.name} — ★ {Number(a.score).toFixed(1)}
-                  </span>
+        {!started && (
+          <motion.div
+            className="max-w-md mx-auto mb-12 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="glass-card p-6">
+              <p className="text-gray-400 mb-4 text-sm">Выбери сложность</p>
+              <div className="flex gap-3">
+                {Object.entries(DIFFICULTIES).map(([key, { label, desc }]) => (
+                  <button
+                    key={key}
+                    onClick={() => setDifficulty(key)}
+                    className={`flex-1 p-4 rounded-xl border transition-all duration-200 text-left ${
+                      difficulty === key
+                        ? 'border-purple-500 bg-purple-500/10'
+                        : 'border-white/10 hover:border-white/20 bg-white/[0.02]'
+                    }`}
+                  >
+                    <div className="font-semibold text-sm mb-1">{label}</div>
+                    <div className="text-xs text-gray-500">{desc}</div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      {allAnime.filter(DIFFICULTIES[key].filter).length} тайтлов
+                    </div>
+                  </button>
                 ))}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <button onClick={startGame} className="gradient-btn mt-6 w-full !py-3">
+                Начать битву
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {started && (
+          <>
+            <div className="flex items-center justify-between mb-6">
+              <span className="text-sm text-gray-500">
+                {DIFFICULTIES[difficulty].label}
+              </span>
+              <button
+                onClick={() => { setStarted(false); setPair(null) }}
+                className="text-sm text-gray-500 hover:text-purple-400 transition-colors"
+              >
+                Сменить сложность
+              </button>
+            </div>
+
+            <div className="text-center mb-8">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={score}
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                  className="inline-block"
+                >
+                  <span className="text-5xl font-black text-purple-400">{score}</span>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {pair && (
+              <div className="grid grid-cols-2 gap-4 md:gap-8 mb-8">
+                <BattleCard
+                  anime={pair[0]}
+                  side="left"
+                  result={
+                    result?.winner === pair[0].id ? 'winner' :
+                    result?.loser === pair[0].id ? 'loser' :
+                    result?.wrong === pair[0].id ? 'wrong' :
+                    result?.correct === pair[0].id && result?.wrong ? 'winner' : null
+                  }
+                  onClick={() => handleChoice(pair[0])}
+                  disabled={disabled}
+                />
+
+                <BattleCard
+                  anime={pair[1]}
+                  side="right"
+                  result={
+                    result?.winner === pair[1].id ? 'winner' :
+                    result?.loser === pair[1].id ? 'loser' :
+                    result?.wrong === pair[1].id ? 'wrong' :
+                    result?.correct === pair[1].id && result?.wrong ? 'winner' : null
+                  }
+                  onClick={() => handleChoice(pair[1])}
+                  disabled={disabled}
+                />
+              </div>
+            )}
+
+            <AnimatePresence>
+              {result && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center mb-6"
+                >
+                  <div className="glass-card inline-block px-6 py-3">
+                    <span className="text-gray-400">Рейтинги: </span>
+                    {pair.map((a) => (
+                      <span key={a.id} className={`font-bold mx-2 ${
+                        result.winner === a.id || result.correct === a.id ? 'text-green-400' : 'text-red-400'
+                      }`}>
+                        {a.russian || a.name} — ★ {Number(a.score).toFixed(1)}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </>
+        )}
       </div>
 
       {gameOver && (
