@@ -9,6 +9,12 @@ export default defineConfig({
         target: 'http://localhost:8888',
         changeOrigin: true,
       },
+      '/tiermaker-api': {
+        target: 'https://tiermaker.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/tiermaker-api/, ''),
+        secure: false,
+      },
     },
   },
 })

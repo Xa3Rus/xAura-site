@@ -81,6 +81,7 @@ export default function Navbar() {
     { to: '/tiermaker', label: 'Tier List', desc: 'Сортируй по тирам' },
     { to: '/battle', label: 'Битва', desc: 'Угадывай рейтинг' },
     { to: '/anime-oped', label: 'Угадай OP/ED', desc: 'По музыке' },
+    { to: '/monopoly', label: 'Monopoly', desc: 'Классическая игра' },
   ]
 
   return (

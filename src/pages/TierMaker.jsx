@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import Loader from '../components/Loader'
 import { loadAnimeData } from '../utils/animeData'
+import { loadFoodData } from '../utils/foodData'
 
 const PRESET_COLORS = [
   '#f87171', '#fb923c', '#facc15', '#4ade80', '#60a5fa', '#a78bfa',
@@ -143,6 +144,7 @@ function ColorPicker({ color, onChange }) {
 export default function TierMaker() {
   const { user } = useContext(AuthContext)
   const [allAnime, setAllAnime] = useState([])
+  const [allFood, setAllFood] = useState([])
   const [loading, setLoading] = useState(true)
   const [tiers, setTiers] = useState(DEFAULT_TIERS.map((t) => ({ ...t, items: [] })))
   const [pool, setPool] = useState([])
@@ -162,26 +164,39 @@ export default function TierMaker() {
   const [addResults, setAddResults] = useState([])
   const [poolItemMenu, setPoolItemMenu] = useState(null)
   const [poolItemMenuPos, setPoolItemMenuPos] = useState({ x: 0, y: 0 })
+  const [tierListType, setTierListType] = useState('anime')
   const editingRef = useRef(null)
   const poolRef = useRef(null)
   const addSearchRef = useRef(null)
   const poolItemMenuRef = useRef(null)
 
   useEffect(() => {
-    loadAnimeData().then(async (data) => {
-      setAllAnime(data)
-      const top500 = data
-        .filter((a) => a.score > 0 && a.image?.original && !a.image.original.includes('missing_'))
-        .sort((a, b) => Number(b.score) - Number(a.score))
-        .slice(0, 500)
-      setPool(top500)
-      if (user) {
-        const { data: lists } = await supabase.from('tier_lists').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
-        setSavedLists(lists || [])
-      }
-      setLoading(false)
-    })
-  }, [user])
+    if (tierListType === 'anime') {
+      loadAnimeData().then(async (data) => {
+        setAllAnime(data)
+        const top500 = data
+          .filter((a) => a.score > 0 && a.image?.original && !a.image.original.includes('missing_'))
+          .sort((a, b) => Number(b.score) - Number(a.score))
+          .slice(0, 500)
+        setPool(top500)
+        if (user) {
+          const { data: lists } = await supabase.from('tier_lists').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+          setSavedLists(lists || [])
+        }
+        setLoading(false)
+      })
+    } else {
+      loadFoodData().then(async (data) => {
+        setAllFood(data)
+        setPool(data.slice(0, 100))
+        if (user) {
+          const { data: lists } = await supabase.from('tier_lists').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+          setSavedLists(lists || [])
+        }
+        setLoading(false)
+      })
+    }
+  }, [user, tierListType])
 
   useEffect(() => {
     if (!editingTier) return
@@ -226,17 +241,27 @@ export default function TierMaker() {
   }
 
   useEffect(() => {
-    if (addSearch.length < 2 || !allAnime.length) { setAddResults([]); return }
+    if (addSearch.length < 2) { setAddResults([]); return }
+    
     const poolIds = new Set(pool.map((a) => a.id))
     const tierIds = new Set(tiers.flatMap((t) => t.items.map((a) => a.id)))
     const q = addSearch.toLowerCase()
-    const results = allAnime.filter((a) => {
-      if (poolIds.has(a.id) || tierIds.has(a.id)) return false
-      if (!a.image?.original || a.image.original.includes('missing_')) return false
-      return (a.name || '').toLowerCase().includes(q) || (a.russian || '').toLowerCase().includes(q)
-    }).slice(0, 12)
-    setAddResults(results)
-  }, [addSearch, allAnime, pool, tiers])
+    
+    if (tierListType === 'anime') {
+      const results = allAnime.filter((a) => {
+        if (poolIds.has(a.id) || tierIds.has(a.id)) return false
+        if (!a.image?.original || a.image.original.includes('missing_')) return false
+        return (a.name || '').toLowerCase().includes(q) || (a.russian || '').toLowerCase().includes(q)
+      }).slice(0, 12)
+      setAddResults(results)
+    } else {
+      const results = allFood.filter((a) => {
+        if (poolIds.has(a.id) || tierIds.has(a.id)) return false
+        return (a.name || '').toLowerCase().includes(q)
+      }).slice(0, 12)
+      setAddResults(results)
+    }
+  }, [addSearch, allAnime, allFood, pool, tiers, tierListType])
 
   const addAnimeToPool = (anime) => {
     setPool((p) => [...p, anime])
@@ -251,7 +276,10 @@ export default function TierMaker() {
   const filteredPool = pool.filter((a) => {
     if (!search) return true
     const q = search.toLowerCase()
-    return (a.name || '').toLowerCase().includes(q) || (a.russian || '').toLowerCase().includes(q)
+    if (tierListType === 'anime') {
+      return (a.name || '').toLowerCase().includes(q) || (a.russian || '').toLowerCase().includes(q)
+    }
+    return (a.name || '').toLowerCase().includes(q)
   })
 
   const handleDragStart = (item, source) => {
@@ -329,7 +357,7 @@ export default function TierMaker() {
 
   const removeTier = (tierId) => {
     const tier = tiers.find((t) => t.id === tierId)
-    if (tier?.items.length > 0 && !confirm('Удалить тир с аниме?')) return
+    if (tier?.items.length > 0 && !confirm(tierListType === 'anime' ? 'Удалить тир с аниме?' : 'Удалить тир с едой?')) return
     setTiers((prev) => {
       const t = prev.find((x) => x.id === tierId)
       if (t?.items.length > 0) setPool((p) => [...p, ...t.items])
@@ -404,12 +432,36 @@ export default function TierMaker() {
     <div className="min-h-screen pt-24 pb-12 px-5 sm:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6 page-enter">
-          <input
-            value={tierListName}
-            onChange={(e) => setTierListName(e.target.value)}
-            className="text-xl font-bold bg-transparent outline-none pb-1 transition-colors"
-            style={{ fontFamily: 'Space Grotesk', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-          />
+          <div className="flex items-center gap-4">
+            <input
+              value={tierListName}
+              onChange={(e) => setTierListName(e.target.value)}
+              className="text-xl font-bold bg-transparent outline-none pb-1 transition-colors"
+              style={{ fontFamily: 'Space Grotesk', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setTierListType('anime'); setPool([]); setTiers(DEFAULT_TIERS.map((t) => ({ ...t, items: [] }))); setTierListName('Мой Tier List') }}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                  tierListType === 'anime' 
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
+                    : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'
+                }`}
+              >
+                Аниме
+              </button>
+              <button
+                onClick={() => { setTierListType('food'); setPool([]); setTiers(DEFAULT_TIERS.map((t) => ({ ...t, items: [] }))); setTierListName('Мой Food Tier List') }}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                  tierListType === 'food' 
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                    : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'
+                }`}
+              >
+                Еда
+              </button>
+            </div>
+          </div>
           <button onClick={() => setShowSaveDialog(true)} className="btn-primary text-xs !py-2">Сохранить</button>
         </div>
 
@@ -488,7 +540,9 @@ export default function TierMaker() {
                 onDrop={(e) => { e.preventDefault(); handleDropOnTier(tier.id) }}
               >
                 {tier.items.length === 0 && (
-                  <span className="text-[10px] mx-auto" style={{ color: 'rgba(255,255,255,0.08)' }}>Перетащи сюда</span>
+                  <span className="text-[10px] mx-auto" style={{ color: 'rgba(255,255,255,0.08)' }}>
+                    {tierListType === 'anime' ? 'Перетащи аниме сюда' : 'Перетащи еду сюда'}
+                  </span>
                 )}
                 {tier.items.map((item, itemIdx) => (
                   <div
@@ -505,15 +559,25 @@ export default function TierMaker() {
                       onDragStart={() => handleDragStart(item, `tier-${tier.id}`)}
                       className="cursor-grab active:cursor-grabbing group/item relative"
                     >
-                      <img
-                        src={item.image?.original && !item.image.original.includes('missing_') ? `https://shikimori.one${item.image.original}` : ''}
-                        alt=""
-                        className="w-14 h-[72px] rounded-lg object-cover group-hover/item:ring-1 ring-amber-500/50 transition-all"
-                        onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
-                      />
-                      <div className={`w-14 h-[72px] rounded-lg bg-surface-3 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
-                        <span className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.1)' }}>{(item.russian || item.name || '?')[0]}</span>
-                      </div>
+                      {tierListType === 'anime' ? (
+                        <>
+                          <img
+                            src={item.image?.original && !item.image.original.includes('missing_') ? `https://shikimori.one${item.image.original}` : ''}
+                            alt=""
+                            className="w-14 h-[72px] rounded-lg object-cover group-hover/item:ring-1 ring-amber-500/50 transition-all"
+                            onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
+                          />
+                          <div className={`w-14 h-[72px] rounded-lg bg-surface-3 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
+                            <span className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.1)' }}>{(item.russian || item.name || '?')[0]}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <img
+                          src={item.image}
+                          alt=""
+                          className="w-14 h-[72px] rounded-lg object-cover group-hover/item:ring-1 ring-green-500/50 transition-all"
+                        />
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
@@ -542,7 +606,9 @@ export default function TierMaker() {
 
         <div className="rounded-xl p-4 page-enter" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
           <div className="flex items-center gap-3 mb-3">
-            <h3 className="font-bold text-sm" style={{ fontFamily: 'Space Grotesk' }}>Пул аниме</h3>
+            <h3 className="font-bold text-sm" style={{ fontFamily: 'Space Grotesk' }}>
+              {tierListType === 'anime' ? 'Пул аниме' : 'Пул еды'}
+            </h3>
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Фильтр..." className="input !py-1.5 text-xs flex-1 max-w-xs" />
             <span className="text-xs" style={{ color: 'rgba(255,255,255,0.12)', fontFamily: 'JetBrains Mono' }}>{filteredPool.length}</span>
           </div>
@@ -553,7 +619,7 @@ export default function TierMaker() {
                 value={addSearch}
                 onChange={(e) => { setAddSearch(e.target.value); setShowAddSearch(true) }}
                 onFocus={() => setShowAddSearch(true)}
-                placeholder="Добавить аниме из каталога..."
+                placeholder={tierListType === 'anime' ? 'Добавить аниме из каталога...' : 'Добавить еду из каталога...'}
                 className="input !py-1.5 text-xs flex-1"
               />
               <button onClick={() => setShowAddSearch(!showAddSearch)} className="text-amber-400 hover:text-amber-300 text-xs transition-colors whitespace-nowrap">
@@ -568,17 +634,29 @@ export default function TierMaker() {
                     onClick={() => { addAnimeToPool(a); setShowAddSearch(false) }}
                     className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/[0.04] transition-colors text-left border-b border-white/[0.03] last:border-b-0"
                   >
-                    {a.image?.original && !a.image.original.includes('missing_') ? (
-                      <img src={`https://shikimori.one${a.image.original}`} alt="" className="w-8 h-11 rounded-md object-cover flex-shrink-0" />
+                    {tierListType === 'anime' ? (
+                      <>
+                        {a.image?.original && !a.image.original.includes('missing_') ? (
+                          <img src={`https://shikimori.one${a.image.original}`} alt="" className="w-8 h-11 rounded-md object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-8 h-11 rounded-md bg-surface-3 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold" style={{ color: 'rgba(255,255,255,0.1)' }}>{(a.russian || a.name || '?')[0]}</span>
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-medium truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{a.russian || a.name}</div>
+                          <div className="text-[10px]" style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'JetBrains Mono' }}>{a.aired_on?.split('-')[0] || '—'} · ★ {Number(a.score).toFixed(2)}</div>
+                        </div>
+                      </>
                     ) : (
-                      <div className="w-8 h-11 rounded-md bg-surface-3 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-bold" style={{ color: 'rgba(255,255,255,0.1)' }}>{(a.russian || a.name || '?')[0]}</span>
-                      </div>
+                      <>
+                        <img src={a.image} alt="" className="w-8 h-11 rounded-md object-cover flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-medium truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{a.name}</div>
+                          <div className="text-[10px]" style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'JetBrains Mono' }}>Еда</div>
+                        </div>
+                      </>
                     )}
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-medium truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{a.russian || a.name}</div>
-                      <div className="text-[10px]" style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'JetBrains Mono' }}>{a.aired_on?.split('-')[0] || '—'} · ★ {Number(a.score).toFixed(2)}</div>
-                    </div>
                     <span className="text-amber-400 text-xs">+</span>
                   </button>
                 ))}
@@ -599,7 +677,9 @@ export default function TierMaker() {
             onDrop={handleDropOnPoolRef}
           >
             {filteredPool.length === 0 && (
-              <span className="text-xs mx-auto self-center" style={{ color: 'rgba(255,255,255,0.08)' }}>Нет аниме в пуле</span>
+              <span className="text-xs mx-auto self-center" style={{ color: 'rgba(255,255,255,0.08)' }}>
+                {tierListType === 'anime' ? 'Нет аниме в пуле' : 'Нет еды в пуле'}
+              </span>
             )}
             {filteredPool.map((item) => (
               <div
@@ -608,15 +688,25 @@ export default function TierMaker() {
                 onDragStart={() => handleDragStart(item, 'pool')}
                 className="flex-shrink-0 cursor-grab active:cursor-grabbing group/pool relative"
               >
-                <img
-                  src={item.image?.original && !item.image.original.includes('missing_') ? `https://shikimori.one${item.image.original}` : ''}
-                  alt=""
-                  className="w-14 h-[72px] rounded-lg object-cover hover:ring-1 ring-amber-500/50 transition-all"
-                  onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
-                />
-                <div className={`w-14 h-[72px] rounded-lg bg-surface-3 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
-                  <span className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.1)' }}>{(item.russian || item.name || '?')[0]}</span>
-                </div>
+                {tierListType === 'anime' ? (
+                  <>
+                    <img
+                      src={item.image?.original && !item.image.original.includes('missing_') ? `https://shikimori.one${item.image.original}` : ''}
+                      alt=""
+                      className="w-14 h-[72px] rounded-lg object-cover hover:ring-1 ring-amber-500/50 transition-all"
+                      onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
+                    />
+                    <div className={`w-14 h-[72px] rounded-lg bg-surface-3 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
+                      <span className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.1)' }}>{(item.russian || item.name || '?')[0]}</span>
+                    </div>
+                  </>
+                ) : (
+                  <img
+                    src={item.image}
+                    alt=""
+                    className="w-14 h-[72px] rounded-lg object-cover hover:ring-1 ring-green-500/50 transition-all"
+                  />
+                )}
                 <div className="absolute bottom-0 left-0 right-0 text-center text-[8px] py-0.5 rounded-b-lg truncate px-0.5" style={{ background: 'rgba(0,0,0,0.7)' }}>
                   {item.russian || item.name}
                 </div>
@@ -651,7 +741,7 @@ export default function TierMaker() {
                 }}
               >
                 <p className="text-[10px] mb-2" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                  Отправить <span className="text-white/50">{item.russian || item.name}</span> в тир:
+                  Отправить <span className="text-white/50">{tierListType === 'anime' ? (item.russian || item.name) : item.name}</span> в тир:
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {tiers.map((tier) => (

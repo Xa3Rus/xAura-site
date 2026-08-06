@@ -13,8 +13,29 @@ import PublicProfile from './pages/PublicProfile'
 import TierListDetail from './pages/TierListDetail'
 import BattlePage from './pages/BattlePage'
 import AnimeOPED from './pages/AnimeOPED'
+import DominionLobby from './pages/DominionLobby'
+import DominionGame from './pages/DominionGame'
+import MonopolyLobby from './pages/MonopolyLobby'
+import MonopolyGame from './pages/MonopolyGame'
+
+const FULLSCREEN_ROUTES = ['/monopoly/game']
 
 export default function App() {
+  const location = useLocation()
+  const isFullscreen = FULLSCREEN_ROUTES.includes(location.pathname)
+
+  if (isFullscreen) {
+    return (
+      <Routes>
+        <Route path="/monopoly/game" element={
+          <ProtectedRoute>
+            <MonopolyGame />
+          </ProtectedRoute>
+        } />
+      </Routes>
+    )
+  }
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a0a0c', color: '#e4e4e8' }}>
       <Navbar />
@@ -58,6 +79,21 @@ export default function App() {
         <Route path="/anime-oped" element={
           <ProtectedRoute>
             <AnimeOPED />
+          </ProtectedRoute>
+        } />
+        <Route path="/dominion" element={
+          <ProtectedRoute>
+            <DominionLobby />
+          </ProtectedRoute>
+        } />
+        <Route path="/dominion/game" element={
+          <ProtectedRoute>
+            <DominionGame />
+          </ProtectedRoute>
+        } />
+        <Route path="/monopoly" element={
+          <ProtectedRoute>
+            <MonopolyLobby />
           </ProtectedRoute>
         } />
       </Routes>
