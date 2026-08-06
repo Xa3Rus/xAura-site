@@ -707,9 +707,11 @@ export default function TierMaker() {
                     className="w-14 h-[72px] rounded-lg object-cover hover:ring-1 ring-green-500/50 transition-all"
                   />
                 )}
-                <div className="absolute bottom-0 left-0 right-0 text-center text-[8px] py-0.5 rounded-b-lg truncate px-0.5" style={{ background: 'rgba(0,0,0,0.7)' }}>
-                  {item.russian || item.name}
-                </div>
+                {tierListType === 'anime' && (
+                  <div className="absolute bottom-0 left-0 right-0 text-center text-[8px] py-0.5 rounded-b-lg truncate px-0.5" style={{ background: 'rgba(0,0,0,0.7)' }}>
+                    {item.russian || item.name}
+                  </div>
+                )}
                 <button
                   onClick={(e) => { e.stopPropagation(); removeAnimeFromPool(item.id) }}
                   className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-[8px] flex items-center justify-center opacity-0 group-hover/pool:opacity-100 transition-opacity"
