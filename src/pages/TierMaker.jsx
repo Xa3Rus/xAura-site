@@ -188,7 +188,7 @@ export default function TierMaker() {
     } else {
       loadFoodData().then(async (data) => {
         setAllFood(data)
-        setPool(data.slice(0, 100))
+        setPool(data)
         if (user) {
           const { data: lists } = await supabase.from('tier_lists').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
           setSavedLists(lists || [])
