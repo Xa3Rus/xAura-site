@@ -2,9 +2,19 @@
   command = "npm run build"
   publish = "dist"
   functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
 
 [build.environment]
   NODE_VERSION = "18"
+
+[[edge_functions]]
+  path = "/tiermaker-api/*"
+  function = "tiermaker-proxy"
+
+[[redirects]]
+  from = "/tiermaker-api/*"
+  to = "/.netlify/edge-functions/tiermaker-proxy"
+  status = 200
 
 [[redirects]]
   from = "/*"
