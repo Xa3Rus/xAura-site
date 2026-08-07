@@ -11,7 +11,6 @@ const BUILT_IN_TEMPLATES = [
     description: 'Топ-500 аниме по оценке Shikimori',
     imageCount: 500,
     category: 'Аниме',
-    builtIn: true,
     preview: 'https://shikimori.one/system/anime/original/000/001/763/1716206665/64739.jpg',
   },
   {
@@ -21,7 +20,6 @@ const BUILT_IN_TEMPLATES = [
     description: '160 блюд русской и кавказской кухни с TierMaker',
     imageCount: 160,
     category: 'Еда',
-    builtIn: true,
     preview: 'https://tiermaker.com/images/media/template_images/2024/16841250/-16841250/1.png',
   },
 ]
@@ -30,7 +28,6 @@ export default function TierListTemplates() {
   const [templates, setTemplates] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [activeCategory, setActiveCategory] = useState('all')
 
   useEffect(() => {
     loadTemplates()
@@ -55,10 +52,7 @@ export default function TierListTemplates() {
     setLoading(false)
   }
 
-  const categories = ['all', ...new Set(templates.map((t) => t.category))]
-
   const filtered = templates.filter((t) => {
-    if (activeCategory !== 'all' && t.category !== activeCategory) return false
     if (search) {
       const q = search.toLowerCase()
       return t.title.toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q)
@@ -80,32 +74,17 @@ export default function TierListTemplates() {
             to="/tiermaker"
             className="btn-primary text-xs !py-2"
           >
-            Создать свой
+            Импорт из TierMaker
           </Link>
         </div>
 
-        <div className="flex items-center gap-3 mb-6 page-enter">
+        <div className="mb-6 page-enter">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Поиск шаблонов..."
-            className="input flex-1 max-w-xs"
+            className="input max-w-xs"
           />
-          <div className="flex gap-1.5">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
-                  activeCategory === cat
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                    : 'bg-white/5 text-white/30 border border-white/5 hover:bg-white/10 hover:text-white/50'
-                }`}
-              >
-                {cat === 'all' ? 'Все' : cat}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -134,13 +113,6 @@ export default function TierListTemplates() {
                 <div className="absolute bottom-3 left-3 right-3">
                   <h3 className="text-sm font-bold text-white truncate">{template.title}</h3>
                 </div>
-                {template.builtIn && (
-                  <div className="absolute top-2 right-2">
-                    <span className="px-2 py-0.5 rounded-md text-[9px] font-medium bg-amber-500/20 text-amber-400 border border-amber-500/20">
-                      Встроенный
-                    </span>
-                  </div>
-                )}
               </div>
               <div className="p-3">
                 <p className="text-[11px] mb-3 line-clamp-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
@@ -163,10 +135,10 @@ export default function TierListTemplates() {
                     <Link
                       to="/tiermaker"
                       className="px-3 py-1 rounded-lg text-[11px] font-medium transition-all"
-                      style={{ background: 'rgba(139,92,246,0.1)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.15)' }}
+                      style={{ background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.15)' }}
                       state={{ importSlug: template.slug }}
                     >
-                      Использовать
+                      Открыть
                     </Link>
                   )}
                 </div>

@@ -99,7 +99,6 @@ export default function Landing() {
           {[
             { title: 'Оценка', desc: '6 критериев для детальной оценки', to: '/rate', img: '/img000/Octsenka.png' },
             { title: 'Битва', desc: 'Угадывай рейтинг', to: '/battle', img: '/img000/Battle.png' },
-            { title: 'Tier List', desc: 'Сортируй по тирам', to: '/tiermaker', img: '/img000/tierlist.png' },
             { title: 'Шаблоны', desc: 'Готовые tier list шаблоны', to: '/tier-templates', img: '/img000/tierlist.png' },
             { title: 'Каталог', desc: '15 000+ тайтлов', to: '/catalog', img: '/img000/catalog.png' },
             { title: 'Угадай OP/ED', desc: '3200+ треков по музыке', to: '/anime-oped', img: '/img000/OPEDGuess.png' },
