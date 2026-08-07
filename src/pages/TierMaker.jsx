@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import Loader from '../components/Loader'
 import { loadAnimeData } from '../utils/animeData'
-import { loadFoodData } from '../utils/foodData'
+import { loadFoodData, parseTierMakerUrl, loadTierMakerTemplate } from '../utils/foodData'
 
 const PRESET_COLORS = [
   '#f87171', '#fb923c', '#facc15', '#4ade80', '#60a5fa', '#a78bfa',
@@ -165,6 +165,9 @@ export default function TierMaker() {
   const [poolItemMenu, setPoolItemMenu] = useState(null)
   const [poolItemMenuPos, setPoolItemMenuPos] = useState({ x: 0, y: 0 })
   const [tierListType, setTierListType] = useState('anime')
+  const [importUrl, setImportUrl] = useState('')
+  const [importLoading, setImportLoading] = useState(false)
+  const [importError, setImportError] = useState('')
   const editingRef = useRef(null)
   const poolRef = useRef(null)
   const addSearchRef = useRef(null)
@@ -185,7 +188,7 @@ export default function TierMaker() {
         }
         setLoading(false)
       })
-    } else {
+    } else if (tierListType === 'food') {
       loadFoodData().then(async (data) => {
         setAllFood(data)
         setPool(data)
@@ -195,6 +198,8 @@ export default function TierMaker() {
         }
         setLoading(false)
       })
+    } else {
+      setLoading(false)
     }
   }, [user, tierListType])
 
@@ -357,7 +362,7 @@ export default function TierMaker() {
 
   const removeTier = (tierId) => {
     const tier = tiers.find((t) => t.id === tierId)
-    if (tier?.items.length > 0 && !confirm(tierListType === 'anime' ? 'Удалить тир с аниме?' : 'Удалить тир с едой?')) return
+    if (tier?.items.length > 0 && !confirm('Удалить тир?')) return
     setTiers((prev) => {
       const t = prev.find((x) => x.id === tierId)
       if (t?.items.length > 0) setPool((p) => [...p, ...t.items])
@@ -426,6 +431,36 @@ export default function TierMaker() {
     setSavedLists((prev) => prev.filter((l) => l.id !== listId))
   }
 
+  const handleImportTierMaker = async () => {
+    const templateId = parseTierMakerUrl(importUrl)
+    if (!templateId) {
+      setImportError('Неверная ссылка. Используйте ссылку вида tiermaker.com/create/XXXX')
+      return
+    }
+    
+    setImportLoading(true)
+    setImportError('')
+    
+    try {
+      const items = await loadTierMakerTemplate(templateId)
+      if (items.length === 0) {
+        setImportError('Шаблон не найден или пуст')
+        setImportLoading(false)
+        return
+      }
+      
+      setPool(items)
+      setTiers(DEFAULT_TIERS.map((t) => ({ ...t, items: [] })))
+      setTierListType('custom')
+      setTierListName(`TierMaker #${templateId}`)
+      setImportUrl('')
+    } catch (err) {
+      setImportError('Ошибка загрузки шаблона')
+    }
+    
+    setImportLoading(false)
+  }
+
   if (loading) return <div className="min-h-screen pt-24 flex items-center justify-center"><Loader text="Загрузка..." /></div>
 
   return (
@@ -463,6 +498,27 @@ export default function TierMaker() {
             </div>
           </div>
           <button onClick={() => setShowSaveDialog(true)} className="btn-primary text-xs !py-2">Сохранить</button>
+        </div>
+
+        <div className="rounded-xl p-3 mb-6 page-enter flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <span className="text-xs shrink-0" style={{ color: 'rgba(255,255,255,0.3)' }}>Импорт с TierMaker:</span>
+          <input
+            value={importUrl}
+            onChange={(e) => { setImportUrl(e.target.value); setImportError('') }}
+            onKeyDown={(e) => e.key === 'Enter' && handleImportTierMaker()}
+            placeholder="Вставьте ссылку на шаблон tiermaker.com/create/..."
+            className="input !py-1.5 text-xs flex-1"
+            disabled={importLoading}
+          />
+          <button
+            onClick={handleImportTierMaker}
+            disabled={importLoading || !importUrl.trim()}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 disabled:opacity-30"
+            style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.2)' }}
+          >
+            {importLoading ? 'Загрузка...' : 'Импортировать'}
+          </button>
+          {importError && <span className="text-[10px] text-red-400 shrink-0">{importError}</span>}
         </div>
 
         {showSaveDialog && (
@@ -541,7 +597,7 @@ export default function TierMaker() {
               >
                 {tier.items.length === 0 && (
                   <span className="text-[10px] mx-auto" style={{ color: 'rgba(255,255,255,0.08)' }}>
-                    {tierListType === 'anime' ? 'Перетащи аниме сюда' : 'Перетащи еду сюда'}
+                    {tierListType === 'anime' ? 'Перетащи аниме сюда' : tierListType === 'food' ? 'Перетащи еду сюда' : 'Перетащи сюда'}
                   </span>
                 )}
                 {tier.items.map((item, itemIdx) => (
@@ -607,7 +663,7 @@ export default function TierMaker() {
         <div className="rounded-xl p-4 page-enter" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
           <div className="flex items-center gap-3 mb-3">
             <h3 className="font-bold text-sm" style={{ fontFamily: 'Space Grotesk' }}>
-              {tierListType === 'anime' ? 'Пул аниме' : 'Пул еды'}
+              {tierListType === 'anime' ? 'Пул аниме' : tierListType === 'food' ? 'Пул еды' : 'Пул изображений'}
             </h3>
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Фильтр..." className="input !py-1.5 text-xs flex-1 max-w-xs" />
             <span className="text-xs" style={{ color: 'rgba(255,255,255,0.12)', fontFamily: 'JetBrains Mono' }}>{filteredPool.length}</span>
@@ -619,7 +675,7 @@ export default function TierMaker() {
                 value={addSearch}
                 onChange={(e) => { setAddSearch(e.target.value); setShowAddSearch(true) }}
                 onFocus={() => setShowAddSearch(true)}
-                placeholder={tierListType === 'anime' ? 'Добавить аниме из каталога...' : 'Добавить еду из каталога...'}
+                placeholder={tierListType === 'anime' ? 'Добавить аниме из каталога...' : tierListType === 'food' ? 'Добавить еду из каталога...' : 'Поиск...'}
                 className="input !py-1.5 text-xs flex-1"
               />
               <button onClick={() => setShowAddSearch(!showAddSearch)} className="text-amber-400 hover:text-amber-300 text-xs transition-colors whitespace-nowrap">
@@ -678,7 +734,7 @@ export default function TierMaker() {
           >
             {filteredPool.length === 0 && (
               <span className="text-xs mx-auto self-center" style={{ color: 'rgba(255,255,255,0.08)' }}>
-                {tierListType === 'anime' ? 'Нет аниме в пуле' : 'Нет еды в пуле'}
+                {tierListType === 'anime' ? 'Нет аниме в пуле' : tierListType === 'food' ? 'Нет еды в пуле' : 'Нет изображений в пуле'}
               </span>
             )}
             {filteredPool.map((item) => (

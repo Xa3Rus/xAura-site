@@ -43,3 +43,50 @@ export function filterFood(data, { search = '' }) {
     (item.name || '').toLowerCase().includes(q)
   )
 }
+
+export function parseTierMakerUrl(url) {
+  const patterns = [
+    /tiermaker\.com\/create\/(-?\d+)/,
+    /tiermaker\.com\/categories\/[^/]+\/(-?\d+)/,
+    /tiermaker\.com\/tier-lists\/[^/]+\/(-?\d+)/,
+  ]
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern)
+    if (match) return match[1]
+  }
+  
+  if (/^-?\d+$/.test(url.trim())) return url.trim()
+  
+  return null
+}
+
+export async function loadTierMakerTemplate(templateId) {
+  try {
+    const res = await fetch(`/tiermaker-api/api/?type=templates-v2&id=${templateId}&lastEdited=&variation=`)
+    if (!res.ok) throw new Error('Failed to load template')
+    
+    const rawData = await res.json()
+    const basePath = rawData[0]
+    
+    const parts = basePath.split('/')
+    const year = parts[2]
+    const userId = parts[3]
+    const templateFolder = parts[4]
+    
+    return rawData.slice(1).map((filename) => {
+      const id = parseInt(filename.replace('.png', ''))
+      const imageUrl = `/tiermaker-api${basePath}/${filename}`
+      
+      return {
+        id: `tm_${templateId}_${id}`,
+        name: `${id}`,
+        image: imageUrl,
+        tier: null
+      }
+    })
+  } catch (err) {
+    console.error('Failed to load TierMaker template:', err)
+    return []
+  }
+}
