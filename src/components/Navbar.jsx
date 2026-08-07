@@ -79,7 +79,6 @@ export default function Navbar() {
   const featureLinks = [
     { to: '/rate', label: 'Оценка', desc: '6 критериев' },
     { to: '/tiermaker', label: 'Tier List', desc: 'Сортируй по тирам' },
-    { to: '/tier-templates', label: 'Шаблоны', desc: 'Готовые tier list' },
     { to: '/battle', label: 'Битва', desc: 'Угадывай рейтинг' },
     { to: '/anime-oped', label: 'Угадай OP/ED', desc: 'По музыке' },
     { to: '/monopoly', label: 'Monopoly', desc: 'Классическая игра' },

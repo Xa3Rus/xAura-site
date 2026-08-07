@@ -181,12 +181,12 @@ export default function TierMaker() {
       setTierListType(state.templateType)
       if (state.templateType === 'food') setTierListName('Мой Food Tier List')
       else setTierListName('Мой Tier List')
-      window.history.replaceState({}, '')
     }
     if (state?.importSlug) {
       setImportUrl(`https://tiermaker.com/create/${state.importSlug}`)
-      window.history.replaceState({}, '')
+      setTierListType('custom')
     }
+    if (state) window.history.replaceState({}, '')
   }, [location.state])
 
   useEffect(() => {
@@ -221,10 +221,9 @@ export default function TierMaker() {
 
   useEffect(() => {
     if (importUrl && !loading && !importLoading) {
-      const timer = setTimeout(() => handleImportTierMaker(), 100)
-      return () => clearTimeout(timer)
+      handleImportTierMaker()
     }
-  }, [importUrl])
+  }, [importUrl, loading])
 
   useEffect(() => {
     if (!editingTier) return
@@ -510,52 +509,56 @@ export default function TierMaker() {
               className="text-xl font-bold bg-transparent outline-none pb-1 transition-colors"
               style={{ fontFamily: 'Space Grotesk', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
             />
-            <div className="flex gap-2">
-              <button
-                onClick={() => { setTierListType('anime'); setPool([]); setTiers(DEFAULT_TIERS.map((t) => ({ ...t, items: [] }))); setTierListName('Мой Tier List') }}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                  tierListType === 'anime' 
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
-                    : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'
-                }`}
-              >
-                Аниме
-              </button>
-              <button
-                onClick={() => { setTierListType('food'); setPool([]); setTiers(DEFAULT_TIERS.map((t) => ({ ...t, items: [] }))); setTierListName('Мой Food Tier List') }}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                  tierListType === 'food' 
-                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                    : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'
-                }`}
-              >
-                Еда
-              </button>
-            </div>
+            {tierListType !== 'custom' && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setTierListType('anime'); setPool([]); setTiers(DEFAULT_TIERS.map((t) => ({ ...t, items: [] }))); setTierListName('Мой Tier List') }}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                    tierListType === 'anime' 
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
+                      : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  Аниме
+                </button>
+                <button
+                  onClick={() => { setTierListType('food'); setPool([]); setTiers(DEFAULT_TIERS.map((t) => ({ ...t, items: [] }))); setTierListName('Мой Food Tier List') }}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                    tierListType === 'food' 
+                      ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                      : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'
+                  }`}
+                >
+                  Еда
+                </button>
+              </div>
+            )}
           </div>
           <button onClick={() => setShowSaveDialog(true)} className="btn-primary text-xs !py-2">Сохранить</button>
         </div>
 
-        <div className="rounded-xl p-3 mb-6 page-enter flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <span className="text-xs shrink-0" style={{ color: 'rgba(255,255,255,0.3)' }}>Импорт с TierMaker:</span>
-          <input
-            value={importUrl}
-            onChange={(e) => { setImportUrl(e.target.value); setImportError('') }}
-            onKeyDown={(e) => e.key === 'Enter' && handleImportTierMaker()}
-            placeholder="Вставьте ссылку на шаблон tiermaker.com/create/..."
-            className="input !py-1.5 text-xs flex-1"
-            disabled={importLoading}
-          />
-          <button
-            onClick={handleImportTierMaker}
-            disabled={importLoading || !importUrl.trim()}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 disabled:opacity-30"
-            style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.2)' }}
-          >
-            {importLoading ? 'Загрузка...' : 'Импортировать'}
-          </button>
-          {importError && <span className="text-[10px] text-red-400 shrink-0">{importError}</span>}
-        </div>
+        {tierListType !== 'custom' && (
+          <div className="rounded-xl p-3 mb-6 page-enter flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <span className="text-xs shrink-0" style={{ color: 'rgba(255,255,255,0.3)' }}>Импорт с TierMaker:</span>
+            <input
+              value={importUrl}
+              onChange={(e) => { setImportUrl(e.target.value); setImportError('') }}
+              onKeyDown={(e) => e.key === 'Enter' && handleImportTierMaker()}
+              placeholder="Вставьте ссылку на шаблон tiermaker.com/create/..."
+              className="input !py-1.5 text-xs flex-1"
+              disabled={importLoading}
+            />
+            <button
+              onClick={handleImportTierMaker}
+              disabled={importLoading || !importUrl.trim()}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 disabled:opacity-30"
+              style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.2)' }}
+            >
+              {importLoading ? 'Загрузка...' : 'Импортировать'}
+            </button>
+            {importError && <span className="text-[10px] text-red-400 shrink-0">{importError}</span>}
+          </div>
+        )}
 
         {showSaveDialog && (
           <div className="rounded-xl p-4 mb-6 page-enter" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
