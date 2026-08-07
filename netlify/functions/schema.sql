@@ -24,6 +24,28 @@ CREATE TABLE IF NOT EXISTS ratings (
   UNIQUE(user_id, anime_id)
 );
 
+CREATE TABLE IF NOT EXISTS tier_lists (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  tiers JSONB NOT NULL DEFAULT '[]',
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tier_templates (
+  id SERIAL PRIMARY KEY,
+  slug VARCHAR(255) UNIQUE NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  image_count INTEGER DEFAULT 0,
+  category VARCHAR(100),
+  preview TEXT,
+  imported_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 CREATE INDEX idx_ratings_user_id ON ratings(user_id);
 CREATE INDEX idx_ratings_anime_id ON ratings(anime_id);
 CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_tier_lists_user_id ON tier_lists(user_id);
+CREATE INDEX idx_tier_templates_slug ON tier_templates(slug);

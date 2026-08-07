@@ -93,12 +93,13 @@ export async function loadTierMakerTemplate(slug) {
     
     const rawData = await apiRes.json()
     const apiBasePath = rawData[0]
+    const imagePath = apiBasePath.startsWith('/images') ? apiBasePath : `/images${apiBasePath}`
     
     return {
       title,
       items: rawData.slice(1).map((filename) => {
         const num = filename.replace('.png', '')
-        const imageUrl = `/tiermaker-api${apiBasePath}/${filename}`
+        const imageUrl = `/tiermaker-api${imagePath}/${filename}`
         
         return {
           id: `tm_${slug}_${num}`,

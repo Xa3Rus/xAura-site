@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import { useLocation } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import Loader from '../components/Loader'
@@ -143,6 +144,7 @@ function ColorPicker({ color, onChange }) {
 
 export default function TierMaker() {
   const { user } = useContext(AuthContext)
+  const location = useLocation()
   const [allAnime, setAllAnime] = useState([])
   const [allFood, setAllFood] = useState([])
   const [loading, setLoading] = useState(true)
@@ -174,6 +176,20 @@ export default function TierMaker() {
   const poolItemMenuRef = useRef(null)
 
   useEffect(() => {
+    const state = location.state
+    if (state?.templateType) {
+      setTierListType(state.templateType)
+      if (state.templateType === 'food') setTierListName('Мой Food Tier List')
+      else setTierListName('Мой Tier List')
+      window.history.replaceState({}, '')
+    }
+    if (state?.importSlug) {
+      setImportUrl(`https://tiermaker.com/create/${state.importSlug}`)
+      window.history.replaceState({}, '')
+    }
+  }, [location.state])
+
+  useEffect(() => {
     if (tierListType === 'anime') {
       loadAnimeData().then(async (data) => {
         setAllAnime(data)
@@ -202,6 +218,13 @@ export default function TierMaker() {
       setLoading(false)
     }
   }, [user, tierListType])
+
+  useEffect(() => {
+    if (importUrl && !loading && !importLoading) {
+      const timer = setTimeout(() => handleImportTierMaker(), 100)
+      return () => clearTimeout(timer)
+    }
+  }, [importUrl])
 
   useEffect(() => {
     if (!editingTier) return
@@ -454,6 +477,19 @@ export default function TierMaker() {
       setTierListType('custom')
       setTierListName(title)
       setImportUrl('')
+
+      if (user) {
+        const preview = items[0]?.image || ''
+        await supabase.from('tier_templates').upsert({
+          slug,
+          title,
+          description: `${items.length} изображений`,
+          image_count: items.length,
+          category: 'Импорт',
+          preview,
+          imported_by: user.id,
+        }, { onConflict: 'slug' })
+      }
     } catch (err) {
       setImportError('Ошибка загрузки шаблона')
     }
