@@ -432,9 +432,9 @@ export default function TierMaker() {
   }
 
   const handleImportTierMaker = async () => {
-    const templateId = parseTierMakerUrl(importUrl)
-    if (!templateId) {
-      setImportError('Неверная ссылка. Используйте ссылку вида tiermaker.com/create/XXXX')
+    const slug = parseTierMakerUrl(importUrl)
+    if (!slug) {
+      setImportError('Неверная ссылка. Вставьте ссылку tiermaker.com/create/...')
       return
     }
     
@@ -442,7 +442,7 @@ export default function TierMaker() {
     setImportError('')
     
     try {
-      const items = await loadTierMakerTemplate(templateId)
+      const { title, items } = await loadTierMakerTemplate(slug)
       if (items.length === 0) {
         setImportError('Шаблон не найден или пуст')
         setImportLoading(false)
@@ -452,7 +452,7 @@ export default function TierMaker() {
       setPool(items)
       setTiers(DEFAULT_TIERS.map((t) => ({ ...t, items: [] })))
       setTierListType('custom')
-      setTierListName(`TierMaker #${templateId}`)
+      setTierListName(title)
       setImportUrl('')
     } catch (err) {
       setImportError('Ошибка загрузки шаблона')

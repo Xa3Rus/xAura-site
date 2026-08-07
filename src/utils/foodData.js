@@ -45,48 +45,71 @@ export function filterFood(data, { search = '' }) {
 }
 
 export function parseTierMakerUrl(url) {
-  const patterns = [
-    /tiermaker\.com\/create\/(-?\d+)/,
-    /tiermaker\.com\/categories\/[^/]+\/(-?\d+)/,
-    /tiermaker\.com\/tier-lists\/[^/]+\/(-?\d+)/,
-  ]
-  
-  for (const pattern of patterns) {
-    const match = url.match(pattern)
-    if (match) return match[1]
+  let slug = null
+
+  const createMatch = url.match(/tiermaker\.com\/create\/([a-z0-9\-]+)/i)
+  if (createMatch) {
+    slug = createMatch[1]
   }
-  
-  if (/^-?\d+$/.test(url.trim())) return url.trim()
-  
-  return null
+
+  if (!slug) {
+    const catMatch = url.match(/tiermaker\.com\/categories\/[^/]+\/([a-z0-9\-]+)/i)
+    if (catMatch) slug = catMatch[1]
+  }
+
+  if (!slug) {
+    const tierMatch = url.match(/tiermaker\.com\/tier-lists\/[^/]+\/([a-z0-9\-]+)/i)
+    if (tierMatch) slug = tierMatch[1]
+  }
+
+  if (!slug && /^[\-a-z0-9]+$/i.test(url.trim())) {
+    slug = url.trim()
+  }
+
+  return slug
 }
 
-export async function loadTierMakerTemplate(templateId) {
+export async function loadTierMakerTemplate(slug) {
   try {
-    const res = await fetch(`/tiermaker-api/api/?type=templates-v2&id=${templateId}&lastEdited=&variation=`)
-    if (!res.ok) throw new Error('Failed to load template')
+    const pageRes = await fetch(`/tiermaker-api/create/${slug}`)
+    if (!pageRes.ok) throw new Error('Failed to load page')
     
-    const rawData = await res.json()
-    const basePath = rawData[0]
+    const html = await pageRes.text()
     
-    const parts = basePath.split('/')
-    const year = parts[2]
-    const userId = parts[3]
-    const templateFolder = parts[4]
+    const pathMatch = html.match(/baseTierImagePath\s*=\s*"([^"]+)"/)
+    const dateMatch = html.match(/dateLastEdited\s*=\s*"([^"]+)"/)
+    const variationMatch = html.match(/tierSystem\.initList\("",\s*"[^"]+",\s*"(\d+)"\)/)
+    const titleMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/)
     
-    return rawData.slice(1).map((filename) => {
-      const id = parseInt(filename.replace('.png', ''))
-      const imageUrl = `/tiermaker-api${basePath}/${filename}`
-      
-      return {
-        id: `tm_${templateId}_${id}`,
-        name: `${id}`,
-        image: imageUrl,
-        tier: null
-      }
-    })
+    const basePath = pathMatch ? pathMatch[1] : null
+    const lastEdited = dateMatch ? dateMatch[1] : ''
+    const variation = variationMatch ? variationMatch[1] : ''
+    const title = titleMatch ? titleMatch[1].trim().replace(' Tier List Maker', '') : slug
+    
+    if (!basePath) throw new Error('Could not parse template data')
+    
+    const apiRes = await fetch(`/tiermaker-api/api/?type=templates-v2&id=${encodeURIComponent(slug)}&lastEdited=${encodeURIComponent(lastEdited)}&variation=${variation}`)
+    if (!apiRes.ok) throw new Error('Failed to load template images')
+    
+    const rawData = await apiRes.json()
+    const apiBasePath = rawData[0]
+    
+    return {
+      title,
+      items: rawData.slice(1).map((filename) => {
+        const num = filename.replace('.png', '')
+        const imageUrl = `/tiermaker-api${apiBasePath}/${filename}`
+        
+        return {
+          id: `tm_${slug}_${num}`,
+          name: num,
+          image: imageUrl,
+          tier: null
+        }
+      })
+    }
   } catch (err) {
     console.error('Failed to load TierMaker template:', err)
-    return []
+    return { title: slug, items: [] }
   }
 }
