@@ -29,17 +29,18 @@ export default function Register() {
   return (
     <div className="min-h-screen flex items-center justify-center px-5 pt-16 pb-12 relative">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-amber-500/[0.02] rounded-full blur-[150px]" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-neon-400/[0.04] rounded-full blur-[150px]" />
+        <div className="absolute top-1/2 left-1/3 w-[300px] h-[300px] bg-cyan-400/[0.03] rounded-full blur-[120px]" />
       </div>
 
       <div className="w-full max-w-sm relative z-10">
         <div className="mb-10 text-center page-enter">
-          <h1 className="text-2xl font-bold tracking-tight mb-1" style={{ fontFamily: 'Space Grotesk' }}>Регистрация</h1>
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Создайте аккаунт</p>
+          <h1 className="text-2xl font-bold tracking-tight mb-1 neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>Регистрация</h1>
+          <p className="text-xs text-text-muted">Создайте аккаунт</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3.5 rounded-xl text-xs text-center" style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.15)', color: '#fb7185' }}>
+          <div className="mb-4 p-3.5 rounded-xl text-xs text-center bg-danger/10 border border-danger/20 text-danger">
             {error}
           </div>
         )}
@@ -57,14 +58,14 @@ export default function Register() {
             <label className="label mb-1.5 block">Пароль</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" required minLength={6} />
           </div>
-          <button type="submit" disabled={loading} className="btn-primary w-full !py-3 !text-sm mt-2">
+          <button type="submit" disabled={loading} className="btn-primary btn-shine w-full !py-3 !text-sm mt-2">
             {loading ? 'Создание...' : 'Зарегистрироваться'}
           </button>
         </form>
 
-        <p className="text-center text-xs mt-10 page-enter" style={{ color: 'rgba(255,255,255,0.15)', animationDelay: '0.1s' }}>
+        <p className="text-center text-xs mt-10 page-enter text-text-muted" style={{ animationDelay: '0.1s' }}>
           Уже есть аккаунт?{' '}
-          <Link to="/login" className="text-amber-400 hover:text-amber-300 font-medium transition-colors">
+          <Link to="/login" className="text-neon-400 hover:text-neon-300 font-medium transition-colors neon-text">
             Войти
           </Link>
         </p>

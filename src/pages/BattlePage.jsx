@@ -108,7 +108,7 @@ export default function BattlePage() {
       if (newScore > bestScore) {
         setBestScore(newScore)
         setIsNewRecord(true)
-        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#f59e0b', '#10b981', '#f97316', '#fbbf24'] })
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#BBF351', '#00E5FF', '#BF5AF2', '#FF2D78'] })
       }
 
       setResult({ winner: chosenAnime.id, loser: other.id })
@@ -141,18 +141,18 @@ export default function BattlePage() {
 
   if (loading) return <div className="min-h-screen pt-24 flex items-center justify-center"><Loader text="Загрузка..." /></div>
 
-  if (!pair) return <div className="min-h-screen pt-24 flex items-center justify-center"><p className="text-sm" style={{ color: 'rgba(255,255,255,0.15)' }}>Недостаточно аниме</p></div>
+  if (!pair) return <div className="min-h-screen pt-24 flex items-center justify-center"><p className="text-sm text-text-muted">Недостаточно аниме</p></div>
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-5 sm:px-8 relative">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-amber-500/[0.02] rounded-full blur-[150px]" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-neon-400/[0.04] rounded-full blur-[150px]" />
       </div>
 
       <div className="max-w-4xl mx-auto relative z-10">
         <div className="text-center mb-8 page-enter">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-1" style={{ fontFamily: 'Space Grotesk' }}>Битва тайтлов</h1>
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Какое аниме имеет более высокий рейтинг?</p>
+                <h1 className="text-2xl sm:text-3xl font-bold mb-1 neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>Битва тайтлов</h1>
+          <p className="text-xs text-text-muted">Какое аниме имеет более высокий рейтинг?</p>
         </div>
 
         <div className="text-center mb-8">
@@ -165,7 +165,7 @@ export default function BattlePage() {
               transition={{ type: 'spring', stiffness: 500, damping: 25 }}
               className="inline-block"
             >
-              <span className="text-4xl font-bold text-amber-400" style={{ fontFamily: 'JetBrains Mono', textShadow: '0 0 30px rgba(251,191,36,0.2)' }}>{score}</span>
+              <span className="text-4xl font-bold text-neon-400 font-mono">{score}</span>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -206,12 +206,12 @@ export default function BattlePage() {
               exit={{ opacity: 0 }}
               className="text-center mb-4"
             >
-              <div className="inline-block rounded-xl px-5 py-2.5" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Рейтинги: </span>
+              <div className="inline-block rounded-xl px-5 py-2.5 bg-surface-1 border border-neon-400/10">
+                <span className="text-xs text-text-muted">Рейтинги: </span>
                 {pair.map((a) => (
                   <span key={a.id} className={`text-xs font-bold mx-1.5 ${
-                    result.winner === a.id || result.correct === a.id ? 'text-mint-400' : 'text-coral-400'
-                  }`} style={{ fontFamily: 'JetBrains Mono' }}>
+                    result.winner === a.id || result.correct === a.id ? 'text-success' : 'text-danger'
+                  }`} style={{ fontFamily: 'Source Code Pro' }}>
                     {a.russian || a.name} — {Number(a.score).toFixed(2)}
                   </span>
                 ))}

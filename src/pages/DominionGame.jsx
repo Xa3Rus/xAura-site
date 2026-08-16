@@ -206,7 +206,7 @@ export default function DominionGame() {
     s.emit('trade:decline', { tradeId })
   }, [])
 
-  if (!gameState) return <div className="min-h-screen pt-24 flex items-center justify-center"><p className="text-white/20">Загрузка...</p></div>
+  if (!gameState)     return <div className="min-h-screen pt-24 flex items-center justify-center"><p className="text-text-muted">Загрузка...</p></div>
 
   const canUpgrade = (cellId) => {
     if (!isMyTurn) return false
@@ -226,21 +226,21 @@ export default function DominionGame() {
   }
 
   return (
-    <div className="min-h-screen pt-16 pb-4 px-2 sm:px-4" style={{ background: '#0a0a0c' }}>
+    <div className="min-h-screen pt-16 pb-4 px-2 sm:px-4 bg-surface-0">
       <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row gap-3 h-[calc(100vh-4rem)]">
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex items-center justify-between mb-3 px-1">
             <div className="flex items-center gap-3">
-              <button onClick={() => navigate('/dominion')} className="text-xs text-white/20 hover:text-white/50 transition-colors">
+              <button onClick={() => navigate('/dominion')} className="text-xs text-text-muted hover:text-text transition-colors">
                 ← Лобби
               </button>
-              <h1 className="text-sm font-bold" style={{ fontFamily: 'Space Grotesk' }}>
-                <span className="text-white/60">xAura</span>
-                <span className="text-amber-400 ml-1">Dominion</span>
+              <h1 className="text-sm font-bold" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>
+                <span className="text-text">xAura</span>
+                <span className="text-neon-400 ml-1">Dominion</span>
               </h1>
             </div>
-            <button onClick={() => setChatOpen(!chatOpen)} className="lg:hidden text-xs px-3 py-1.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              Чат {messages.length > 0 && <span className="text-amber-400 ml-1">•</span>}
+              <button onClick={() => setChatOpen(!chatOpen)} className="lg:hidden text-xs px-3 py-1.5 rounded-lg glass">
+              Чат {messages.length > 0 && <span className="text-neon-400 ml-1">•</span>}
             </button>
           </div>
 
@@ -254,12 +254,12 @@ export default function DominionGame() {
           </div>
 
           <div className="mt-3">
-            <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="rounded-2xl p-4 glass">
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex-1 min-w-0">
-                  <div className="text-[10px] mb-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                    Ход: <span className="text-white/50 font-medium">{currentTurnPlayer?.name}</span>
-                    {isMyTurn && <span className="text-amber-400 ml-1">(Вы)</span>}
+                  <div className="text-[10px] mb-1" style={{ color: '#A0A0A0' }}>
+                    Ход: <span className="text-text font-medium">{currentTurnPlayer?.name}</span>
+                    {isMyTurn && <span className="text-neon-400 ml-1">(Вы)</span>}
                   </div>
                   <div className="flex gap-3 flex-wrap">
                     {gameState.players.map((p) => (
@@ -267,15 +267,15 @@ export default function DominionGame() {
                         key={p.id}
                         className="flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-all"
                         style={{
-                          background: p.id === currentTurnPlayer?.id ? 'rgba(255,255,255,0.04)' : 'transparent',
-                          border: `1px solid ${p.id === currentTurnPlayer?.id ? 'rgba(255,255,255,0.08)' : 'transparent'}`,
+                          background: p.id === currentTurnPlayer?.id ? 'rgba(187,243,81,0.08)' : 'transparent',
+                          border: `1px solid ${p.id === currentTurnPlayer?.id ? 'rgba(187,243,81,0.15)' : 'transparent'}`,
                           opacity: p.isBankrupt ? 0.3 : 1,
                         }}
                         onClick={() => !p.isBankrupt && handleTrade(p.id)}
                       >
                         <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
-                        <span className="text-xs" style={{ color: p.isBankrupt ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)' }}>{p.name}</span>
-                        <span className="text-xs font-mono font-bold" style={{ color: p.balance < 0 ? '#f43f5e' : p.color }}>
+                        <span className="text-xs" style={{ color: p.isBankrupt ? '#A0A0A0' : '#F0F0F0' }}>{p.name}</span>
+                        <span className="text-xs font-mono font-bold" style={{ color: p.balance < 0 ? '#FF3366' : p.color }}>
                           ${p.balance}
                         </span>
                       </div>
@@ -297,7 +297,7 @@ export default function DominionGame() {
                       {gameState.phase === 'action' && cellAction?.action === 'can_buy' && (
                         <div className="flex gap-2">
                           <button onClick={handleBuy} className="btn-primary text-xs !py-2">Купить</button>
-                          <button onClick={handleEndTurn} className="text-xs px-4 py-2 rounded-xl transition-colors" style={{ color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                          <button onClick={handleEndTurn} className="text-xs px-4 py-2 rounded-xl transition-colors text-text-muted border border-neon-400/10 hover:bg-surface-2/50">
                             Пропустить
                           </button>
                         </div>
@@ -316,14 +316,14 @@ export default function DominionGame() {
                         <button onClick={handleEvent} className="btn-primary text-xs !py-2">Открыть событие</button>
                       )}
                       {gameState.phase === 'action' && (cellAction?.action === 'none' || cellAction?.action === 'just_visiting' || cellAction?.action === 'own_property') && (
-                        <button onClick={handleEndTurn} className="text-xs px-4 py-2 rounded-xl transition-colors" style={{ color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <button onClick={handleEndTurn} className="text-xs px-4 py-2 rounded-xl transition-colors text-text-muted border border-neon-400/10 hover:bg-surface-2/50">
                           Завершить ход
                         </button>
                       )}
                     </>
                   )}
                   {!isMyTurn && gameState.phase !== 'game_over' && (
-                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Ожидание хода...</p>
+                    <p className="text-xs" style={{ color: '#A0A0A0' }}>Ожидание хода...</p>
                   )}
                 </div>
               </div>
@@ -340,9 +340,9 @@ export default function DominionGame() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="rounded-xl px-4 py-3 flex items-center gap-3"
-                    style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)' }}
+                    style={{ background: 'rgba(191,90,242,0.08)', border: '1px solid rgba(191,90,242,0.2)' }}
                   >
-                    <span className="text-xs text-white/50">{offerer?.name} предлагает обмен</span>
+                    <span className="text-xs text-text">{offerer?.name} предлагает обмен</span>
                     <button onClick={() => handleTradeAccept(trade.id)} className="text-xs text-mint-400 hover:text-mint-300 transition-colors">Принять</button>
                     <button onClick={() => handleTradeDecline(trade.id)} className="text-xs text-coral-400 hover:text-coral-300 transition-colors">Отклонить</button>
                   </motion.div>

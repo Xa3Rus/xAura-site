@@ -39,25 +39,25 @@ export default function TradeModal({ myPlayer, targetPlayer, gameState, onOffer,
       <AnimatePresence>
         <motion.div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-          <motion.div className="relative w-full max-w-md rounded-2xl p-5" style={{ background: 'rgba(17,17,20,0.97)', border: '1px solid rgba(255,255,255,0.08)' }} initial={{ scale: 0.95 }} animate={{ scale: 1 }}>
-            <h3 className="font-bold text-sm mb-4" style={{ fontFamily: 'Space Grotesk' }}>Предложение обмена</h3>
+          <motion.div className="relative w-full max-w-md rounded-2xl p-5" style={{ background: '#0A0A0A', border: '1px solid rgba(187,243,81,0.1)' }} initial={{ scale: 0.95 }} animate={{ scale: 1 }}>
+            <h3 className="font-bold text-sm mb-4" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>Предложение обмена</h3>
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div>
-                <p className="text-[10px] mb-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>Вы отдаёте:</p>
+                <p className="text-[10px] mb-1.5" style={{ color: '#707070' }}>Вы отдаёте:</p>
                 {existingTrade.offer.properties.map((id) => <div key={id} className="text-[10px] py-0.5">{BOARD[id]?.name}</div>)}
-                {existingTrade.offer.money > 0 && <div className="text-[10px] text-amber-400">${existingTrade.offer.money}</div>}
+                {existingTrade.offer.money > 0 && <div className="text-[10px] text-neon-400">${existingTrade.offer.money}</div>}
                 {existingTrade.offer.jailCards > 0 && <div className="text-[10px]">🃏 ×{existingTrade.offer.jailCards}</div>}
               </div>
               <div>
-                <p className="text-[10px] mb-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>Вы получаете:</p>
+                <p className="text-[10px] mb-1.5" style={{ color: '#707070' }}>Вы получаете:</p>
                 {existingTrade.request.properties.map((id) => <div key={id} className="text-[10px] py-0.5">{BOARD[id]?.name}</div>)}
-                {existingTrade.request.money > 0 && <div className="text-[10px] text-amber-400">${existingTrade.request.money}</div>}
+                {existingTrade.request.money > 0 && <div className="text-[10px] text-neon-400">${existingTrade.request.money}</div>}
                 {existingTrade.request.jailCards > 0 && <div className="text-[10px]">🃏 ×{existingTrade.request.jailCards}</div>}
               </div>
             </div>
             <div className="flex gap-2">
               <button onClick={() => onAccept?.(existingTrade.id)} className="flex-1 btn-primary text-xs">Принять</button>
-              <button onClick={() => onDecline?.(existingTrade.id)} className="flex-1 text-xs py-2 rounded-xl" style={{ color: '#f87171', border: '1px solid rgba(248,113,113,0.2)' }}>Отклонить</button>
+              <button onClick={() => onDecline?.(existingTrade.id)} className="flex-1 text-xs py-2 rounded-xl" style={{ color: '#FF6688', border: '1px solid rgba(255,102,136,0.2)' }}>Отклонить</button>
             </div>
           </motion.div>
         </motion.div>
@@ -69,24 +69,24 @@ export default function TradeModal({ myPlayer, targetPlayer, gameState, onOffer,
     <AnimatePresence>
       <motion.div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-        <motion.div className="relative w-full max-w-lg rounded-2xl p-5 max-h-[85vh] overflow-y-auto" style={{ background: 'rgba(17,17,20,0.97)', border: '1px solid rgba(255,255,255,0.08)' }} initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }}>
+          <motion.div className="relative w-full max-w-lg rounded-2xl p-5 max-h-[85vh] overflow-y-auto" style={{ background: '#0A0A0A', border: '1px solid rgba(187,243,81,0.1)' }} initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-sm" style={{ fontFamily: 'Space Grotesk' }}>Обмен с <span style={{ color: targetPlayer.color }}>{targetPlayer.username}</span></h3>
-            <button onClick={onClose} className="text-white/20 hover:text-white/50">×</button>
+            <h3 className="font-bold text-sm" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>Обмен с <span style={{ color: targetPlayer.color }}>{targetPlayer.username}</span></h3>
+            <button onClick={onClose} className="text-text-muted hover:text-text">×</button>
           </div>
 
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div>
-              <p className="text-[10px] mb-1.5 font-medium" style={{ color: 'rgba(255,255,255,0.3)' }}>Вы отдаёте</p>
+              <p className="text-[10px] mb-1.5 font-medium" style={{ color: '#707070' }}>Вы отдаёте</p>
               {myProps.map((id) => (
                 <motion.button
                   key={id}
                   onClick={() => toggle(id, offerProps, setOfferProps)}
                   className="w-full text-left text-[10px] px-2 py-1.5 rounded-lg mb-1 transition-all"
                   style={{
-                    background: offerProps.includes(id) ? 'rgba(251,191,36,0.1)' : 'rgba(255,255,255,0.02)',
-                    border: `1px solid ${offerProps.includes(id) ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.04)'}`,
-                    color: offerProps.includes(id) ? '#fbbf24' : 'rgba(255,255,255,0.4)',
+                    background: offerProps.includes(id) ? 'rgba(187,243,81,0.1)' : 'rgba(10,10,10,0.6)',
+                    border: `1px solid ${offerProps.includes(id) ? 'rgba(187,243,81,0.2)' : 'rgba(187,243,81,0.1)'}`,
+                    color: offerProps.includes(id) ? '#BBF351' : '#A0A0A0',
                   }}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
@@ -94,8 +94,8 @@ export default function TradeModal({ myPlayer, targetPlayer, gameState, onOffer,
                   {BOARD[id]?.name}
                 </motion.button>
               ))}
-              <div className="flex items-center gap-1 mt-1 px-2 py-1.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
-                <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.2)' }}>$</span>
+              <div className="flex items-center gap-1 mt-1 px-2 py-1.5 rounded-lg" style={{ background: 'rgba(10,10,10,0.6)', border: '1px solid rgba(187,243,81,0.1)' }}>
+                <span className="text-[9px]" style={{ color: '#707070' }}>$</span>
                 <input
                   type="number"
                   value={offerMoney || ''}
@@ -103,17 +103,17 @@ export default function TradeModal({ myPlayer, targetPlayer, gameState, onOffer,
                   placeholder="0"
                   max={myPlayer.balance}
                   className="bg-transparent text-[10px] w-full outline-none font-mono"
-                  style={{ color: 'rgba(255,255,255,0.5)' }}
+                  style={{ color: '#F0F0F0' }}
                 />
-                <span className="text-[8px]" style={{ color: 'rgba(255,255,255,0.1)' }}>/ {formatMoney(myPlayer.balance)}</span>
+                <span className="text-[8px]" style={{ color: '#2A2A2A' }}>/ {formatMoney(myPlayer.balance)}</span>
               </div>
               {myPlayer.getOutOfJailCards > 0 && (
-                <div className="flex items-center gap-2 mt-1 px-2 py-1.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                <div className="flex items-center gap-2 mt-1 px-2 py-1.5 rounded-lg" style={{ background: 'rgba(10,10,10,0.6)', border: '1px solid rgba(187,243,81,0.1)' }}>
                   <span className="text-[9px]">🃏 Карты из тюрьмы:</span>
                   <select
                     value={offerJailCards}
                     onChange={(e) => setOfferJailCards(parseInt(e.target.value))}
-                    className="bg-transparent text-[10px] outline-none text-white/70"
+                    className="bg-transparent text-[10px] outline-none text-text"
                     style={{ border: 'none', background: 'transparent' }}
                   >
                     {Array.from({ length: myPlayer.getOutOfJailCards + 1 }, (_, i) => (
@@ -124,16 +124,16 @@ export default function TradeModal({ myPlayer, targetPlayer, gameState, onOffer,
               )}
             </div>
             <div>
-              <p className="text-[10px] mb-1.5 font-medium" style={{ color: 'rgba(255,255,255,0.3)' }}>Запрашиваете</p>
+              <p className="text-[10px] mb-1.5 font-medium" style={{ color: '#707070' }}>Запрашиваете</p>
               {targetProps.map((id) => (
                 <motion.button
                   key={id}
                   onClick={() => toggle(id, requestProps, setRequestProps)}
                   className="w-full text-left text-[10px] px-2 py-1.5 rounded-lg mb-1 transition-all"
                   style={{
-                    background: requestProps.includes(id) ? 'rgba(168,85,247,0.1)' : 'rgba(255,255,255,0.02)',
-                    border: `1px solid ${requestProps.includes(id) ? 'rgba(168,85,247,0.2)' : 'rgba(255,255,255,0.04)'}`,
-                    color: requestProps.includes(id) ? '#c084fc' : 'rgba(255,255,255,0.4)',
+                    background: requestProps.includes(id) ? 'rgba(191,90,242,0.1)' : 'rgba(10,10,10,0.6)',
+                    border: `1px solid ${requestProps.includes(id) ? 'rgba(191,90,242,0.2)' : 'rgba(187,243,81,0.1)'}`,
+                    color: requestProps.includes(id) ? '#BF5AF2' : '#A0A0A0',
                   }}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
@@ -141,8 +141,8 @@ export default function TradeModal({ myPlayer, targetPlayer, gameState, onOffer,
                   {BOARD[id]?.name}
                 </motion.button>
               ))}
-              <div className="flex items-center gap-1 mt-1 px-2 py-1.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
-                <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.2)' }}>$</span>
+              <div className="flex items-center gap-1 mt-1 px-2 py-1.5 rounded-lg" style={{ background: 'rgba(10,10,10,0.6)', border: '1px solid rgba(187,243,81,0.1)' }}>
+                <span className="text-[9px]" style={{ color: '#707070' }}>$</span>
                 <input
                   type="number"
                   value={requestMoney || ''}
@@ -150,17 +150,17 @@ export default function TradeModal({ myPlayer, targetPlayer, gameState, onOffer,
                   placeholder="0"
                   max={targetPlayer.balance}
                   className="bg-transparent text-[10px] w-full outline-none font-mono"
-                  style={{ color: 'rgba(255,255,255,0.5)' }}
+                  style={{ color: '#F0F0F0' }}
                 />
-                <span className="text-[8px]" style={{ color: 'rgba(255,255,255,0.1)' }}>/ {formatMoney(targetPlayer.balance)}</span>
+                <span className="text-[8px]" style={{ color: '#2A2A2A' }}>/ {formatMoney(targetPlayer.balance)}</span>
               </div>
               {targetPlayer.getOutOfJailCards > 0 && (
-                <div className="flex items-center gap-2 mt-1 px-2 py-1.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                <div className="flex items-center gap-2 mt-1 px-2 py-1.5 rounded-lg" style={{ background: 'rgba(10,10,10,0.6)', border: '1px solid rgba(187,243,81,0.1)' }}>
                   <span className="text-[9px]">🃏 Карты из тюрьмы:</span>
                   <select
                     value={requestJailCards}
                     onChange={(e) => setRequestJailCards(parseInt(e.target.value))}
-                    className="bg-transparent text-[10px] outline-none text-white/70"
+                    className="bg-transparent text-[10px] outline-none text-text"
                     style={{ border: 'none', background: 'transparent' }}
                   >
                     {Array.from({ length: targetPlayer.getOutOfJailCards + 1 }, (_, i) => (

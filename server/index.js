@@ -13,7 +13,7 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://xaura-ranking.netlify.app',
-]
+].concat(process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : [])
 
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }))
 app.use(express.json())

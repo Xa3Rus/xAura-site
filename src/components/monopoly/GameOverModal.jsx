@@ -9,7 +9,7 @@ export default function GameOverModal({ winner, players, onPlayAgain, onExit }) 
         <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onExit} />
         <motion.div
           className="relative w-full max-w-md rounded-2xl p-8 text-center"
-          style={{ background: 'rgba(17,17,20,0.97)', border: '1px solid rgba(251,191,36,0.2)', boxShadow: '0 0 80px rgba(251,191,36,0.05)' }}
+          style={{ background: '#0A0A0A', border: '1px solid rgba(187,243,81,0.2)', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}
           initial={{ scale: 0.8, y: 30 }}
           animate={{ scale: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.2 }}
@@ -22,10 +22,10 @@ export default function GameOverModal({ winner, players, onPlayAgain, onExit }) 
           >
             🏆
           </motion.div>
-          <h2 className="text-xl font-bold mb-1" style={{ fontFamily: 'Space Grotesk' }}>
-            <span className="text-amber-400" style={{ textShadow: '0 0 20px rgba(251,191,36,0.3)' }}>Победа!</span>
+          <h2 className="text-xl font-bold mb-1" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>
+            <span className="text-neon-400" style={{ textShadow: 'none' }}>Победа!</span>
           </h2>
-          <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <p className="text-sm mb-6" style={{ color: '#A0A0A0' }}>
             <span style={{ color: winner?.color }}>{winner?.username}</span> одержал победу!
           </p>
 
@@ -34,20 +34,20 @@ export default function GameOverModal({ winner, players, onPlayAgain, onExit }) 
               <motion.div
                 key={p.userId}
                 className="flex items-center gap-3 p-2 rounded-xl text-left"
-                style={{ background: p.userId === winner?.userId ? `rgba(${p.color.slice(1)},0.1)` : 'rgba(255,255,255,0.02)', border: p.userId === winner?.userId ? `1px solid ${p.color}40` : '1px solid rgba(255,255,255,0.04)' }}
+                style={{ background: p.userId === winner?.userId ? `rgba(${p.color.slice(1)},0.1)` : 'rgba(10,10,10,0.6)', border: p.userId === winner?.userId ? `1px solid ${p.color}40` : '1px solid rgba(187,243,81,0.1)' }}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + i * 0.05 }}
               >
-                <span className="text-sm font-bold" style={{ color: p.userId === winner?.userId ? '#fbbf24' : 'rgba(255,255,255,0.3)' }}>#{i + 1}</span>
+                <span className="text-sm font-bold" style={{ color: p.userId === winner?.userId ? '#BBF351' : '#707070' }}>#{i + 1}</span>
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: p.color, color: '#fff' }}>
                   {p.username?.[0]?.toUpperCase() || '?'}
                 </div>
-                <span className="text-sm font-medium flex-1 truncate" style={{ color: p.userId === winner?.userId ? '#fff' : 'rgba(255,255,255,0.7)' }}>
+                <span className="text-sm font-medium flex-1 truncate" style={{ color: p.userId === winner?.userId ? '#F0F0F0' : '#F0F0F0' }}>
                   {p.username}
                   {p.isBankrupt && <span className="ml-2 text-[10px] text-red-400">💀</span>}
                 </span>
-                <span className="text-sm font-bold font-mono" style={{ color: p.balance < 0 ? '#f43f5e' : p.color }}>
+                <span className="text-sm font-bold font-mono" style={{ color: p.balance < 0 ? '#FF3366' : p.color }}>
                   ${p.balance}
                 </span>
               </motion.div>
@@ -66,8 +66,8 @@ export default function GameOverModal({ winner, players, onPlayAgain, onExit }) 
             <motion.button
               onClick={onExit}
               className="flex-1 text-sm py-2.5 rounded-xl"
-              style={{ color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}
-              whileHover={{ background: 'rgba(255,255,255,0.05)', color: '#fff' }}
+              style={{ color: '#A0A0A0', border: '1px solid rgba(187,243,81,0.1)' }}
+              whileHover={{ background: '#111111', color: '#F0F0F0' }}
               whileTap={{ scale: 0.98 }}
             >
               В лобби

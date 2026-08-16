@@ -1,5 +1,14 @@
 const audioContext = new (window.AudioContext || window.webkitAudioContext)()
 
+let muted = localStorage.getItem('xAura:muted') === '1'
+
+export function isMuted() { return muted }
+export function toggleMute() {
+  muted = !muted
+  localStorage.setItem('xAura:muted', muted ? '1' : '0')
+  return muted
+}
+
 const sounds = {
   diceRoll: { freq: [200, 400, 600], type: 'triangle', duration: 0.3 },
   diceLand: { freq: 800, type: 'sine', duration: 0.15 },
@@ -16,10 +25,13 @@ const sounds = {
   notification: { freq: [660, 880], type: 'triangle', duration: 0.3 },
   auctionBid: { freq: [880, 1100], type: 'sine', duration: 0.2 },
   tradeOffer: { freq: [523, 784], type: 'triangle', duration: 0.3 },
+  win: { freq: [523, 659, 784, 1047, 1319, 1568], type: 'triangle', duration: 1.4 },
+  step: { freq: 320, type: 'sine', duration: 0.06 },
 }
 
 function playTone(frequency, type, duration, volume = 0.1) {
-  if (!audioContext) return
+  if (!audioContext || muted) return
+  if (audioContext.state === 'suspended') audioContext.resume()
 
   const oscillator = audioContext.createOscillator()
   const gainNode = audioContext.createGain()
@@ -71,6 +83,8 @@ export function playError() { playSound('error', 0.1) }
 export function playNotification() { playSound('notification', 0.08) }
 export function playAuctionBid() { playSound('auctionBid', 0.1) }
 export function playTradeOffer() { playSound('tradeOffer', 0.1) }
+export function playWin() { playSound('win', 0.12) }
+export function playStep() { playSound('step', 0.05) }
 
 export function initAudio() {
   if (audioContext.state === 'suspended') {

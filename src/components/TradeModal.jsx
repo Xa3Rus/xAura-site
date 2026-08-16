@@ -43,21 +43,21 @@ export default function TradeModal({ myPlayer, targetPlayer, gameState, onOffer,
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <motion.div
         className="relative w-full max-w-lg rounded-2xl p-6 max-h-[85vh] overflow-y-auto"
-        style={{ background: 'rgba(17,17,20,0.97)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px -16px rgba(0,0,0,0.7)' }}
+        style={{ background: '#0A0A0A', border: '1px solid rgba(187,243,81,0.15)' }}
         initial={{ scale: 0.95, y: 10 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.95, y: 10 }}
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="font-bold text-sm" style={{ fontFamily: 'Space Grotesk' }}>
+          <h2 className="font-bold text-sm" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>
             Обмен с <span style={{ color: targetPlayer.color }}>{targetPlayer.name}</span>
           </h2>
-          <button onClick={onClose} className="text-white/20 hover:text-white/50 text-sm transition-colors">×</button>
+          <button onClick={onClose} className="text-text-muted hover:text-text text-sm transition-colors">×</button>
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-5">
           <div>
-            <h3 className="text-[10px] mb-2 font-medium" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            <h3 className="text-[10px] mb-2 font-medium" style={{ color: '#A0A0A0' }}>
               Вы отдаёте
             </h3>
             <div className="space-y-1.5">
@@ -67,9 +67,9 @@ export default function TradeModal({ myPlayer, targetPlayer, gameState, onOffer,
                   onClick={() => toggleAsset(cell.id, offerAssets, setOfferAssets)}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all text-left"
                   style={{
-                    background: offerAssets.includes(cell.id) ? 'rgba(251,191,36,0.1)' : 'rgba(255,255,255,0.02)',
-                    border: `1px solid ${offerAssets.includes(cell.id) ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.04)'}`,
-                    color: offerAssets.includes(cell.id) ? '#fbbf24' : 'rgba(255,255,255,0.4)',
+                    background: offerAssets.includes(cell.id) ? 'rgba(187,243,81,0.1)' : 'rgba(10,10,10,0.5)',
+                    border: `1px solid ${offerAssets.includes(cell.id) ? 'rgba(187,243,81,0.2)' : 'rgba(187,243,81,0.06)'}`,
+                    color: offerAssets.includes(cell.id) ? '#BBF351' : '#A0A0A0',
                   }}
                 >
                   <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cell.color }} />
@@ -77,8 +77,8 @@ export default function TradeModal({ myPlayer, targetPlayer, gameState, onOffer,
                   <span className="font-mono text-[10px]">${cell.price}</span>
                 </button>
               ))}
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.2)' }}>$</span>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg glass">
+                <span className="text-[10px]" style={{ color: '#A0A0A0' }}>$</span>
                 <input
                   type="number"
                   value={offerMoney || ''}
@@ -86,15 +86,15 @@ export default function TradeModal({ myPlayer, targetPlayer, gameState, onOffer,
                   placeholder="0"
                   max={myPlayer.balance}
                   className="bg-transparent text-xs w-full outline-none font-mono"
-                  style={{ color: 'rgba(255,255,255,0.5)' }}
+                  style={{ color: '#F0F0F0' }}
                 />
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.15)' }}>/ ${myPlayer.balance}</span>
+                <span className="text-[10px]" style={{ color: '#A0A0A0' }}>/ ${myPlayer.balance}</span>
               </div>
             </div>
           </div>
 
           <div>
-            <h3 className="text-[10px] mb-2 font-medium" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            <h3 className="text-[10px] mb-2 font-medium" style={{ color: '#A0A0A0' }}>
               Запрашиваете
             </h3>
             <div className="space-y-1.5">
@@ -104,9 +104,9 @@ export default function TradeModal({ myPlayer, targetPlayer, gameState, onOffer,
                   onClick={() => toggleAsset(cell.id, requestAssets, setRequestAssets)}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all text-left"
                   style={{
-                    background: requestAssets.includes(cell.id) ? 'rgba(168,85,247,0.1)' : 'rgba(255,255,255,0.02)',
-                    border: `1px solid ${requestAssets.includes(cell.id) ? 'rgba(168,85,247,0.2)' : 'rgba(255,255,255,0.04)'}`,
-                    color: requestAssets.includes(cell.id) ? '#c084fc' : 'rgba(255,255,255,0.4)',
+                    background: requestAssets.includes(cell.id) ? 'rgba(191,90,242,0.1)' : 'rgba(10,10,10,0.5)',
+                    border: `1px solid ${requestAssets.includes(cell.id) ? 'rgba(191,90,242,0.2)' : 'rgba(187,243,81,0.06)'}`,
+                    color: requestAssets.includes(cell.id) ? '#BF5AF2' : '#A0A0A0',
                   }}
                 >
                   <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cell.color }} />
@@ -114,8 +114,8 @@ export default function TradeModal({ myPlayer, targetPlayer, gameState, onOffer,
                   <span className="font-mono text-[10px]">${cell.price}</span>
                 </button>
               ))}
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.2)' }}>$</span>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg glass">
+                <span className="text-[10px]" style={{ color: '#A0A0A0' }}>$</span>
                 <input
                   type="number"
                   value={requestMoney || ''}
@@ -123,9 +123,9 @@ export default function TradeModal({ myPlayer, targetPlayer, gameState, onOffer,
                   placeholder="0"
                   max={targetPlayer.balance}
                   className="bg-transparent text-xs w-full outline-none font-mono"
-                  style={{ color: 'rgba(255,255,255,0.5)' }}
+                  style={{ color: '#F0F0F0' }}
                 />
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.15)' }}>/ ${targetPlayer.balance}</span>
+                <span className="text-[10px]" style={{ color: '#A0A0A0' }}>/ ${targetPlayer.balance}</span>
               </div>
             </div>
           </div>

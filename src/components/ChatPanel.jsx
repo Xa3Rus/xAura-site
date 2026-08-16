@@ -49,17 +49,17 @@ export default function ChatPanel({ messages, players, currentUserId, onSend, on
   const otherPlayers = players.filter((p) => p.id !== currentUserId && !p.isBankrupt)
 
   return (
-    <div className="h-full flex flex-col rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-      <div className="px-4 py-3 flex items-center gap-2 border-b" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+    <div className="h-full flex flex-col rounded-2xl overflow-hidden glass">
+      <div className="px-4 py-3 flex items-center gap-2 border-b border-neon-400/10">
         <button
           onClick={() => { setChatMode('public'); setPmTarget(null) }}
-          className={`text-xs px-3 py-1 rounded-lg transition-all ${chatMode === 'public' ? 'text-amber-400 bg-amber-500/10' : 'text-white/25 hover:text-white/40'}`}
+          className={`text-xs px-3 py-1 rounded-lg transition-all ${chatMode === 'public' ? 'text-neon-400 bg-neon-400/10' : 'text-text-muted hover:text-text-muted'}`}
         >
           Общий
         </button>
         <button
           onClick={() => { setChatMode('private'); setShowPmMenu(!showPmMenu) }}
-          className={`text-xs px-3 py-1 rounded-lg transition-all relative ${chatMode === 'private' ? 'text-purple-400 bg-purple-500/10' : 'text-white/25 hover:text-white/40'}`}
+          className={`text-xs px-3 py-1 rounded-lg transition-all relative ${chatMode === 'private' ? 'text-purple-400 bg-purple-500/10' : 'text-text-muted hover:text-text-muted'}`}
         >
           Личные {pmTarget && <span className="text-purple-400 ml-0.5">•</span>}
         </button>
@@ -71,16 +71,16 @@ export default function ChatPanel({ messages, players, currentUserId, onSend, on
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="absolute top-full left-0 mt-1 rounded-xl overflow-hidden z-50 w-48"
-              style={{ background: 'rgba(17,17,20,0.97)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 16px 48px -12px rgba(0,0,0,0.7)' }}
+              style={{ background: '#0A0A0A', border: '1px solid rgba(187,243,81,0.15)' }}
             >
               {otherPlayers.map((p) => (
                 <button
                   key={p.id}
                   onClick={() => { setPmTarget(p.id); setShowPmMenu(false) }}
-                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-white/[0.04] transition-colors text-left"
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-surface-2 transition-colors text-left"
                 >
                   <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-                  <span className="text-xs text-white/60">{p.name}</span>
+                  <span className="text-xs text-text">{p.name}</span>
                 </button>
               ))}
             </motion.div>
@@ -90,7 +90,7 @@ export default function ChatPanel({ messages, players, currentUserId, onSend, on
         {pmTarget && (
           <span className="text-[10px] text-purple-400/60 ml-auto">
             → {getPmName(pmTarget)}
-            <button onClick={() => setPmTarget(null)} className="ml-1 text-white/20 hover:text-white/40">×</button>
+            <button onClick={() => setPmTarget(null)} className="ml-1 text-text-muted hover:text-text-muted">×</button>
           </span>
         )}
       </div>
@@ -98,7 +98,7 @@ export default function ChatPanel({ messages, players, currentUserId, onSend, on
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-0">
         {filteredMessages.length === 0 && (
           <div className="flex items-center justify-center h-full">
-            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.1)' }}>
+            <p className="text-[10px]" style={{ color: '#D1D5DB' }}>
               {chatMode === 'public' ? 'Пока нет сообщений' : 'Нет личных сообщений'}
             </p>
           </div>
@@ -110,13 +110,13 @@ export default function ChatPanel({ messages, players, currentUserId, onSend, on
             <div key={msg.id} className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
               <div className="flex items-center gap-1.5 mb-0.5">
                 <div className="w-1.5 h-1.5 rounded-full" style={{ background: sender?.color || '#666' }} />
-                <span className="text-[10px] font-medium" style={{ color: sender?.color || 'rgba(255,255,255,0.3)' }}>
+                <span className="text-[10px] font-medium" style={{ color: sender?.color || '#9CA3AF' }}>
                   {msg.senderName}
                 </span>
                 {msg.type === 'private' && (
                   <span className="text-[8px] text-purple-400/50">ЛС</span>
                 )}
-                <span className="text-[8px]" style={{ color: 'rgba(255,255,255,0.1)' }}>
+                <span className="text-[8px]" style={{ color: '#D1D5DB' }}>
                   {new Date(msg.timestamp).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
@@ -124,12 +124,12 @@ export default function ChatPanel({ messages, players, currentUserId, onSend, on
                 className="px-3 py-1.5 rounded-xl max-w-[85%] text-xs leading-relaxed"
                 style={{
                   background: isMine
-                    ? 'rgba(251,191,36,0.08)'
+                    ? 'rgba(187,243,81,0.08)'
                     : msg.type === 'private'
-                      ? 'rgba(168,85,247,0.08)'
-                      : 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${isMine ? 'rgba(251,191,36,0.12)' : msg.type === 'private' ? 'rgba(168,85,247,0.12)' : 'rgba(255,255,255,0.04)'}`,
-                  color: 'rgba(255,255,255,0.6)',
+                      ? 'rgba(191,90,242,0.08)'
+                      : 'rgba(10,10,10,0.5)',
+                  border: `1px solid ${isMine ? 'rgba(187,243,81,0.15)' : msg.type === 'private' ? 'rgba(191,90,242,0.12)' : 'rgba(187,243,81,0.06)'}`,
+                  color: '#F0F0F0',
                 }}
               >
                 {msg.message}
@@ -138,14 +138,14 @@ export default function ChatPanel({ messages, players, currentUserId, onSend, on
           )
         })}
         {typingUsers.length > 0 && (
-          <div className="text-[10px] px-2" style={{ color: 'rgba(255,255,255,0.15)' }}>
+          <div className="text-[10px] px-2" style={{ color: '#9CA3AF' }}>
             {typingUsers.map((u) => u.username).join(', ')} печатает...
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="px-3 py-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+      <div className="px-3 py-2 border-t border-neon-400/10">
         <div className="flex gap-2">
           <input
             ref={inputRef}
@@ -153,18 +153,13 @@ export default function ChatPanel({ messages, players, currentUserId, onSend, on
             onChange={handleInput}
             onKeyDown={handleKeyDown}
             placeholder={chatMode === 'private' && pmTarget ? `ЛС ${getPmName(pmTarget)}...` : 'Сообщение...'}
-            className="flex-1 text-xs px-3 py-2 rounded-xl focus:outline-none transition-all"
-            style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.05)',
-              color: 'rgba(255,255,255,0.7)',
-            }}
+            className="flex-1 text-xs px-3 py-2 rounded-xl focus:outline-none transition-all input !text-xs !rounded-xl"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim()}
             className="px-3 py-2 rounded-xl text-xs font-medium transition-all disabled:opacity-30"
-            style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.2)' }}
+            style={{ background: 'rgba(187,243,81,0.15)', color: '#BBF351', border: '1px solid rgba(187,243,81,0.2)' }}
           >
             →
           </button>

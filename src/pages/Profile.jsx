@@ -5,10 +5,10 @@ import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 
 function scoreColor(score) {
-  if (score >= 8) return 'bg-mint-500/15 text-mint-400 border-mint-500/20'
-  if (score >= 7) return 'bg-amber-500/15 text-amber-400 border-amber-500/20'
-  if (score >= 5.5) return 'bg-white/[0.06] text-white/50 border-white/[0.06]'
-  return 'bg-coral-500/15 text-coral-400 border-coral-500/20'
+  if (score >= 8) return 'bg-success/10 text-success border-success/20'
+  if (score >= 7) return 'bg-neon-400/10 text-neon-400 border-neon-400/15'
+  if (score >= 5.5) return 'bg-surface-2 text-text-muted border-surface-3'
+  return 'bg-danger/10 text-danger border-danger/15'
 }
 
 export default function Profile() {
@@ -108,64 +108,64 @@ export default function Profile() {
     <div className="min-h-screen pt-24 pb-12 px-5 sm:px-8">
       <div className="max-w-[1400px] mx-auto">
         <motion.div className="mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
-          <div className="rounded-2xl p-6 sm:p-8 relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/[0.03] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-mint-500/[0.02] rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2" />
+          <div className="rounded-2xl p-6 sm:p-8 relative overflow-hidden bg-surface-1 border border-neon-400/10 shadow-soft glass">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-neon-400/[0.06] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-mint-400/[0.04] rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2" />
 
             <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-5">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 relative" style={{ background: 'linear-gradient(135deg, rgba(251,191,36,0.12) 0%, rgba(249,115,22,0.06) 100%)', border: '1px solid rgba(251,191,36,0.2)' }}>
-                <span className="text-2xl font-bold text-amber-400" style={{ fontFamily: 'Space Grotesk' }}>{getAvatarLetter()}</span>
-                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: '2px solid #111114' }} />
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 relative bg-neon-400/10 border border-neon-400/20">
+                <span className="text-2xl font-bold text-neon-400" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>{getAvatarLetter()}</span>
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-success" style={{ border: '2px solid #FFFFFF' }} />
               </div>
               <div className="flex-1 text-center sm:text-left">
-                <h1 className="text-xl font-bold tracking-tight mb-0.5" style={{ fontFamily: 'Space Grotesk' }}>{user?.username}</h1>
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>{user?.email}</p>
+                <h1 className="text-xl font-bold tracking-tight mb-0.5 neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>{user?.username}</h1>
+                <p className="text-xs text-text-muted">{user?.email}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 relative">
-              <div className="rounded-xl px-4 py-3.5 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.04)' }}>
-                <div className="text-xl font-bold text-amber-400" style={{ fontFamily: 'JetBrains Mono', textShadow: '0 0 15px rgba(251,191,36,0.15)' }}>{ratings.length}</div>
+              <div className="rounded-xl px-4 py-3.5 flex items-center gap-3 bg-surface-1 border border-neon-400/10">
+                <div className="text-xl font-bold text-neon-400 font-mono">{ratings.length}</div>
                 <div className="label">Оценок</div>
               </div>
-              <div className="rounded-xl px-4 py-3.5 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.04)' }}>
-                <div className="text-xl font-bold text-mint-400" style={{ fontFamily: 'JetBrains Mono', textShadow: '0 0 15px rgba(52,211,153,0.15)' }}>{battleRank ? `#${battleRank}` : '—'}</div>
+              <div className="rounded-xl px-4 py-3.5 flex items-center gap-3 bg-surface-1 border border-neon-400/10">
+                <div className="text-xl font-bold text-mint-500 font-mono">{battleRank ? `#${battleRank}` : '—'}</div>
                 <div className="label">В рейтинге</div>
               </div>
             </div>
           </div>
         </motion.div>
 
-        <div className="flex gap-1 mb-6 p-1 rounded-xl w-fit" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.04)' }}>
+        <div className="flex gap-1 mb-6 p-1 rounded-xl w-fit bg-surface-1 border border-neon-400/10">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className="px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 relative"
               style={activeTab === tab.id ? {
-                color: '#fbbf24',
-                background: 'rgba(251,191,36,0.08)',
-                border: '1px solid rgba(251,191,36,0.12)',
+                color: '#8fc420',
+                background: 'rgba(187,243,81,0.12)',
+                border: '1px solid rgba(187,243,81,0.18)',
               } : {
-                color: 'rgba(255,255,255,0.25)',
+                color: '#9CA3AF',
                 border: '1px solid transparent',
               }}
             >
-              {tab.label} <span style={{ fontFamily: 'JetBrains Mono', opacity: 0.5 }}>({tab.count})</span>
+              {tab.label} <span className="font-mono opacity-50">({tab.count})</span>
             </button>
           ))}
         </div>
 
         {loading ? (
-          <div className="text-center py-16 text-sm" style={{ color: 'rgba(255,255,255,0.15)' }}>Загрузка...</div>
+          <div className="text-center py-16 text-sm text-text-muted">Загрузка...</div>
         ) : (
           <>
             {activeTab === 'ratings' && (
               <div>
                 {ratings.length === 0 ? (
-                  <div className="text-center py-16 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.2)' }}>Вы ещё не оценили ни одного аниме</p>
-                    <Link to="/catalog" className="btn-primary text-xs">Перейти к каталогу</Link>
+                  <div className="text-center py-16 rounded-2xl bg-surface-1 border border-neon-400/10 shadow-soft">
+                    <p className="text-sm mb-3 text-text-muted">Вы ещё не оценили ни одного аниме</p>
+                    <Link to="/catalog" className="btn-primary btn-shine text-xs">Перейти к каталогу</Link>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3">
@@ -177,7 +177,7 @@ export default function Profile() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.02, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                       >
-                        <div className="aspect-[3/4] relative overflow-hidden rounded-t-2xl bg-surface-3">
+                        <div className="aspect-[3/4] relative overflow-hidden rounded-t-2xl bg-surface-2">
                           {rating.anime_image ? (
                             <img
                               src={rating.anime_image}
@@ -186,26 +186,26 @@ export default function Profile() {
                               loading="lazy"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center" style={{ color: 'rgba(255,255,255,0.08)' }}>Нет</div>
+                            <div className="w-full h-full flex items-center justify-center text-text-subtle">Нет</div>
                           )}
-                          <div className={`absolute top-2 left-2 score-badge border backdrop-blur-md ${scoreColor(rating.average_score)}`} style={{ fontFamily: 'JetBrains Mono' }}>
+                          <div className={`absolute top-2 left-2 score-badge border font-mono ${scoreColor(rating.average_score)}`}>
                             {rating.average_score?.toFixed(2)}
                           </div>
-                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-end pb-3 gap-1.5">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-end pb-3 gap-1.5">
                             {rating.drawing > 0 && (
-                              <div className="text-[10px] text-center px-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                              <div className="text-[10px] text-center px-2 text-white/70">
                                 Рис.{rating.drawing} · Ид.{rating.idea} · Реал.{rating.realization}<br/>
                                 Пер.{rating.characters} · Сюж.{rating.story} · Эмоц.{rating.emotional}
                               </div>
                             )}
                             <div className="flex gap-1.5">
-                              <button onClick={() => handleReRate(rating)} className="btn-primary text-[10px] !px-2.5 !py-1 !rounded-lg">Подробнее</button>
+                              <button onClick={() => handleReRate(rating)} className="btn-primary btn-shine text-[10px] !px-2.5 !py-1 !rounded-lg">Подробнее</button>
                               <button onClick={() => handleDeleteRating(rating.id)} className="btn-danger text-[10px] !px-2.5 !py-1 !rounded-lg">Удалить</button>
                             </div>
                           </div>
                         </div>
                         <div className="p-2.5">
-                          <h3 className="font-medium text-xs truncate" style={{ color: 'rgba(255,255,255,0.65)' }}>{rating.anime_name || `#${rating.anime_id}`}</h3>
+                          <h3 className="font-medium text-xs truncate text-text-secondary">{rating.anime_name || `#${rating.anime_id}`}</h3>
                         </div>
                       </motion.div>
                     ))}
@@ -217,9 +217,9 @@ export default function Profile() {
             {activeTab === 'tierlists' && (
               <div>
                 {tierLists.length === 0 ? (
-                  <div className="text-center py-16 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.2)' }}>У вас пока нет Tier List</p>
-                    <Link to="/tiermaker" className="btn-primary text-xs">Создать</Link>
+                  <div className="text-center py-16 rounded-2xl bg-surface-1 border border-neon-400/10 shadow-soft">
+                    <p className="text-sm mb-3 text-text-muted">У вас пока нет Tier List</p>
+                    <Link to="/tiermaker" className="btn-primary btn-shine text-xs">Создать</Link>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -228,27 +228,24 @@ export default function Profile() {
                       return (
                         <motion.div
                           key={list.id}
-                          className="rounded-xl px-4 py-3.5 flex items-center gap-3 cursor-pointer group transition-all duration-300"
-                          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
+                          className="rounded-xl px-4 py-3.5 flex items-center gap-3 cursor-pointer group transition-all duration-300 bg-surface-1 border border-neon-400/10 shadow-soft hover:border-neon-400/20"
                           onClick={() => navigate(`/tierlist/${list.id}`)}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.04, duration: 0.3 }}
-                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(251,191,36,0.15)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)' }}
                         >
                           <div className="flex gap-0.5 flex-shrink-0">
                             {tiers.filter((t) => t.items.length > 0).slice(0, 6).map((t) => (
-                              <div key={t.id} className="w-6 h-6 rounded-lg flex items-center justify-center text-[7px] font-bold" style={{ borderColor: t.color, backgroundColor: t.color + '15', color: t.color, border: `1px solid ${t.color}30` }}>
+                              <div key={t.id} className="w-6 h-6 rounded-lg flex items-center justify-center text-[7px] font-bold" style={{ backgroundColor: t.color + '15', color: t.color, border: `1px solid ${t.color}30` }}>
                                 {t.name}
                               </div>
                             ))}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-sm truncate group-hover:text-amber-400 transition-colors duration-200" style={{ color: 'rgba(255,255,255,0.7)' }}>{list.name}</h3>
-                            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'JetBrains Mono' }}>{new Date(list.created_at).toLocaleDateString('ru')}</p>
+                            <h3 className="font-medium text-sm truncate group-hover:text-neon-400 transition-colors duration-200 text-text-secondary">{list.name}</h3>
+                            <p className="text-[10px] text-text-muted font-mono">{new Date(list.created_at).toLocaleDateString('ru')}</p>
                           </div>
-                          <button onClick={(e) => { e.stopPropagation(); handleDeleteTierList(list.id) }} className="text-[10px] hover:text-coral-400 transition-colors flex-shrink-0" style={{ color: 'rgba(255,255,255,0.15)' }}>Удалить</button>
+                          <button onClick={(e) => { e.stopPropagation(); handleDeleteTierList(list.id) }} className="text-[10px] hover:text-danger transition-colors flex-shrink-0 text-text-muted">Удалить</button>
                         </motion.div>
                       )
                     })}
@@ -260,28 +257,28 @@ export default function Profile() {
             {activeTab === 'battle' && (
               <div>
                 {!battleStats ? (
-                  <div className="text-center py-16 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.2)' }}>Вы ещё не играли в Битву</p>
-                    <Link to="/battle" className="btn-primary text-xs">Начать</Link>
+                  <div className="text-center py-16 rounded-2xl bg-surface-1 border border-neon-400/10 shadow-soft">
+                    <p className="text-sm mb-3 text-text-muted">Вы ещё не играли в Битву</p>
+                    <Link to="/battle" className="btn-primary btn-shine text-xs">Начать</Link>
                   </div>
                 ) : (
-                  <div className="rounded-2xl p-6 sm:p-8" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div className="rounded-2xl p-6 sm:p-8 bg-surface-1 border border-neon-400/10 shadow-soft">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                       <div className="text-center">
-                        <div className="text-4xl font-bold text-amber-400 mb-1" style={{ fontFamily: 'JetBrains Mono', textShadow: '0 0 25px rgba(251,191,36,0.2)' }}>{battleStats.best}</div>
+                        <div className="text-4xl font-bold text-neon-400 mb-1 font-mono">{battleStats.best}</div>
                         <div className="label">Лучший результат</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-4xl font-bold text-mint-400 mb-1" style={{ fontFamily: 'JetBrains Mono', textShadow: '0 0 25px rgba(52,211,153,0.2)' }}>{battleStats.total}</div>
+                        <div className="text-4xl font-bold text-mint-500 mb-1 font-mono">{battleStats.total}</div>
                         <div className="label">Всего игр</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-4xl font-bold mb-1" style={{ fontFamily: 'JetBrains Mono', color: 'rgba(255,255,255,0.5)' }}>{battleStats.avg}</div>
+                        <div className="text-4xl font-bold text-text-muted mb-1 font-mono">{battleStats.avg}</div>
                         <div className="label">Средний счёт</div>
                       </div>
                     </div>
                     <div className="mt-8 text-center">
-                      <Link to="/battle" className="btn-primary text-xs">Играть</Link>
+                      <Link to="/battle" className="btn-primary btn-shine text-xs">Играть</Link>
                     </div>
                   </div>
                 )}
@@ -300,21 +297,20 @@ export default function Profile() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmModal(null)} />
+            <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setConfirmModal(null)} />
             <motion.div
-              className="relative rounded-2xl p-5 w-[90%] max-w-xs"
-              style={{ background: 'rgba(17,17,20,0.97)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px -16px rgba(0,0,0,0.7)' }}
+              className="relative rounded-2xl p-5 w-[90%] max-w-xs bg-surface-1 border border-neon-400/10 shadow-soft-lg"
               initial={{ scale: 0.95, y: 10 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 10 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
-              <p className="text-sm font-medium mb-5" style={{ color: 'rgba(255,255,255,0.7)' }}>{confirmModal.text}</p>
+              <p className="text-sm font-medium mb-5 text-text-secondary">{confirmModal.text}</p>
               <div className="flex gap-2 justify-end">
-                <button onClick={() => setConfirmModal(null)} className="px-4 py-1.5 rounded-lg text-xs font-medium transition-colors" style={{ color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <button onClick={() => setConfirmModal(null)} className="px-4 py-1.5 rounded-lg text-xs font-medium transition-colors text-text-muted border border-surface-3 hover:bg-surface-1">
                   Отмена
                 </button>
-                <button onClick={confirmAction} className="btn-primary text-xs !py-1.5">
+                <button onClick={confirmAction} className="btn-primary btn-shine text-xs !py-1.5">
                   Удалить
                 </button>
               </div>

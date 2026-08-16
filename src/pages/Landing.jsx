@@ -7,22 +7,22 @@ import { loadAnimeData } from '../utils/animeData'
 
 function AnimeStrip({ anime }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl" style={{ background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.04)' }}>
-      <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-surface-0 to-transparent z-10 rounded-l-2xl" />
-      <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-surface-0 to-transparent z-10 rounded-r-2xl" />
+    <div className="relative overflow-hidden rounded-lg border border-neon-400/15 bg-surface-1/80 backdrop-blur-sm">
+      <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-surface-0 to-transparent z-10 rounded-l-lg" />
+      <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-surface-0 to-transparent z-10 rounded-r-lg" />
       <div className="flex gap-2.5 animate-scroll py-3 px-3">
         {[...anime, ...anime].map((a, i) => (
-          <div key={`${a.id}-${i}`} className="flex-shrink-0 w-[120px] h-[170px] rounded-xl overflow-hidden relative group" style={{ background: '#18181c' }}>
+          <div key={`${a.id}-${i}`} className="flex-shrink-0 w-[120px] h-[170px] rounded-md overflow-hidden relative group bg-surface-2">
             <img
               src={a.image?.original ? `https://shikimori.one${a.image.original}` : ''}
               alt={a.russian || a.name}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="absolute inset-x-0 bottom-0 p-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
               <span className="text-[10px] text-white font-medium line-clamp-2 block leading-tight mb-0.5">{a.russian || a.name}</span>
-              <span className="text-[9px] text-amber-400 font-bold" style={{ fontFamily: 'JetBrains Mono' }}>★ {Number(a.score).toFixed(2)}</span>
+              <span className="text-[9px] text-neon-400 font-bold font-mono">★ {Number(a.score).toFixed(2)}</span>
             </div>
           </div>
         ))}
@@ -84,13 +84,38 @@ export default function Landing() {
     fetchStats()
   }, [])
 
-  const medals = ['🥇', '🥈', '🥉']
-
   return (
     <div className="min-h-screen">
-      <div className="max-w-[1400px] mx-auto px-5 sm:px-8 relative z-10 pt-20">
+      <div className="max-w-[1400px] mx-auto px-5 sm:px-8 relative z-10 pt-24">
+
+        <motion.section
+          className="hero-panel relative overflow-hidden px-6 sm:px-12 py-14 sm:py-20 mb-10"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="absolute inset-0 neon-grid pointer-events-none" />
+          <div className="relative max-w-3xl">
+            <span className="label block mb-4">АНИМЕ · ОЦЕНКИ · ТИР-ЛИСТЫ · БИТВЫ</span>
+            <h1 className="font-display font-bold text-white text-4xl sm:text-6xl leading-[1.05] tracking-wide mb-5">
+              Оценивай. Ранжируй. <span className="text-neon-400">Сражайся.</span>
+            </h1>
+            <p className="text-base sm:text-xl text-white/75 mb-8 max-w-2xl">
+              15 000+ тайтлов, детальная оценка по 6 критериям, тир-листы и музыкальные битвы — вся аниме-вселенная в одном неоновом месте.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link to={user ? '/rate' : '/register'} className="btn-primary btn-shine">
+                Начать оценку
+              </Link>
+              <Link to="/catalog" className="btn-ghost">
+                Открыть каталог
+              </Link>
+            </div>
+          </div>
+        </motion.section>
+
         {topAnime.length > 0 && (
-          <div className="mb-8">
+          <div className="mb-10">
             <AnimeStrip anime={topAnime} />
           </div>
         )}
@@ -112,8 +137,7 @@ export default function Landing() {
             >
               <Link
                 to={item.to}
-                className="block relative rounded-2xl overflow-hidden group h-[200px] sm:h-[220px]"
-                style={{ border: '1px solid rgba(255,255,255,0.05)' }}
+                className="block relative rounded-lg overflow-hidden group h-[200px] sm:h-[220px] border border-neon-400/15 hover:border-neon-400 hover:shadow-glow-neon transition-all duration-300"
               >
                 {item.img ? (
                   <img
@@ -123,13 +147,16 @@ export default function Landing() {
                     loading="lazy"
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-surface-3" />
+                  <div className="absolute inset-0 bg-surface-2" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-4">
-                  <h3 className="font-semibold text-sm mb-0.5 group-hover:text-amber-400 transition-colors duration-300">{item.title}</h3>
-                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{item.desc}</p>
+                  <h3 className="font-display font-semibold text-sm mb-0.5 text-white group-hover:text-neon-400 transition-colors duration-300">{item.title}</h3>
+                  <p className="text-[10px] text-white/50">{item.desc}</p>
                 </div>
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                  style={{ boxShadow: 'inset 0 0 30px rgba(187, 243, 81, 0.12)' }}
+                />
               </Link>
             </motion.div>
           ))}
@@ -148,32 +175,32 @@ export default function Landing() {
               <span className="label">Битва</span>
             </div>
 
-            <div className="rounded-2xl overflow-hidden max-w-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="card overflow-hidden max-w-2xl">
               {leaderboard.map((entry, i) => (
                 <Link
                   key={entry.user_id}
                   to={`/user/${entry.user_id}`}
-                  className="flex items-center gap-4 px-5 py-3.5 hover:bg-white/[0.02] transition-all duration-200 group relative"
-                  style={{ borderBottom: i < leaderboard.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}
+                  className="flex items-center gap-4 px-5 py-3.5 hover:bg-neon-400/5 transition-all duration-200 group relative"
+                  style={{ borderBottom: i < leaderboard.length - 1 ? '1px solid rgba(187, 243, 81, 0.08)' : 'none' }}
                 >
-                  <span className="w-7 text-center text-xs font-bold" style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'JetBrains Mono' }}>
-                    {i < 3 ? medals[i] : `${i + 1}`}
+                  <span className={`w-7 text-center text-xs font-bold font-display ${i < 3 ? 'text-neon-400' : 'text-text-subtle'}`}>
+                    {String(i + 1).padStart(2, '0')}
                   </span>
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:shadow-glow-amber" style={{ background: 'linear-gradient(135deg, rgba(251,191,36,0.1) 0%, rgba(249,115,22,0.06) 100%)', border: '1px solid rgba(251,191,36,0.12)' }}>
-                    <span className="text-[10px] font-bold text-amber-400">{entry.username[0].toUpperCase()}</span>
+                  <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:shadow-glow-neon bg-brand-softer border-2 border-brand-medium">
+                    <span className="text-[10px] font-bold text-neon-300">{entry.username[0].toUpperCase()}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium truncate block transition-colors duration-200" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                    <span className="text-sm font-medium truncate block transition-colors duration-200 text-text-secondary group-hover:text-text">
                       {entry.username}
                     </span>
                   </div>
-                  <span className="text-sm font-bold text-amber-400" style={{ fontFamily: 'JetBrains Mono' }}>{entry.best_score}</span>
+                  <span className="text-sm font-bold text-neon-400 font-mono">{entry.best_score}</span>
                 </Link>
               ))}
             </div>
 
             <div className="mt-8">
-              <Link to="/battle" className="btn-ghost text-xs !py-2.5">
+              <Link to="/battle" className="btn-ghost btn-shine text-xs !py-2.5">
                 Присоединяйся к битве →
               </Link>
             </div>

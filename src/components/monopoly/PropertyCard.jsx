@@ -30,7 +30,7 @@ export default function PropertyCard({ cellIndex, propData, owner, gameState, on
   return (
     <motion.div
       className="rounded-xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+      style={{ background: 'rgba(10,10,10,0.6)', border: '1px solid rgba(187,243,81,0.1)' }}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
     >
@@ -51,29 +51,29 @@ export default function PropertyCard({ cellIndex, propData, owner, gameState, on
         </motion.div>
       )}
       <div className="p-3 space-y-2">
-        <div className="text-[10px] flex items-center gap-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
-          <span>Стоимость: <span className="font-mono text-amber-400">${cell.price}</span></span>
+        <div className="text-[10px] flex items-center gap-2" style={{ color: '#707070' }}>
+          <span>Стоимость: <span className="font-mono text-neon-400">${cell.price}</span></span>
           {cell.housePrice && (
             <span className="ml-auto">Дом: <span className="font-mono text-green-400">${cell.housePrice}</span></span>
           )}
         </div>
 
         <div className="text-[10px] space-y-0.5">
-          <div className="font-medium mb-1 flex items-center gap-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <div className="font-medium mb-1 flex items-center gap-2" style={{ color: '#A0A0A0' }}>
             <span>Аренда:</span>
-            {hasMonopoly && <span className="text-[8px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">МОНОПОЛИЯ x2</span>}
+            {hasMonopoly && <span className="text-[8px] px-1.5 py-0.5 rounded bg-neon-400/20 text-neon-400 border border-neon-400/30">МОНОПОЛИЯ x2</span>}
           </div>
           {cell.rent?.map((r, i) => (
             <motion.div
               key={i}
               className="flex justify-between"
-              style={{ color: 'rgba(255,255,255,0.3)' }}
+              style={{ color: '#707070' }}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.03 }}
             >
               <span>{i === 0 ? 'Базовая' : i === 5 ? 'Отель' : `${i} дом${i === 1 ? '' : i < 5 ? 'а' : 'ов'}`}</span>
-              <span className="font-mono ${i === houses || (hasHotel && i === 5) ? 'text-amber-400' : ''}">${r}</span>
+              <span className="font-mono ${i === houses || (hasHotel && i === 5) ? 'text-neon-400' : ''}">${r}</span>
             </motion.div>
           ))}
         </div>
@@ -81,7 +81,7 @@ export default function PropertyCard({ cellIndex, propData, owner, gameState, on
         {owner && (
           <motion.div
             className="flex items-center gap-2 text-[10px]"
-            style={{ color: 'rgba(255,255,255,0.3)' }}
+            style={{ color: '#707070' }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
@@ -96,7 +96,7 @@ export default function PropertyCard({ cellIndex, propData, owner, gameState, on
         {isMortgaged && (
           <motion.div
             className="text-[10px] text-red-400 text-center py-1.5 rounded-lg"
-            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
+            style={{ background: 'rgba(255,51,102,0.1)', border: '1px solid rgba(255,51,102,0.2)' }}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
           >
@@ -114,8 +114,8 @@ export default function PropertyCard({ cellIndex, propData, owner, gameState, on
               <motion.button
                 onClick={() => onBuild?.(cellIndex)}
                 className="text-[9px] px-2.5 py-1.5 rounded-lg text-green-400 font-medium"
-                style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}
-                whileHover={{ background: 'rgba(34,197,94,0.2)' }}
+                style={{ background: 'rgba(187,243,81,0.1)', border: '1px solid rgba(187,243,81,0.2)' }}
+                whileHover={{ background: 'rgba(187,243,81,0.2)' }}
                 whileTap={{ scale: 0.97 }}
               >
                 🏠 Дом ${cell.housePrice}
@@ -124,9 +124,9 @@ export default function PropertyCard({ cellIndex, propData, owner, gameState, on
             {canSell && (
               <motion.button
                 onClick={() => onSell?.(cellIndex)}
-                className="text-[9px] px-2.5 py-1.5 rounded-lg text-amber-400 font-medium"
-                style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)' }}
-                whileHover={{ background: 'rgba(251,191,36,0.2)' }}
+                className="text-[9px] px-2.5 py-1.5 rounded-lg text-neon-400 font-medium"
+                style={{ background: 'rgba(187,243,81,0.1)', border: '1px solid rgba(187,243,81,0.2)' }}
+                whileHover={{ background: 'rgba(187,243,81,0.2)' }}
                 whileTap={{ scale: 0.97 }}
               >
                 Продать ${Math.floor(cell.housePrice / 2)}
@@ -136,8 +136,8 @@ export default function PropertyCard({ cellIndex, propData, owner, gameState, on
               <motion.button
                 onClick={() => onMortgage?.(cellIndex)}
                 className="text-[9px] px-2.5 py-1.5 rounded-lg text-red-400 font-medium"
-                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
-                whileHover={{ background: 'rgba(239,68,68,0.2)' }}
+                style={{ background: 'rgba(255,51,102,0.1)', border: '1px solid rgba(255,51,102,0.2)' }}
+                whileHover={{ background: 'rgba(255,51,102,0.2)' }}
                 whileTap={{ scale: 0.97 }}
               >
                 Заложить ${mortgageValue}
@@ -155,8 +155,8 @@ export default function PropertyCard({ cellIndex, propData, owner, gameState, on
             <motion.button
               onClick={() => onMortgage?.(cellIndex)}
               className="text-[9px] px-2.5 py-1.5 rounded-lg text-green-400 font-medium"
-              style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}
-              whileHover={{ background: 'rgba(34,197,94,0.2)' }}
+              style={{ background: 'rgba(187,243,81,0.1)', border: '1px solid rgba(187,243,81,0.2)' }}
+              whileHover={{ background: 'rgba(187,243,81,0.2)' }}
               whileTap={{ scale: 0.97 }}
             >
               Снять с заклада ${unmortgagePrice}

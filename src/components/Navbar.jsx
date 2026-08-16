@@ -87,15 +87,15 @@ export default function Navbar() {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
       scrolled
-        ? 'bg-surface-0/80 backdrop-blur-2xl border-b border-white/[0.04] shadow-[0_1px_0_0_rgba(255,255,255,0.02)]'
+        ? 'bg-surface-0/85 backdrop-blur-2xl border-b border-neon-400/20 shadow-neon'
         : 'bg-transparent'
     }`}>
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8">
         <div className="flex items-center justify-between h-14">
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-0.5 group relative">
-              <span className="text-base font-bold tracking-tight text-white/90 transition-colors group-hover:text-white" style={{ fontFamily: 'Space Grotesk' }}>x</span>
-              <span className="text-base font-bold tracking-tight text-amber-400 transition-all group-hover:text-amber-300 group-hover:drop-shadow-[0_0_8px_rgba(251,191,36,0.3)]" style={{ fontFamily: 'Space Grotesk' }}>Aura</span>
+              <span className="text-base font-bold tracking-tight font-display text-text-muted transition-colors group-hover:text-text">x</span>
+              <span className="text-base font-bold tracking-tight font-display text-neon-400 transition-all group-hover:text-neon-300 group-hover:drop-shadow-[0_0_12px_rgba(187,243,81,0.5)]">Aura</span>
             </Link>
 
             <div className="hidden md:flex items-center gap-0.5">
@@ -105,15 +105,15 @@ export default function Navbar() {
                   to={link.to}
                   className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-300 relative ${
                     isActive(link.to)
-                      ? 'text-amber-400'
-                      : 'text-white/35 hover:text-white/70'
+                      ? 'text-neon-400'
+                      : 'text-text-muted hover:text-text'
                   }`}
                 >
                   {link.label}
                   {isActive(link.to) && (
                     <motion.div
                       layoutId="nav-active"
-                      className="absolute inset-0 bg-amber-500/[0.07] rounded-lg border border-amber-500/10"
+                      className="absolute inset-0 bg-neon-400/10 rounded-lg border border-neon-400/15"
                       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     />
                   )}
@@ -126,8 +126,8 @@ export default function Navbar() {
                     onClick={() => setFeaturesOpen(!featuresOpen)}
                     className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-300 flex items-center gap-1.5 ${
                       featureLinks.some(l => isActive(l.to))
-                        ? 'text-amber-400'
-                        : 'text-white/35 hover:text-white/70'
+                        ? 'text-neon-400'
+                        : 'text-text-muted hover:text-text'
                     }`}
                   >
                     Мини-игры
@@ -137,7 +137,7 @@ export default function Navbar() {
                     {featureLinks.some(l => isActive(l.to)) && (
                       <motion.div
                         layoutId="nav-active"
-                        className="absolute inset-0 bg-amber-500/[0.07] rounded-lg border border-amber-500/10 -z-10"
+                        className="absolute inset-0 bg-neon-400/10 rounded-lg border border-neon-400/15 -z-10"
                         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                       />
                     )}
@@ -150,13 +150,7 @@ export default function Navbar() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -4, scale: 0.98 }}
                         transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                        className="absolute top-full mt-2 left-0 w-52 rounded-xl overflow-hidden"
-                        style={{
-                          background: 'rgba(17,17,20,0.95)',
-                          border: '1px solid rgba(255,255,255,0.06)',
-                          boxShadow: '0 16px 48px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03)',
-                          backdropFilter: 'blur(20px)',
-                        }}
+                        className="absolute top-full mt-2 left-0 w-52 rounded-xl overflow-hidden glass border border-neon-400/10 shadow-neon-lg z-50"
                       >
                         {featureLinks.map((link) => (
                           <Link
@@ -165,14 +159,14 @@ export default function Navbar() {
                             onClick={() => setFeaturesOpen(false)}
                             className={`flex flex-col px-4 py-2.5 transition-all duration-200 group/item ${
                               isActive(link.to)
-                                ? 'bg-amber-500/[0.06]'
-                                : 'hover:bg-white/[0.04]'
+                                ? 'bg-neon-400/10'
+                                : 'hover:bg-surface-2/50'
                             }`}
                           >
-                            <span className={`text-[13px] font-medium ${isActive(link.to) ? 'text-amber-400' : 'text-white/60 group-hover/item:text-white/90'} transition-colors`}>
+                            <span className={`text-[13px] font-medium ${isActive(link.to) ? 'text-neon-400' : 'text-text-secondary group-hover/item:text-text'} transition-colors`}>
                               {link.label}
                             </span>
-                            <span className="text-[10px] text-white/20 mt-0.5">{link.desc}</span>
+                            <span className="text-[10px] text-text-muted mt-0.5">{link.desc}</span>
                           </Link>
                         ))}
                       </motion.div>
@@ -190,23 +184,9 @@ export default function Navbar() {
                   onChange={(e) => handleSearch(e.target.value)}
                   onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
                   placeholder="Найти пользователя..."
-                  className="w-44 rounded-lg px-3 py-1.5 pl-8 text-xs text-white/80 placeholder-white/15 focus:outline-none transition-all duration-500"
-                  style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.05)',
-                  }}
-                  onFocusCapture={(e) => {
-                    e.target.style.borderColor = 'rgba(251,191,36,0.2)'
-                    e.target.style.width = '220px'
-                    e.target.style.background = 'rgba(255,255,255,0.04)'
-                  }}
-                  onBlurCapture={(e) => {
-                    e.target.style.borderColor = 'rgba(255,255,255,0.05)'
-                    e.target.style.width = '176px'
-                    e.target.style.background = 'rgba(255,255,255,0.03)'
-                  }}
+                  className="w-44 rounded-lg px-3 py-1.5 pl-8 text-xs text-text placeholder-text-muted focus:outline-none transition-all duration-500 bg-surface-1/80 border border-neon-400/10 focus:border-neon-400/50 focus:shadow-[0_0_0_3px_rgba(187,243,81,0.12)] focus:w-56 backdrop-blur-sm"
                 />
-                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/15 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
@@ -218,24 +198,18 @@ export default function Navbar() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -4, scale: 0.98 }}
                     transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute top-full mt-2 left-0 w-56 rounded-xl overflow-hidden"
-                    style={{
-                      background: 'rgba(17,17,20,0.95)',
-                      border: '1px solid rgba(255,255,255,0.06)',
-                      boxShadow: '0 16px 48px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03)',
-                      backdropFilter: 'blur(20px)',
-                    }}
+                    className="absolute top-full mt-2 left-0 w-56 rounded-xl overflow-hidden glass border border-neon-400/10 shadow-neon-lg z-50"
                   >
                     {searchResults.map((u) => (
                       <button
                         key={u.id}
                         onClick={() => handleUserClick(u.id)}
-                        className="w-full px-3.5 py-2.5 flex items-center gap-3 hover:bg-white/[0.04] transition-colors duration-200 text-left group/item"
+                        className="w-full px-3.5 py-2.5 flex items-center gap-3 hover:bg-surface-2/50 transition-colors duration-200 text-left group/item"
                       >
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all group-hover/item:shadow-glow-amber" style={{ background: 'linear-gradient(135deg, rgba(251,191,36,0.12) 0%, rgba(249,115,22,0.08) 100%)', border: '1px solid rgba(251,191,36,0.15)' }}>
-                          <span className="text-[10px] font-bold text-amber-400">{u.username[0].toUpperCase()}</span>
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all group-hover/item:shadow-glow-neon bg-neon-400/10 border border-neon-400/20">
+                          <span className="text-[10px] font-bold text-neon-400">{u.username[0].toUpperCase()}</span>
                         </div>
-                        <span className="text-xs text-white/60 truncate group-hover/item:text-white/90 transition-colors">{u.username}</span>
+                        <span className="text-xs text-text-secondary truncate group-hover/item:text-text transition-colors">{u.username}</span>
                       </button>
                     ))}
                   </motion.div>
@@ -251,20 +225,20 @@ export default function Navbar() {
                   to="/profile"
                   className="px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-300 relative group"
                 >
-                  <span className={isActive('/profile') ? 'text-amber-400' : 'text-white/35 group-hover:text-white/70'}>
+                  <span className={isActive('/profile') ? 'text-neon-400' : 'text-text-muted group-hover:text-text'}>
                     {user.username}
                   </span>
                   {isActive('/profile') && (
                     <motion.div
                       layoutId="nav-active-right"
-                      className="absolute inset-0 bg-amber-500/[0.07] rounded-lg border border-amber-500/10"
+                      className="absolute inset-0 bg-neon-400/10 rounded-lg border border-neon-400/15"
                       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     />
                   )}
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-xs text-white/20 hover:text-white/50 px-2.5 py-1.5 rounded-lg hover:bg-white/[0.03] transition-all duration-200"
+                  className="text-xs text-text-muted hover:text-text px-2.5 py-1.5 rounded-lg hover:bg-surface-2/50 transition-all duration-200"
                 >
                   Выход
                 </button>
@@ -274,7 +248,7 @@ export default function Navbar() {
                 <Link to="/login" className="btn-ghost !text-xs !px-4 !py-2">
                   Вход
                 </Link>
-                <Link to="/register" className="btn-primary !text-xs !px-4 !py-2">
+                <Link to="/register" className="btn-primary btn-shine !text-xs !px-4 !py-2">
                   Регистрация
                 </Link>
               </>
@@ -283,7 +257,7 @@ export default function Navbar() {
 
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden text-white/30 hover:text-white p-2 rounded-lg hover:bg-white/[0.04] transition-all"
+            className="md:hidden text-text-muted hover:text-text p-2 rounded-lg hover:bg-surface-2/50 transition-all"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {menuOpen ? (
@@ -303,8 +277,7 @@ export default function Navbar() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="md:hidden border-t border-white/[0.04] overflow-hidden"
-            style={{ background: 'rgba(10,10,12,0.95)', backdropFilter: 'blur(20px)' }}
+            className="md:hidden border-t border-neon-400/10 overflow-hidden bg-surface-0/95 backdrop-blur-xl"
           >
             <div className="px-5 py-4 space-y-1">
               <div className="relative mb-3">
@@ -316,17 +289,17 @@ export default function Navbar() {
                   className="input !text-xs"
                 />
                 {showDropdown && searchResults.length > 0 && (
-                  <div className="absolute top-full mt-1 left-0 right-0 rounded-xl overflow-hidden z-50" style={{ background: 'rgba(17,17,20,0.95)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 16px 48px -12px rgba(0,0,0,0.7)' }}>
+                  <div className="absolute top-full mt-1 left-0 right-0 rounded-xl overflow-hidden z-50 glass border border-neon-400/10 shadow-neon-lg">
                     {searchResults.map((u) => (
                       <button
                         key={u.id}
                         onClick={() => { handleUserClick(u.id); setMenuOpen(false) }}
-                        className="w-full px-3.5 py-2.5 flex items-center gap-3 hover:bg-white/[0.04] transition-colors text-left"
+                        className="w-full px-3.5 py-2.5 flex items-center gap-3 hover:bg-surface-2/50 transition-colors text-left"
                       >
-                        <div className="w-7 h-7 rounded-lg bg-amber-500/[0.1] border border-amber-500/15 flex items-center justify-center flex-shrink-0">
-                          <span className="text-[10px] font-bold text-amber-400">{u.username[0].toUpperCase()}</span>
+                        <div className="w-7 h-7 rounded-lg bg-neon-400/10 border border-neon-400/20 flex items-center justify-center flex-shrink-0">
+                          <span className="text-[10px] font-bold text-neon-400">{u.username[0].toUpperCase()}</span>
                         </div>
-                        <span className="text-xs text-white/60 truncate">{u.username}</span>
+                        <span className="text-xs text-text-secondary truncate">{u.username}</span>
                       </button>
                     ))}
                   </div>
@@ -338,7 +311,7 @@ export default function Navbar() {
                   to={link.to}
                   onClick={() => setMenuOpen(false)}
                   className={`block py-2.5 px-3 rounded-lg text-sm transition-all duration-200 ${
-                    isActive(link.to) ? 'text-amber-400 bg-amber-500/[0.06]' : 'text-white/35 hover:text-white/70 hover:bg-white/[0.03]'
+                    isActive(link.to) ? 'text-neon-400 bg-neon-400/10' : 'text-text-muted hover:text-text hover:bg-surface-2/50'
                   }`}
                 >
                   {link.label}
@@ -346,14 +319,14 @@ export default function Navbar() {
               ))}
               {user && (
                 <>
-                  <div className="py-1.5 px-3 text-[10px] text-white/15 uppercase tracking-wider font-medium">Мини-игры</div>
+                  <div className="py-1.5 px-3 text-[10px] text-text-muted uppercase tracking-wider font-medium">Мини-игры</div>
                   {featureLinks.map((link) => (
                     <Link
                       key={link.to}
                       to={link.to}
                       onClick={() => setMenuOpen(false)}
                       className={`block py-2.5 px-3 rounded-lg text-sm transition-all duration-200 ${
-                        isActive(link.to) ? 'text-amber-400 bg-amber-500/[0.06]' : 'text-white/35 hover:text-white/70 hover:bg-white/[0.03]'
+                        isActive(link.to) ? 'text-neon-400 bg-neon-400/10' : 'text-text-muted hover:text-text hover:bg-surface-2/50'
                       }`}
                     >
                       {link.label}
@@ -363,13 +336,13 @@ export default function Navbar() {
               )}
               {user ? (
                 <>
-                  <Link to="/profile" onClick={() => setMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-sm text-white/35 hover:text-white/70 hover:bg-white/[0.03]">{user.username}</Link>
-                  <button onClick={() => { handleLogout(); setMenuOpen(false) }} className="block w-full text-left py-2.5 px-3 rounded-lg text-sm text-white/35 hover:text-white/70 hover:bg-white/[0.03]">Выход</button>
+                  <Link to="/profile" onClick={() => setMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-sm text-text-muted hover:text-text hover:bg-surface-2/50">{user.username}</Link>
+                  <button onClick={() => { handleLogout(); setMenuOpen(false) }} className="block w-full text-left py-2.5 px-3 rounded-lg text-sm text-text-muted hover:text-text hover:bg-surface-2/50">Выход</button>
                 </>
               ) : (
                 <>
-                  <Link to="/login" onClick={() => setMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-sm text-white/35 hover:text-white/70 hover:bg-white/[0.03]">Вход</Link>
-                  <Link to="/register" onClick={() => setMenuOpen(false)} className="block btn-primary text-center mt-2">Регистрация</Link>
+                  <Link to="/login" onClick={() => setMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-sm text-text-muted hover:text-text hover:bg-surface-2/50">Вход</Link>
+                  <Link to="/register" onClick={() => setMenuOpen(false)} className="block btn-primary btn-shine text-center mt-2">Регистрация</Link>
                 </>
               )}
             </div>

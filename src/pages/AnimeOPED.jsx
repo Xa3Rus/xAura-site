@@ -143,16 +143,16 @@ export default function AnimeOPED() {
               className="text-center py-20"
             >
               <div className="mb-8">
-                <div className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-6" style={{ background: 'linear-gradient(135deg, rgba(251,191,36,0.15), rgba(249,115,22,0.08))', border: '1px solid rgba(251,191,36,0.2)' }}>
-                  <svg className="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-6 bg-surface-1 border border-neon-400/10">
+                  <svg className="w-8 h-8 text-neon-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                   </svg>
                 </div>
-                <h1 className="text-2xl font-bold mb-3" style={{ fontFamily: 'Space Grotesk' }}>Угадай аниме</h1>
-                <p className="text-sm mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>по опенингу или эндингу</p>
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>{songs.length} треков из {allAnime.length} аниме</p>
+                <h1 className="text-2xl font-bold mb-3 neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>Угадай аниме</h1>
+                <p className="text-sm mb-2 text-text-muted">по опенингу или эндингу</p>
+                <p className="text-xs text-text-muted">{songs.length} треков из {allAnime.length} аниме</p>
               </div>
-              <button onClick={startGame} className="btn-primary text-sm !px-8 !py-3">
+              <button onClick={startGame} className="btn-primary btn-shine text-sm !px-8 !py-3">
                 Начать
               </button>
             </motion.div>
@@ -171,8 +171,8 @@ export default function AnimeOPED() {
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.5 }}
-                className="text-7xl font-bold text-amber-400"
-                style={{ fontFamily: 'JetBrains Mono' }}
+                className="text-7xl font-bold text-neon-400"
+                style={{ fontFamily: 'Source Code Pro' }}
               >
                 {countdown || '▶'}
               </motion.span>
@@ -188,22 +188,22 @@ export default function AnimeOPED() {
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono' }}>
+                  <span className="text-xs text-text-muted" style={{ fontFamily: 'Source Code Pro' }}>
                     {round} / {ROUNDS}
                   </span>
-                  <span className="tag !bg-amber-500/10 !text-amber-400 !border-amber-500/15">
+                  <span className="tag !bg-neon-600/10 !text-neon-400 !border-neon-600/15">
                     {currentSong.type === 'opening' ? 'Opening' : 'Ending'}
                   </span>
                   {currentSong.type_number && (
                     <span className="tag">{currentSong.type_number}</span>
                   )}
                 </div>
-                <span className="text-sm font-bold text-amber-400" style={{ fontFamily: 'JetBrains Mono' }}>
+                <span className="text-sm font-bold text-neon-400" style={{ fontFamily: 'Source Code Pro' }}>
                   ★ {score}
                 </span>
               </div>
 
-              <div className="rounded-2xl overflow-hidden mb-6 relative" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div className="rounded-2xl overflow-hidden mb-6 relative bg-surface-1 border border-neon-400/10">
                 <div className="aspect-video">
                   <iframe
                     ref={playerRef}
@@ -217,14 +217,14 @@ export default function AnimeOPED() {
                     className={`w-full h-full transition-opacity duration-500 ${showVideo ? 'opacity-100' : 'opacity-0'}`}
                   />
                   {!showVideo && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3" style={{ background: 'rgba(10,10,12,0.95)' }}>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-surface-2">
                       <div className="relative">
-                        <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)' }}>
+                        <div className="w-16 h-16 rounded-full flex items-center justify-center bg-neon-600/10 border border-neon-600/20">
                           <div className="flex items-end gap-1 h-6">
                             {[1,2,3,4,5].map((i) => (
                               <motion.div
                                 key={i}
-                                className="w-1 bg-amber-400 rounded-full"
+                                className="w-1 bg-neon-600 rounded-full"
                                 animate={{ height: [8, 20, 12, 24, 8] }}
                                 transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.1, ease: 'easeInOut' }}
                               />
@@ -232,13 +232,13 @@ export default function AnimeOPED() {
                           </div>
                         </div>
                       </div>
-                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Слушай и угадывай...</span>
+                      <span className="text-xs text-text-muted">Слушай и угадывай...</span>
                     </div>
                   )}
                 </div>
               </div>
 
-              <p className="text-xs text-center mb-4" style={{ color: 'rgba(255,255,255,0.25)' }}>
+              <p className="text-xs text-center mb-4 text-text-muted">
                 Какое аниме?
               </p>
 
@@ -262,33 +262,33 @@ export default function AnimeOPED() {
                       }`}
                       style={{
                         background: showCorrectHighlight
-                          ? 'rgba(34,197,94,0.1)'
+                          ? 'rgba(0,204,136,0.1)'
                           : showWrongHighlight
-                          ? 'rgba(239,68,68,0.1)'
-                          : 'rgba(255,255,255,0.03)',
+                          ? 'rgba(255,51,102,0.1)'
+                          : 'rgba(10, 10, 10, 0.8)',
                         border: `1px solid ${
                           showCorrectHighlight
-                            ? 'rgba(34,197,94,0.3)'
+                            ? 'rgba(0,204,136,0.3)'
                             : showWrongHighlight
-                            ? 'rgba(239,68,68,0.3)'
-                            : 'rgba(255,255,255,0.05)'
+                            ? 'rgba(255,51,102,0.3)'
+                            : '#111111'
                         }`,
                       }}
                     >
                       {poster ? (
                         <img src={poster} alt="" className="w-10 h-14 rounded-lg object-cover flex-shrink-0" />
                       ) : (
-                        <div className="w-10 h-14 rounded-lg bg-surface-3 flex items-center justify-center flex-shrink-0">
-                          <span className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.1)' }}>
+                        <div className="w-10 h-14 rounded-lg bg-surface-2 flex items-center justify-center flex-shrink-0">
+                          <span className="text-sm font-bold text-text-muted">
                             {(opt.animeData?.russian || opt.anime || '?')[0]}
                           </span>
                         </div>
                       )}
-                      <span className="text-xs font-medium truncate" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                      <span className="text-xs font-medium truncate text-text">
                         {opt.animeData?.russian || opt.anime}
                       </span>
-                      {showCorrectHighlight && <span className="ml-auto text-green-400 text-sm">✓</span>}
-                      {showWrongHighlight && <span className="ml-auto text-red-400 text-sm">✗</span>}
+                      {showCorrectHighlight && <span className="ml-auto text-success text-sm">✓</span>}
+                      {showWrongHighlight && <span className="ml-auto text-danger-lightened text-sm">✗</span>}
                     </motion.button>
                   )
                 })}
@@ -300,7 +300,7 @@ export default function AnimeOPED() {
                   animate={{ opacity: 1, y: 0 }}
                   className="text-center"
                 >
-                  <p className="text-sm mb-4" style={{ color: selected?.isCorrect ? 'rgba(34,197,94,0.8)' : 'rgba(239,68,68,0.8)' }}>
+                  <p className="text-sm mb-4" style={{ color: selected?.isCorrect ? 'rgba(0,204,136,0.8)' : 'rgba(255,51,102,0.8)' }}>
                     {selected?.isCorrect ? 'Верно!' : `Неверно! Это ${currentSong.animeData?.russian || currentSong.anime}`}
                   </p>
                   <div className="flex items-center justify-center gap-2.5">
@@ -310,7 +310,7 @@ export default function AnimeOPED() {
                     >
                       ↻ Переслушать
                     </button>
-                    <button onClick={handleNext} className="btn-primary text-xs !py-2.5">
+                    <button onClick={handleNext} className="btn-primary btn-shine text-xs !py-2.5">
                       {round >= ROUNDS ? 'Результат' : 'Далее →'}
                     </button>
                   </div>
@@ -328,8 +328,8 @@ export default function AnimeOPED() {
               className="text-center py-16"
             >
               <div className="mb-8">
-                <div className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-6" style={{ background: score >= 8 ? 'linear-gradient(135deg, rgba(251,191,36,0.15), rgba(249,115,22,0.08))' : 'rgba(255,255,255,0.03)', border: `1px solid ${score >= 8 ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.05)'}` }}>
-                  <svg className={`w-10 h-10 ${score >= 8 ? 'text-amber-400' : 'text-white/20'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-6 bg-surface-1 border border-neon-400/10">
+                  <svg className={`w-10 h-10 ${score >= 8 ? 'text-neon-400' : 'text-text-muted'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     {score >= 8 ? (
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     ) : (
@@ -337,20 +337,20 @@ export default function AnimeOPED() {
                     )}
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Space Grotesk' }}>
+                <h2 className="text-2xl font-bold mb-2 neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>
                   {score >= 8 ? 'Великолепно!' : score >= 5 ? 'Хороший результат!' : 'Стоит попробовать ещё раз'}
                 </h2>
-                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                <p className="text-sm text-text-muted">
                   {score} из {ROUNDS} верных ответов
                 </p>
                 <div className="mt-4">
-                  <span className="text-3xl font-bold text-amber-400" style={{ fontFamily: 'JetBrains Mono' }}>
+                  <span className="text-3xl font-bold text-neon-400" style={{ fontFamily: 'Source Code Pro' }}>
                     ★ {score}
                   </span>
                 </div>
               </div>
               <div className="flex items-center justify-center gap-3">
-                <button onClick={startGame} className="btn-primary text-xs !py-2.5">
+                <button onClick={startGame} className="btn-primary btn-shine text-xs !py-2.5">
                   Заново
                 </button>
                 <Link to="/" className="btn-ghost text-xs !py-2.5">

@@ -113,15 +113,43 @@ export function registerSocketHandlers(io) {
     userSockets.set(userId, socket.id);
     console.log(`[Monopoly] ${username} connected (${socket.id})`);
 
-    socket.on('room:create', (_, cb) => {
-      const room = createRoom(userId, username);
+    socket.on('room:create', (data, cb) => {
+      // leave any previous room first
+      const oldCode = socketRooms.get(socket.id);
+      if (oldCode) {
+        socket.leave(oldCode);
+        socketRooms.delete(socket.id);
+        const left = leaveRoom(oldCode, userId);
+        if (left && !left.error && !left.deleted) io.to(oldCode).emit('room:updated', left);
+      }
+      const room = createRoom(userId, username, data?.token);
       socket.join(room.code);
       socketRooms.set(socket.id, room.code);
       cb?.({ success: true, room });
     });
 
-    socket.on('room:join', (code, cb) => {
-      const result = joinRoom(code, userId, username);
+    socket.on('room:join', (payload, cb) => {
+      // accepts plain 'CODE' string or { code, token }
+      const code = typeof payload === 'string' ? payload : payload?.code;
+      const token = typeof payload === 'string' ? undefined : payload?.token;
+      if (!code) return cb?.({ error: 'No room code' });
+
+      const existingRoom = getRoom(code);
+      if (!existingRoom) return cb?.({ error: 'Room not found' });
+
+      // rejoin support: player already in the room (refresh / reconnect)
+      const existingPlayer = existingRoom.players.find((p) => p.id === userId);
+      if (existingPlayer) {
+        existingPlayer.connected = true;
+        if (token) existingPlayer.token = token;
+        socket.join(code);
+        socketRooms.set(socket.id, code);
+        io.to(code).emit('room:updated', existingRoom);
+        if (existingRoom.gameState) io.to(code).emit('game:updated', existingRoom.gameState);
+        return cb?.({ success: true, room: existingRoom, gameState: existingRoom.gameState || null, rejoined: true });
+      }
+
+      const result = joinRoom(code, userId, username, undefined, token);
       if (result.error) return cb?.({ error: result.error });
       socket.join(code);
       socketRooms.set(socket.id, code);
@@ -158,6 +186,7 @@ export function registerSocketHandlers(io) {
           userId: p.id,
           username: p.name,
           color: p.color,
+          token: p.token || '🚗',
         }));
         room.gameState = createGame(players);
         room.gameState.roomId = code;
@@ -175,6 +204,16 @@ export function registerSocketHandlers(io) {
       const code = socketRooms.get(socket.id);
       if (!code) return cb?.({ room: null });
       cb?.({ room: getRoom(code) });
+    });
+
+    socket.on('game:state', (_, cb) => {
+      const code = socketRooms.get(socket.id);
+      if (!code) return cb?.({ gameState: null, room: null });
+      const room = getRoom(code);
+      cb?.({
+        gameState: room?.gameState || null,
+        room: room ? { code: room.code, hostId: room.hostId, status: room.status, players: room.players } : null,
+      });
     });
 
     socket.on('game:rollDice', (_, cb) => {

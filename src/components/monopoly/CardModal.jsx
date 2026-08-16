@@ -12,9 +12,9 @@ export default function CardModal({ card, type, onClose }) {
         <motion.div
           className="relative w-full max-w-xs rounded-2xl p-6 text-center"
           style={{
-            background: 'rgba(17,17,20,0.97)',
-            border: `1px solid ${isChance ? 'rgba(168,85,247,0.3)' : 'rgba(59,130,246,0.3)'}`,
-            boxShadow: `0 0 60px ${isChance ? 'rgba(168,85,247,0.05)' : 'rgba(59,130,246,0.05)'}`,
+            background: '#0A0A0A',
+            border: `1px solid ${isChance ? 'rgba(191,90,242,0.3)' : 'rgba(0,229,255,0.3)'}`,
+            boxShadow: `0 4px 24px ${isChance ? 'rgba(191,90,242,0.15)' : 'rgba(0,229,255,0.15)'}`,
           }}
           initial={{ rotateY: 90, scale: 0.8 }}
           animate={{ rotateY: 0, scale: 1 }}
@@ -24,8 +24,8 @@ export default function CardModal({ card, type, onClose }) {
           <motion.div
             className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center relative overflow-hidden"
             style={{
-              background: isChance ? 'rgba(168,85,247,0.1)' : 'rgba(59,130,246,0.1)',
-              border: `1px solid ${isChance ? 'rgba(168,85,247,0.2)' : 'rgba(59,130,246,0.2)'}`,
+              background: isChance ? 'rgba(191,90,242,0.1)' : 'rgba(0,229,255,0.1)',
+              border: `1px solid ${isChance ? 'rgba(191,90,242,0.2)' : 'rgba(0,229,255,0.2)'}`,
             }}
             animate={{ rotate: [0, 5, -5, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
@@ -38,10 +38,10 @@ export default function CardModal({ card, type, onClose }) {
               transition={{ duration: 2, repeat: Infinity }}
             />
           </motion.div>
-          <h3 className="font-bold text-sm mb-1" style={{ fontFamily: 'Space Grotesk', color: isChance ? '#c084fc' : '#60a5fa' }}>
+          <h3 className="font-bold text-sm mb-1" style={{ fontFamily: 'Quantico, Inter, sans-serif', color: isChance ? '#BF5AF2' : '#00E5FF' }}>
             {isChance ? 'Шанс' : 'Общественная казна'}
           </h3>
-          <p className="text-xs mb-5 leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>{card.text}</p>
+          <p className="text-xs mb-5 leading-relaxed" style={{ color: '#A0A0A0' }}>{card.text}</p>
           <motion.button
             onClick={onClose}
             className="btn-primary w-full text-xs"

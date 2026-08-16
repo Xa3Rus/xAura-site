@@ -8,17 +8,17 @@ import { loadAnimeData } from '../utils/animeData'
 import { loadFoodData, parseTierMakerUrl, loadTierMakerTemplate } from '../utils/foodData'
 
 const PRESET_COLORS = [
-  '#f87171', '#fb923c', '#facc15', '#4ade80', '#60a5fa', '#a78bfa',
-  '#f472b6', '#34d399', '#f97316', '#818cf8', '#22c55e', '#ec4899',
+  '#FF2D78', '#FF8A33', '#D4F785', '#BBF351', '#00CC88', '#00E5FF',
+  '#BF5AF2', '#FF6688', '#9EDB3E', '#66F0FF', '#FF5C93', '#707070',
 ]
 
 const DEFAULT_TIERS = [
-  { id: 's', name: 'S', color: '#f87171', items: [] },
-  { id: 'a', name: 'A', color: '#fb923c', items: [] },
-  { id: 'b', name: 'B', color: '#facc15', items: [] },
-  { id: 'c', name: 'C', color: '#4ade80', items: [] },
-  { id: 'd', name: 'D', color: '#60a5fa', items: [] },
-  { id: 'f', name: 'F', color: '#6b7280', items: [] },
+  { id: 's', name: 'S', color: '#FF2D78', items: [] },
+  { id: 'a', name: 'A', color: '#FF8A33', items: [] },
+  { id: 'b', name: 'B', color: '#D4F785', items: [] },
+  { id: 'c', name: 'C', color: '#BBF351', items: [] },
+  { id: 'd', name: 'D', color: '#00E5FF', items: [] },
+  { id: 'f', name: 'F', color: '#707070', items: [] },
 ]
 
 function hexToHSV(hex) {
@@ -134,8 +134,8 @@ function ColorPicker({ color, onChange }) {
           type="text"
           value={color}
           onChange={(e) => { if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) onChange(e.target.value) }}
-          className="w-20 text-center text-[10px] rounded-lg px-1.5 py-1 outline-none"
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', fontFamily: 'JetBrains Mono' }}
+          className="w-20 text-center text-[10px] rounded-lg px-1.5 py-1 outline-none bg-surface-2 border border-neon-400/10 text-text-secondary"
+          style={{ fontFamily: 'Source Code Pro' }}
         />
       </div>
     </div>
@@ -507,7 +507,7 @@ export default function TierMaker() {
               value={tierListName}
               onChange={(e) => setTierListName(e.target.value)}
               className="text-xl font-bold bg-transparent outline-none pb-1 transition-colors"
-              style={{ fontFamily: 'Space Grotesk', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+              style={{ fontFamily: 'Quantico, Inter, sans-serif', borderBottom: '1px solid #1A1A1A' }}
             />
             {tierListType !== 'custom' && (
               <div className="flex gap-2">
@@ -515,8 +515,8 @@ export default function TierMaker() {
                   onClick={() => { setTierListType('anime'); setPool([]); setTiers(DEFAULT_TIERS.map((t) => ({ ...t, items: [] }))); setTierListName('Мой Tier List') }}
                   className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                     tierListType === 'anime' 
-                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
-                      : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'
+                      ? 'bg-neon-600/20 text-neon-400 border border-neon-600/30' 
+                      : 'bg-surface-2 text-text-muted border border-neon-400/10 hover:bg-surface-3'
                   }`}
                 >
                   Аниме
@@ -525,8 +525,8 @@ export default function TierMaker() {
                   onClick={() => { setTierListType('food'); setPool([]); setTiers(DEFAULT_TIERS.map((t) => ({ ...t, items: [] }))); setTierListName('Мой Food Tier List') }}
                   className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                     tierListType === 'food' 
-                      ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                      : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'
+                      ? 'bg-mint-500/20 text-mint-500 border border-mint-500/30' 
+                      : 'bg-surface-2 text-text-muted border border-neon-400/10 hover:bg-surface-3'
                   }`}
                 >
                   Еда
@@ -534,12 +534,12 @@ export default function TierMaker() {
               </div>
             )}
           </div>
-          <button onClick={() => setShowSaveDialog(true)} className="btn-primary text-xs !py-2">Сохранить</button>
+          <button onClick={() => setShowSaveDialog(true)} className="btn-primary btn-shine text-xs !py-2">Сохранить</button>
         </div>
 
         {tierListType !== 'custom' && (
-          <div className="rounded-xl p-3 mb-6 page-enter flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <span className="text-xs shrink-0" style={{ color: 'rgba(255,255,255,0.3)' }}>Импорт с TierMaker:</span>
+          <div className="rounded-xl p-3 mb-6 page-enter flex items-center gap-3 bg-surface-1 border border-neon-400/10">
+            <span className="text-xs shrink-0 text-text-muted">Импорт с TierMaker:</span>
             <input
               value={importUrl}
               onChange={(e) => { setImportUrl(e.target.value); setImportError('') }}
@@ -552,20 +552,20 @@ export default function TierMaker() {
               onClick={handleImportTierMaker}
               disabled={importLoading || !importUrl.trim()}
               className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 disabled:opacity-30"
-              style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.2)' }}
+              style={{ background: 'rgba(191,90,242,0.15)', color: '#BF5AF2', border: '1px solid rgba(191,90,242,0.2)' }}
             >
               {importLoading ? 'Загрузка...' : 'Импортировать'}
             </button>
-            {importError && <span className="text-[10px] text-red-400 shrink-0">{importError}</span>}
+            {importError && <span className="text-[10px] text-danger shrink-0">{importError}</span>}
           </div>
         )}
 
         {showSaveDialog && (
-          <div className="rounded-xl p-4 mb-6 page-enter" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="rounded-xl p-4 mb-6 page-enter bg-surface-1 border border-neon-400/10">
             <div className="flex items-center gap-3">
               <input value={tierListName} onChange={(e) => setTierListName(e.target.value)} className="input flex-1" placeholder="Название" />
-              <button onClick={saveTierList} className="btn-primary text-xs">Сохранить</button>
-              <button onClick={() => setShowSaveDialog(false)} className="text-xs hover:text-white/40" style={{ color: 'rgba(255,255,255,0.2)' }}>Отмена</button>
+              <button onClick={saveTierList} className="btn-primary btn-shine text-xs">Сохранить</button>
+              <button onClick={() => setShowSaveDialog(false)} className="text-xs hover:text-text-muted text-text-secondary">Отмена</button>
             </div>
           </div>
         )}
@@ -577,8 +577,7 @@ export default function TierMaker() {
                 {editingTier === tier.id ? (
                   <div
                     ref={editingRef}
-                    className="flex flex-col items-center gap-2 p-2 rounded-xl"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
+                    className="flex flex-col items-center gap-2 p-2 rounded-xl bg-surface-1 border border-neon-400/10"
                   >
                     <div
                       className="tier-badge"
@@ -620,22 +619,21 @@ export default function TierMaker() {
                       {tier.name}
                     </div>
                     <div className="flex gap-0.5">
-                      <button onClick={() => moveTier(tier.id, 'up')} className="text-[10px] hover:text-white/40 transition-colors" style={{ color: 'rgba(255,255,255,0.1)' }}>▲</button>
-                      <button onClick={() => moveTier(tier.id, 'down')} className="text-[10px] hover:text-white/40 transition-colors" style={{ color: 'rgba(255,255,255,0.1)' }}>▼</button>
+                      <button onClick={() => moveTier(tier.id, 'up')} className="text-[10px] hover:text-text-muted transition-colors text-text-muted/50">▲</button>
+                      <button onClick={() => moveTier(tier.id, 'down')} className="text-[10px] hover:text-text-muted transition-colors text-text-muted/50">▼</button>
                     </div>
                   </>
                 )}
               </div>
 
               <div
-                className="flex-1 min-h-[60px] rounded-xl p-1.5 flex flex-wrap items-center gap-1.5"
-                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}
+                className="flex-1 min-h-[60px] rounded-xl p-1.5 flex flex-wrap items-center gap-1.5 bg-surface-2 border border-neon-400/10"
                 onDragOver={handleDragOver}
                 onDragLeave={() => { setDragOverTierId(null); setDragOverIndex(null) }}
                 onDrop={(e) => { e.preventDefault(); handleDropOnTier(tier.id) }}
               >
                 {tier.items.length === 0 && (
-                  <span className="text-[10px] mx-auto" style={{ color: 'rgba(255,255,255,0.08)' }}>
+                  <span className="text-[10px] mx-auto text-text-muted/50">
                     {tierListType === 'anime' ? 'Перетащи аниме сюда' : tierListType === 'food' ? 'Перетащи еду сюда' : 'Перетащи сюда'}
                   </span>
                 )}
@@ -647,7 +645,7 @@ export default function TierMaker() {
                     onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleDropOnTier(tier.id, itemIdx) }}
                   >
                     {dragOverTierId === tier.id && dragOverIndex === itemIdx && draggedItem && item.id !== draggedItem?.id && (
-                      <div className="w-0.5 h-10 bg-amber-400 rounded-full mr-0.5 animate-pulse flex-shrink-0" />
+                      <div className="w-0.5 h-10 bg-neon-400 rounded-full mr-0.5 animate-pulse flex-shrink-0" />
                     )}
                     <div
                       draggable
@@ -659,18 +657,18 @@ export default function TierMaker() {
                           <img
                             src={item.image?.original && !item.image.original.includes('missing_') ? `https://shikimori.one${item.image.original}` : ''}
                             alt=""
-                            className="w-14 h-[72px] rounded-lg object-cover group-hover/item:ring-1 ring-amber-500/50 transition-all"
+                            className="w-14 h-[72px] rounded-lg object-cover group-hover/item:ring-1 ring-neon-600/50 transition-all"
                             onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
                           />
-                          <div className={`w-14 h-[72px] rounded-lg bg-surface-3 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
-                            <span className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.1)' }}>{(item.russian || item.name || '?')[0]}</span>
+                          <div className={`w-14 h-[72px] rounded-lg bg-surface-2 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
+                            <span className="text-sm font-bold text-text-muted">{(item.russian || item.name || '?')[0]}</span>
                           </div>
                         </>
                       ) : (
                         <img
                           src={item.image}
                           alt=""
-                          className="w-14 h-[72px] rounded-lg object-cover group-hover/item:ring-1 ring-green-500/50 transition-all"
+                            className="w-14 h-[72px] rounded-lg object-cover group-hover/item:ring-1 ring-mint-500/50 transition-all"
                         />
                       )}
                       <button
@@ -682,30 +680,30 @@ export default function TierMaker() {
                           setPool((p) => [...p, item])
                         }}
                         className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-[8px] flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity"
-                        style={{ background: 'rgba(244,63,94,0.9)' }}
+                        style={{ background: 'rgba(255,45,120,0.9)' }}
                       >×</button>
                     </div>
                   </div>
                 ))}
                 {dragOverTierId === tier.id && dragOverIndex === tier.items.length && draggedItem && (
-                  <div className="w-0.5 h-10 bg-amber-400 rounded-full animate-pulse flex-shrink-0" />
+                  <div className="w-0.5 h-10 bg-neon-400 rounded-full animate-pulse flex-shrink-0" />
                 )}
               </div>
 
-              <button onClick={() => removeTier(tier.id)} className="text-xs px-1 self-center hover:text-coral-400 transition-colors" style={{ color: 'rgba(255,255,255,0.1)' }}>✕</button>
+              <button onClick={() => removeTier(tier.id)} className="text-xs px-1 self-center hover:text-danger transition-colors text-text-muted/50">✕</button>
             </div>
           ))}
         </div>
 
-        <button onClick={addTier} className="text-amber-400 hover:text-amber-300 text-xs mb-6 transition-colors">+ Добавить тир</button>
+        <button onClick={addTier} className="text-neon-400 hover:text-neon-700 text-xs mb-6 transition-colors">+ Добавить тир</button>
 
-        <div className="rounded-xl p-4 page-enter" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="rounded-xl p-4 page-enter bg-surface-1 border border-neon-400/10">
           <div className="flex items-center gap-3 mb-3">
-            <h3 className="font-bold text-sm" style={{ fontFamily: 'Space Grotesk' }}>
+              <h3 className="font-bold text-sm neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>
               {tierListType === 'anime' ? 'Пул аниме' : tierListType === 'food' ? 'Пул еды' : 'Пул изображений'}
             </h3>
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Фильтр..." className="input !py-1.5 text-xs flex-1 max-w-xs" />
-            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.12)', fontFamily: 'JetBrains Mono' }}>{filteredPool.length}</span>
+            <span className="text-xs text-text-muted" style={{ fontFamily: 'Source Code Pro' }}>{filteredPool.length}</span>
           </div>
 
           <div className="relative mb-3" ref={addSearchRef}>
@@ -717,62 +715,61 @@ export default function TierMaker() {
                 placeholder={tierListType === 'anime' ? 'Добавить аниме из каталога...' : tierListType === 'food' ? 'Добавить еду из каталога...' : 'Поиск...'}
                 className="input !py-1.5 text-xs flex-1"
               />
-              <button onClick={() => setShowAddSearch(!showAddSearch)} className="text-amber-400 hover:text-amber-300 text-xs transition-colors whitespace-nowrap">
+              <button onClick={() => setShowAddSearch(!showAddSearch)} className="text-neon-400 hover:text-neon-700 text-xs transition-colors whitespace-nowrap">
                 + Из каталога
               </button>
             </div>
             {showAddSearch && addResults.length > 0 && (
-              <div className="absolute top-full mt-1 left-0 right-0 max-h-64 overflow-y-auto rounded-xl z-50" style={{ background: 'rgba(17,17,20,0.97)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 16px 48px -12px rgba(0,0,0,0.7)' }}>
+              <div className="absolute top-full mt-1 left-0 right-0 max-h-64 overflow-y-auto rounded-xl z-50 bg-surface-1 border border-neon-400/10 shadow-xl">
                 {addResults.map((a) => (
                   <button
                     key={a.id}
                     onClick={() => { addAnimeToPool(a); setShowAddSearch(false) }}
-                    className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/[0.04] transition-colors text-left border-b border-white/[0.03] last:border-b-0"
+                    className="w-full flex items-center gap-3 px-3 py-2 hover:bg-surface-2 transition-colors text-left border-b border-neon-400/10 last:border-b-0"
                   >
                     {tierListType === 'anime' ? (
                       <>
                         {a.image?.original && !a.image.original.includes('missing_') ? (
                           <img src={`https://shikimori.one${a.image.original}`} alt="" className="w-8 h-11 rounded-md object-cover flex-shrink-0" />
                         ) : (
-                          <div className="w-8 h-11 rounded-md bg-surface-3 flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-bold" style={{ color: 'rgba(255,255,255,0.1)' }}>{(a.russian || a.name || '?')[0]}</span>
+                          <div className="w-8 h-11 rounded-md bg-surface-2 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold text-text-muted">{(a.russian || a.name || '?')[0]}</span>
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <div className="text-xs font-medium truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{a.russian || a.name}</div>
-                          <div className="text-[10px]" style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'JetBrains Mono' }}>{a.aired_on?.split('-')[0] || '—'} · ★ {Number(a.score).toFixed(2)}</div>
+                          <div className="text-xs font-medium truncate text-text-secondary">{a.russian || a.name}</div>
+                          <div className="text-[10px] text-text-muted" style={{ fontFamily: 'Source Code Pro' }}>{a.aired_on?.split('-')[0] || '—'} · ★ {Number(a.score).toFixed(2)}</div>
                         </div>
                       </>
                     ) : (
                       <>
                         <img src={a.image} alt="" className="w-8 h-11 rounded-md object-cover flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <div className="text-xs font-medium truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{a.name}</div>
-                          <div className="text-[10px]" style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'JetBrains Mono' }}>Еда</div>
+                          <div className="text-xs font-medium truncate text-text-secondary">{a.name}</div>
+                          <div className="text-[10px] text-text-muted" style={{ fontFamily: 'Source Code Pro' }}>Еда</div>
                         </div>
                       </>
                     )}
-                    <span className="text-amber-400 text-xs">+</span>
+                    <span className="text-neon-400 text-xs">+</span>
                   </button>
                 ))}
               </div>
             )}
             {showAddSearch && addSearch.length >= 2 && addResults.length === 0 && (
-              <div className="absolute top-full mt-1 left-0 right-0 rounded-xl z-50 p-3 text-center" style={{ background: 'rgba(17,17,20,0.97)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.15)' }}>Ничего не найдено</span>
+              <div className="absolute top-full mt-1 left-0 right-0 rounded-xl z-50 p-3 text-center bg-surface-1 border border-neon-400/10">
+                <span className="text-xs text-text-muted">Ничего не найдено</span>
               </div>
             )}
           </div>
 
           <div
             ref={poolRef}
-            className="flex flex-wrap gap-1.5 min-h-[72px] p-2 rounded-xl"
-            style={{ background: 'rgba(255,255,255,0.015)', border: '1px dashed rgba(255,255,255,0.06)' }}
+            className="flex flex-wrap gap-1.5 min-h-[72px] p-2 rounded-xl bg-surface-2 border border-dashed border-neon-400/10"
             onDragOver={handleDragOver}
             onDrop={handleDropOnPoolRef}
           >
             {filteredPool.length === 0 && (
-              <span className="text-xs mx-auto self-center" style={{ color: 'rgba(255,255,255,0.08)' }}>
+              <span className="text-xs mx-auto self-center text-text-muted/50">
                 {tierListType === 'anime' ? 'Нет аниме в пуле' : tierListType === 'food' ? 'Нет еды в пуле' : 'Нет изображений в пуле'}
               </span>
             )}
@@ -788,18 +785,18 @@ export default function TierMaker() {
                     <img
                       src={item.image?.original && !item.image.original.includes('missing_') ? `https://shikimori.one${item.image.original}` : ''}
                       alt=""
-                      className="w-14 h-[72px] rounded-lg object-cover hover:ring-1 ring-amber-500/50 transition-all"
+                            className="w-14 h-[72px] rounded-lg object-cover hover:ring-1 ring-neon-600/50 transition-all"
                       onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
                     />
-                    <div className={`w-14 h-[72px] rounded-lg bg-surface-3 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
-                      <span className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.1)' }}>{(item.russian || item.name || '?')[0]}</span>
+                    <div className={`w-14 h-[72px] rounded-lg bg-surface-2 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
+                      <span className="text-sm font-bold text-text-muted">{(item.russian || item.name || '?')[0]}</span>
                     </div>
                   </>
                 ) : (
                   <img
                     src={item.image}
                     alt=""
-                    className="w-14 h-[72px] rounded-lg object-cover hover:ring-1 ring-green-500/50 transition-all"
+                            className="w-14 h-[72px] rounded-lg object-cover hover:ring-1 ring-mint-500/50 transition-all"
                   />
                 )}
                 {tierListType === 'anime' && (
@@ -810,12 +807,12 @@ export default function TierMaker() {
                 <button
                   onClick={(e) => { e.stopPropagation(); removeAnimeFromPool(item.id) }}
                   className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-[8px] flex items-center justify-center opacity-0 group-hover/pool:opacity-100 transition-opacity"
-                  style={{ background: 'rgba(244,63,94,0.9)' }}
+                  style={{ background: 'rgba(255,45,120,0.9)' }}
                 >×</button>
                 <button
                   onClick={(e) => { e.stopPropagation(); e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); setPoolItemMenuPos({ x: r.left, y: r.bottom + 4 }); setPoolItemMenu(poolItemMenu === item.id ? null : item.id) }}
                   className="absolute -top-1 -left-1 w-4 h-4 rounded-full text-[8px] flex items-center justify-center opacity-0 group-hover/pool:opacity-100 transition-opacity"
-                  style={{ background: 'rgba(251,191,36,0.9)' }}
+                  style={{ background: 'rgba(187,243,81,0.9)' }}
                 >↓</button>
               </div>
             ))}
@@ -827,18 +824,15 @@ export default function TierMaker() {
             return createPortal(
               <div
                 ref={poolItemMenuRef}
-                className="fixed rounded-xl p-3 z-[9999]"
+                className="fixed rounded-xl p-3 z-[9999] bg-surface-1 border border-neon-400/10 shadow-xl"
                 style={{
-                  background: 'rgba(17,17,20,0.97)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  boxShadow: '0 12px 40px -8px rgba(0,0,0,0.7)',
                   left: poolItemMenuPos.x,
                   top: poolItemMenuPos.y,
                   maxWidth: '320px',
                 }}
               >
-                <p className="text-[10px] mb-2" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                  Отправить <span className="text-white/50">{tierListType === 'anime' ? (item.russian || item.name) : item.name}</span> в тир:
+                <p className="text-[10px] mb-2 text-text-muted">
+                  Отправить <span className="text-text-secondary">{tierListType === 'anime' ? (item.russian || item.name) : item.name}</span> в тир:
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {tiers.map((tier) => (
@@ -860,15 +854,15 @@ export default function TierMaker() {
 
         {savedLists.length > 0 && (
           <div className="mt-8">
-            <h3 className="font-bold text-sm mb-3" style={{ fontFamily: 'Space Grotesk' }}>Сохранённые Tier List</h3>
+            <h3 className="font-bold text-sm mb-3 neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>Сохранённые Tier List</h3>
             <div className="space-y-1.5">
               {savedLists.map((list) => {
                 const tiersData = typeof list.tiers === 'string' ? JSON.parse(list.tiers) : list.tiers
                 return (
-                  <div key={list.id} className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div key={list.id} className="rounded-xl px-4 py-3 flex items-center gap-3 bg-surface-1 border border-neon-400/10">
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-sm truncate">{list.name}</h4>
-                      <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'JetBrains Mono' }}>{new Date(list.created_at).toLocaleDateString('ru')}</p>
+                      <p className="text-[10px] text-text-muted" style={{ fontFamily: 'Source Code Pro' }}>{new Date(list.created_at).toLocaleDateString('ru')}</p>
                     </div>
                     <div className="flex gap-0.5">
                       {tiersData.filter((t) => t.items.length > 0).map((t) => (
@@ -877,8 +871,8 @@ export default function TierMaker() {
                         </span>
                       ))}
                     </div>
-                    <button onClick={() => loadTierList(list)} className="text-amber-400 hover:text-amber-300 text-xs transition-colors">Загрузить</button>
-                    <button onClick={() => deleteTierList(list.id)} className="hover:text-coral-400 text-xs transition-colors" style={{ color: 'rgba(255,255,255,0.15)' }}>Удалить</button>
+                    <button onClick={() => loadTierList(list)} className="text-neon-400 hover:text-neon-700 text-xs transition-colors">Загрузить</button>
+                    <button onClick={() => deleteTierList(list.id)} className="hover:text-danger text-xs transition-colors text-text-muted">Удалить</button>
                   </div>
                 )
               })}

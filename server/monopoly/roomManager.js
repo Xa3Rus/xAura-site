@@ -14,13 +14,13 @@ function generateCode() {
   return code;
 }
 
-export function createRoom(hostId, hostName) {
+export function createRoom(hostId, hostName, token) {
   const code = generateCode();
   const room = {
     id: code,
     code,
     hostId,
-    players: [{ id: hostId, name: hostName, color: COLORS[0], ready: false, connected: true }],
+    players: [{ id: hostId, name: hostName, color: COLORS[0], token: token || '🚗', ready: false, connected: true }],
     status: 'waiting',
     gameState: null,
     createdAt: Date.now(),
@@ -33,7 +33,7 @@ export function getRoom(code) {
   return rooms.get(code) || null;
 }
 
-export function joinRoom(code, userId, username, color) {
+export function joinRoom(code, userId, username, color, token) {
   const room = rooms.get(code);
   if (!room) return { error: 'Room not found' };
   if (room.status !== 'waiting') return { error: 'Game already in progress' };
@@ -44,7 +44,11 @@ export function joinRoom(code, userId, username, color) {
   const playerColor = color && !usedColors.includes(color) ? color : COLORS.find(c => !usedColors.includes(c));
   if (!playerColor) return { error: 'No colors available' };
 
-  const player = { id: userId, name: username, color: playerColor, ready: false, connected: true };
+  const usedTokens = room.players.map(p => p.token);
+  const TOKENS = ['🚗', '🎩', '🐕', '🚀'];
+  const playerToken = token && !usedTokens.includes(token) ? token : TOKENS.find(t => !usedTokens.includes(t)) || '🚗';
+
+  const player = { id: userId, name: username, color: playerColor, token: playerToken, ready: false, connected: true };
   room.players.push(player);
   return room;
 }

@@ -67,12 +67,12 @@ export default function TierListTemplates() {
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8 page-enter">
           <div>
-            <h1 className="text-2xl font-bold" style={{ fontFamily: 'Space Grotesk' }}>Шаблоны Tier List</h1>
-            <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.25)' }}>Выбери шаблон и начни составлять</p>
+                <h1 className="text-2xl font-bold neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>Шаблоны Tier List</h1>
+            <p className="text-xs mt-1 text-text-muted">Выбери шаблон и начни составлять</p>
           </div>
           <Link
             to="/tiermaker"
-            className="btn-primary text-xs !py-2"
+            className="btn-primary btn-shine text-xs !py-2"
           >
             Импорт из TierMaker
           </Link>
@@ -91,8 +91,7 @@ export default function TierListTemplates() {
           {filtered.map((template) => (
             <div
               key={template.id || template.slug}
-              className="group rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02]"
-              style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
+              className="group rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] bg-surface-1 border border-neon-400/10"
             >
               <div className="relative h-40 overflow-hidden">
                 {template.preview ? (
@@ -103,8 +102,8 @@ export default function TierListTemplates() {
                     onError={(e) => { e.target.style.display = 'none' }}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(249,115,22,0.04) 100%)' }}>
-                    <span className="text-3xl font-bold" style={{ color: 'rgba(255,255,255,0.05)', fontFamily: 'Space Grotesk' }}>
+                  <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(187,243,81,0.08) 0%, rgba(168,224,48,0.04) 100%)' }}>
+                    <span className="text-3xl font-bold text-text-muted" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>
                       {(template.title || '?')[0]}
                     </span>
                   </div>
@@ -115,18 +114,18 @@ export default function TierListTemplates() {
                 </div>
               </div>
               <div className="p-3">
-                <p className="text-[11px] mb-3 line-clamp-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                <p className="text-[11px] mb-3 line-clamp-2 text-text-muted">
                   {template.description || `${template.imageCount || '?'} изображений`}
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'JetBrains Mono' }}>
+                  <span className="text-[10px] text-text-muted" style={{ fontFamily: 'Source Code Pro' }}>
                     {template.imageCount || '?'} изображений
                   </span>
                   {template.builtIn ? (
                     <Link
                       to="/tiermaker"
                       className="px-3 py-1 rounded-lg text-[11px] font-medium transition-all"
-                      style={{ background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.15)' }}
+                      style={{ background: 'rgba(187,243,81,0.1)', color: 'var(--color-neon-600, #a3e635)', border: '1px solid rgba(187,243,81,0.15)' }}
                       state={{ templateType: template.id }}
                     >
                       Открыть
@@ -135,7 +134,7 @@ export default function TierListTemplates() {
                     <Link
                       to="/tiermaker"
                       className="px-3 py-1 rounded-lg text-[11px] font-medium transition-all"
-                      style={{ background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.15)' }}
+                      style={{ background: 'rgba(187,243,81,0.1)', color: 'var(--color-neon-600, #a3e635)', border: '1px solid rgba(187,243,81,0.15)' }}
                       state={{ importSlug: template.slug }}
                     >
                       Открыть
@@ -149,7 +148,7 @@ export default function TierListTemplates() {
 
         {filtered.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.15)' }}>Нет шаблонов</p>
+            <p className="text-sm text-text-muted">Нет шаблонов</p>
           </div>
         )}
       </div>

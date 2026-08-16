@@ -3,16 +3,25 @@ import { io } from 'socket.io-client'
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001'
 
 let socket = null
+let socketToken = null
 
 export function getMonopolySocket(token) {
-  if (socket?.connected) return socket
+  // reuse the singleton while it belongs to the same user and is alive
+  if (socket && socketToken === token && (socket.connected || socket.active)) return socket
 
+  if (socket) {
+    socket.removeAllListeners()
+    socket.disconnect()
+    socket = null
+  }
+
+  socketToken = token
   socket = io(SOCKET_URL, {
     auth: { token },
     transports: ['websocket', 'polling'],
     reconnection: true,
     reconnectionDelay: 1000,
-    reconnectionAttempts: 10,
+    reconnectionAttempts: Infinity,
   })
 
   socket.on('connect', () => console.log('[Monopoly Socket] Connected'))
@@ -20,6 +29,24 @@ export function getMonopolySocket(token) {
   socket.on('connect_error', (err) => console.error('[Monopoly Socket] Error:', err.message))
 
   return socket
+}
+
+export function waitConnected(s, timeoutMs = 8000) {
+  return new Promise((resolve, reject) => {
+    if (!s) return reject(new Error('No socket'))
+    if (s.connected) return resolve()
+    let timer = null
+    const onConnect = () => { cleanup(); resolve() }
+    const onError = (err) => { cleanup(); reject(err) }
+    const cleanup = () => {
+      if (timer) clearTimeout(timer)
+      s.off('connect', onConnect)
+      s.off('connect_error', onError)
+    }
+    timer = setTimeout(() => { cleanup(); reject(new Error('Connection timeout')) }, timeoutMs)
+    s.on('connect', onConnect)
+    s.on('connect_error', onError)
+  })
 }
 
 export function disconnectMonopolySocket() {

@@ -20,11 +20,11 @@ function Tile({ cell, owner, ownerColor, upgradeLevel, playersOnCell, isMyProper
     <div
       className={`relative flex flex-col rounded-lg overflow-hidden transition-all duration-200 ${isCorner ? 'min-h-[70px]' : 'min-h-[56px]'}`}
       style={{
-        background: cell.type === 'start' ? 'rgba(16,185,129,0.08)' :
-                    cell.type === 'jail' ? 'rgba(244,63,94,0.06)' :
-                    cell.type === 'parking' ? 'rgba(96,165,250,0.06)' :
-                    cell.type === 'tax' ? 'rgba(251,191,36,0.06)' :
-                    cell.type === 'event' ? 'rgba(168,85,247,0.06)' :
+        background: cell.type === 'start' ? 'rgba(0,204,136,0.08)' :
+                    cell.type === 'jail' ? 'rgba(255,51,102,0.06)' :
+                    cell.type === 'parking' ? 'rgba(0,229,255,0.06)' :
+                    cell.type === 'tax' ? 'rgba(187,243,81,0.06)' :
+                    cell.type === 'event' ? 'rgba(191,90,242,0.06)' :
                     'rgba(255,255,255,0.02)',
         border: `1px solid ${isOwned ? (ownerColor + '30') : 'rgba(255,255,255,0.04)'}`,
       }}
@@ -37,10 +37,10 @@ function Tile({ cell, owner, ownerColor, upgradeLevel, playersOnCell, isMyProper
 
       <div className="flex-1 flex flex-col justify-between px-1 py-0.5 min-w-0">
         <span className="text-[7px] sm:text-[8px] font-medium truncate leading-tight" style={{
-          color: cell.type === 'start' ? '#34d399' :
-                 cell.type === 'jail' ? '#fb7185' :
-                 cell.type === 'tax' ? '#fbbf24' :
-                 cell.type === 'event' ? '#c084fc' :
+          color: cell.type === 'start' ? '#00CC88' :
+                 cell.type === 'jail' ? '#FF6688' :
+                 cell.type === 'tax' ? '#FF8A33' :
+                 cell.type === 'event' ? '#BF5AF2' :
                  'rgba(255,255,255,0.45)'
         }}>
           {cell.name}
@@ -52,13 +52,13 @@ function Tile({ cell, owner, ownerColor, upgradeLevel, playersOnCell, isMyProper
           </span>
         )}
         {cell.amount && cell.type === 'tax' && (
-          <span className="text-[6px] sm:text-[7px] font-mono text-amber-400">-${cell.amount}</span>
+          <span className="text-[6px] sm:text-[7px] font-mono text-neon-400">-${cell.amount}</span>
         )}
 
         {level > 0 && (
           <div className="flex gap-px">
             {Array.from({ length: level }).map((_, i) => (
-              <div key={i} className="w-1 h-1 rounded-full" style={{ background: ownerColor || '#fbbf24' }} />
+              <div key={i} className="w-1 h-1 rounded-full" style={{ background: ownerColor || '#FF8A33' }} />
             ))}
           </div>
         )}
@@ -68,7 +68,7 @@ function Tile({ cell, owner, ownerColor, upgradeLevel, playersOnCell, isMyProper
         <button
           onClick={(e) => { e.stopPropagation(); onUpgrade(cell.id) }}
           className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold z-10 transition-all hover:scale-110"
-          style={{ background: 'rgba(251,191,36,0.9)', color: '#0a0a0c' }}
+          style={{ background: 'rgba(187,243,81,0.9)', color: '#000000' }}
         >
           +
         </button>
@@ -139,7 +139,7 @@ function DominionBoard({ gameState, currentPlayerId, onUpgrade, canUpgrade }) {
               >
                 {isCenter && row === 5 && col === 5 && (
                   <div className="text-center">
-                    <div className="text-[10px] sm:text-xs font-bold" style={{ fontFamily: 'Space Grotesk', color: 'rgba(255,255,255,0.15)' }}>
+                    <div className="text-[10px] sm:text-xs font-bold" style={{ fontFamily: 'Quantico, Inter, sans-serif', color: 'rgba(255,255,255,0.15)' }}>
                       xAura
                     </div>
                     <div className="text-[7px] sm:text-[8px]" style={{ color: 'rgba(255,255,255,0.06)' }}>Dominion</div>

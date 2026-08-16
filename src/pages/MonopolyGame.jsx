@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
-import { getMonopolySocket, getSocket } from '../services/monopolySocket'
+import { getMonopolySocket, getSocket, waitConnected } from '../services/monopolySocket'
+import { ROOM_CODE_KEY } from './MonopolyLobby'
 import MonopolyBoard from '../components/monopoly/MonopolyBoard'
 import Dice from '../components/monopoly/Dice'
 import TradeModal from '../components/monopoly/TradeModal'
@@ -13,8 +14,9 @@ import GameOverModal from '../components/monopoly/GameOverModal'
 import BankruptModal from '../components/monopoly/BankruptModal'
 import PlayerPanel from '../components/monopoly/PlayerPanel'
 import PropertyCard from '../components/monopoly/PropertyCard'
+import GameLog from '../components/monopoly/GameLog'
 import { BOARD } from '../data/boardData'
-import { initAudio, playDiceRoll, playDiceLand, playBuy, playBuild, playJail, playJailRelease, playBankrupt, playCardDraw, playTurnEnd, playError, playAuctionBid, playTradeOffer, playMoneyGain, playMoneyLoss, playNotification } from '../utils/sounds'
+import { initAudio, playDiceRoll, playDiceLand, playBuy, playBuild, playJail, playJailRelease, playBankrupt, playCardDraw, playTurnEnd, playError, playAuctionBid, playTradeOffer, playMoneyGain, playMoneyLoss, playNotification, playWin, playStep, toggleMute, isMuted } from '../utils/sounds'
 
 export default function MonopolyGame() {
   const { user } = useContext(AuthContext)
@@ -35,11 +37,14 @@ export default function MonopolyGame() {
   const [chatInput, setChatInput] = useState('')
   const [lastDice, setLastDice] = useState(null)
   const [animatingPositions, setAnimatingPositions] = useState(null)
+  const [connected, setConnected] = useState(true)
+  const [muted, setMuted] = useState(isMuted())
 
   const socketRef = useRef(null)
   const rollingRef = useRef(false)
   const chatEndRef = useRef(null)
   const prevPositions = useRef({})
+  const animInterval = useRef(null)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -54,19 +59,50 @@ export default function MonopolyGame() {
 
   useEffect(() => {
     if (!user) return
-    const gs = location.state?.gameState
-    if (!gs) { navigate('/monopoly'); return }
+    let cancelled = false
 
-    setGameState(gs)
-    setRoom(location.state?.room || null)
-
-    const s = getSocket()
-    if (s) {
-      socketRef.current = s
-      setupSocketListeners(s)
+    // always rejoin through the socket — the server is the source of truth.
+    // location.state survives page refreshes (history.state) and would be a
+    // stale snapshot, so it's only used as a fallback for the room code.
+    const restore = async () => {
+      try {
+        const code = localStorage.getItem(ROOM_CODE_KEY) || location.state?.room?.code || location.state?.gameState?.roomId
+        if (!code) { navigate('/monopoly'); return }
+        let s = getSocket()
+        if (!s) {
+          const { data } = await supabase.auth.getSession()
+          if (cancelled) return
+          if (!data?.session?.access_token) { navigate('/login'); return }
+          s = getMonopolySocket(data.session.access_token)
+        }
+        socketRef.current = s
+        setupSocketListeners(s)
+        await waitConnected(s, 8000)
+        if (cancelled) return
+        s.emit('room:join', { code }, (res) => {
+          if (cancelled) return
+          if (res?.gameState) {
+            setGameState(res.gameState)
+            setRoom({ code })
+            prevPositions.current = {}
+            res.gameState.players?.forEach((p) => { prevPositions.current[p.userId] = p.position })
+          } else if (res?.room) {
+            // game hasn't started yet — back to lobby
+            navigate('/monopoly')
+          } else {
+            localStorage.removeItem(ROOM_CODE_KEY)
+            navigate('/monopoly')
+          }
+        })
+      } catch {
+        if (!cancelled) navigate('/monopoly')
+      }
     }
+    restore()
 
     return () => {
+      cancelled = true
+      if (animInterval.current) { clearInterval(animInterval.current); animInterval.current = null }
       if (socketRef.current) {
         const sk = socketRef.current
         sk.off('game:updated')
@@ -82,7 +118,25 @@ export default function MonopolyGame() {
         sk.off('error')
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
+
+  // re-map socket to room after network reconnect
+  useEffect(() => {
+    const s = socketRef.current
+    if (!s) return
+    const onConnect = () => {
+      setConnected(true)
+      const code = room?.code || gameState?.roomId
+      if (code && s.connected) s.emit('room:join', { code }, () => {})
+    }
+    const onDisconnect = () => setConnected(false)
+    s.on('connect', onConnect)
+    s.on('disconnect', onDisconnect)
+    setConnected(s.connected)
+    return () => { s.off('connect', onConnect); s.off('disconnect', onDisconnect) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room?.code, gameState?.roomId, gameState])
 
   const setupSocketListeners = useCallback((s) => {
     if (!s) return
@@ -100,28 +154,23 @@ export default function MonopolyGame() {
     s.off('error')
 
     s.on('game:updated', (newState) => {
+      if (!newState) return
       const prev = prevPositions.current
       const animations = []
 
-      if (newState?.players && prev) {
-        newState.players.forEach((p) => {
-          const oldPos = prev[p.userId]
-          if (oldPos !== undefined && oldPos !== p.position) {
-            animations.push({ userId: p.userId, from: oldPos, to: p.position, username: p.username })
-          }
-        })
-      }
+      newState.players?.forEach((p) => {
+        const oldPos = prev[p.userId]
+        if (oldPos !== undefined && oldPos !== p.position) {
+          animations.push({ userId: p.userId, from: oldPos, to: p.position, username: p.username })
+        }
+      })
 
-      if (animations.length > 0) {
-        runMovementAnimation(animations, () => {
-          setGameState(newState)
-          prevPositions.current = {}
-          newState.players?.forEach((p) => { prevPositions.current[p.userId] = p.position })
-        })
-      } else {
-        setGameState(newState)
-        newState.players?.forEach((p) => { prevPositions.current[p.userId] = p.position })
-      }
+      // apply server state immediately — token movement is a visual overlay only,
+      // so UI (buy buttons, phase) never waits for the animation to finish
+      setGameState(newState)
+      prevPositions.current = {}
+      newState.players?.forEach((p) => { prevPositions.current[p.userId] = p.position })
+      if (animations.length > 0) runMovementAnimation(animations)
 
       if (newState?.lastCard) {
         setShowCard({ card: newState.lastCard, type: newState.lastCardType || 'chance' })
@@ -179,7 +228,8 @@ export default function MonopolyGame() {
     })
   }, [])
 
-  const runMovementAnimation = useCallback((moves, onComplete) => {
+  const runMovementAnimation = useCallback((moves) => {
+    if (animInterval.current) { clearInterval(animInterval.current); animInterval.current = null }
     const TOTAL_CELLS = 40
     let step = 0
     const maxSteps = moves.reduce((max, m) => {
@@ -187,8 +237,9 @@ export default function MonopolyGame() {
       return Math.max(max, dist)
     }, 0)
 
-    const interval = setInterval(() => {
+    animInterval.current = setInterval(() => {
       step++
+      playStep()
       setAnimatingPositions((prev) => {
         const next = {}
         moves.forEach((m) => {
@@ -202,9 +253,9 @@ export default function MonopolyGame() {
         return next
       })
       if (step >= maxSteps) {
-        clearInterval(interval)
+        clearInterval(animInterval.current)
+        animInterval.current = null
         setAnimatingPositions(null)
-        onComplete()
       }
     }, 150)
   }, [])
@@ -220,6 +271,20 @@ export default function MonopolyGame() {
   const currentTurnPlayer = gameState?.players?.[gameState?.currentPlayerIndex]
   const isMyTurn = currentTurnPlayer?.userId === user?.id
   const isGameOver = gameState?.phase === 'game_over'
+
+  // sound cue when it becomes my turn
+  const prevMyTurn = useRef(false)
+  useEffect(() => {
+    if (isMyTurn && !prevMyTurn.current && !isGameOver) {
+      playNotification()
+      addEventOverlay({ text: 'Ваш ход!', type: 'info' })
+    }
+    prevMyTurn.current = isMyTurn
+  }, [isMyTurn, isGameOver, addEventOverlay])
+
+  useEffect(() => {
+    if (isGameOver) playWin()
+  }, [isGameOver])
 
   const emitSafe = useCallback((event, data, cb) => {
     const s = socketRef.current
@@ -285,10 +350,18 @@ export default function MonopolyGame() {
   const handleCellClick = useCallback((cellIndex) => setSelectedCell((p) => p === cellIndex ? null : cellIndex), [])
 
   if (!gameState) {
-    return <div className="h-screen flex items-center justify-center" style={{ background: '#0a0a0c' }}><p className="text-white/20 text-sm">Loading...</p></div>
+    return <div className="h-screen flex items-center justify-center bg-surface-0"><p className="text-text-muted text-sm">Loading...</p></div>
   }
 
   const selectedCellData = selectedCell != null ? BOARD[selectedCell] : null
+  // server stores diceResult as [d1, d2]; lastDice from ack is { d1, d2 }
+  const dicePair = lastDice
+    ? [lastDice.d1, lastDice.d2]
+    : Array.isArray(gameState?.diceResult)
+      ? gameState.diceResult
+      : gameState?.diceResult
+        ? [gameState.diceResult.d1, gameState.diceResult.d2]
+        : null
   const selectedCellPropData = gameState?.properties?.[selectedCell]
   const selectedCellOwner = selectedCellPropData?.ownerId || null
   const selectedCellOwnerPlayer = selectedCellOwner ? gameState?.players?.find((p) => p.userId === selectedCellOwner) : null
@@ -300,26 +373,26 @@ export default function MonopolyGame() {
       return (
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: currentTurnPlayer?.color || '#fff' }} />
-          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
-            <span className="text-white/50 font-medium">{currentTurnPlayer?.username}</span>'s turn
+            <span className="text-xs" style={{ color: '#A0A0A0' }}>
+            <span className="text-text font-medium">{currentTurnPlayer?.username}</span>'s turn
           </span>
         </div>
       )
     }
     if (currentPlayer?.inJail) {
       return (
-        <div className="flex items-center gap-2">
-          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>In jail!</span>
+              <div className="flex items-center gap-2">
+          <span className="text-xs" style={{ color: '#707070' }}>In jail!</span>
           {currentPlayer.getOutOfJailCards > 0 && (
-            <button onClick={handleUseJailCard} className="text-[10px] px-3 py-1.5 rounded-xl" style={{ color: '#c084fc', border: '1px solid rgba(192,132,252,0.2)' }}>Card</button>
+                <button onClick={handleUseJailCard} className="text-[10px] px-3 py-1.5 rounded-xl" style={{ color: '#BF5AF2', border: '1px solid rgba(191,90,242,0.2)' }}>Card</button>
           )}
-          <button onClick={handlePayJail} className="text-[10px] px-3 py-1.5 rounded-xl" style={{ color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}>Pay $50</button>
-          {gameState.phase === 'jail_roll' && <Dice onRoll={handleRollDice} disabled={rolling} dice={gameState.diceResult} rolling={rolling} isMyTurn={isMyTurn} />}
+              <button onClick={handlePayJail} className="text-[10px] px-3 py-1.5 rounded-xl" style={{ color: '#A0A0A0', border: '1px solid rgba(187,243,81,0.1)' }}>Pay $50</button>
+          {gameState.phase === 'jail_roll' && <Dice onRoll={handleRollDice} disabled={rolling} dice={dicePair} rolling={rolling} isMyTurn={isMyTurn} />}
         </div>
       )
     }
     if (gameState.phase === 'roll') {
-      return <Dice onRoll={handleRollDice} disabled={rolling} dice={gameState.diceResult} rolling={rolling} isMyTurn={isMyTurn} />
+      return <Dice onRoll={handleRollDice} disabled={rolling} dice={dicePair} rolling={rolling} isMyTurn={isMyTurn} />
     }
     if (gameState.phase === 'action') {
       const cellIndex = gameState.pendingCellIndex ?? currentPlayer?.position
@@ -327,13 +400,13 @@ export default function MonopolyGame() {
       if (gameState.pendingAction === 'buy_offer') {
         return (
           <div className="flex items-center gap-2">
-            <span className="text-[11px] mr-1" style={{ color: 'rgba(255,255,255,0.4)' }}>{landedCell?.name} — ${landedCell?.price}</span>
+            <span className="text-[11px] mr-1" style={{ color: '#A0A0A0' }}>{landedCell?.name} — ${landedCell?.price}</span>
             <button onClick={() => handleBuy(gameState.pendingCellIndex)} className="btn-primary text-[11px] !py-1.5 !px-4">Buy ${landedCell?.price}</button>
-            <button onClick={handleDeclineBuy} className="text-[11px] px-3 py-1.5 rounded-xl" style={{ color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.06)' }}>Skip</button>
+            <button onClick={handleDeclineBuy} className="text-[11px] px-3 py-1.5 rounded-xl text-text-muted border border-neon-400/10 hover:bg-surface-2/50">Skip</button>
           </div>
         )
       }
-      return <button onClick={handleEndTurn} className="text-[11px] px-4 py-1.5 rounded-xl" style={{ color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.06)' }}>End Turn</button>
+            return <button onClick={handleEndTurn} className="text-[11px] px-4 py-1.5 rounded-xl text-text-muted border border-neon-400/10 hover:bg-surface-2/50">End Turn</button>
     }
     return null
   }
@@ -343,39 +416,103 @@ export default function MonopolyGame() {
     if (chatInput.trim()) { handleSendMessage(chatInput); setChatInput('') }
   }
 
+  const logMessages = chatMessages.filter((m) => m.type)
+
+  const centerContent = (
+    <div className="flex flex-col h-full min-h-0 rounded-lg overflow-hidden" style={{ background: 'rgba(9,9,9,0.94)', border: '1px solid rgba(187,243,81,0.1)' }}>
+      <div className="flex items-center justify-between px-3 py-1.5 border-b flex-shrink-0" style={{ borderColor: 'rgba(187,243,81,0.1)' }}>
+        <span className="text-[10px] font-bold tracking-[0.18em]" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>
+          <span className="text-text">xAURA</span> <span className="text-neon-400">MONOPOLY</span>
+        </span>
+        {lastDice && (
+          <span className="text-[11px] font-mono" style={{ color: '#A0A0A0' }}>
+            🎲 {lastDice.d1 || 0} + {lastDice.d2 || 0} = <span className="text-neon-400 font-bold">{(lastDice.d1 || 0) + (lastDice.d2 || 0)}</span>
+          </span>
+        )}
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5 min-h-0" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(187,243,81,0.15) transparent' }}>
+        {chatMessages.length === 0 && (
+          <p className="text-[10px] text-center mt-6" style={{ color: '#4A4A4A' }}>Чат и игровые события появятся здесь</p>
+        )}
+        {chatMessages.map((msg, i) => {
+          const player = gameState.players?.find((p) => p.userId === msg.userId)
+          const isEvent = !!msg.type
+          if (isEvent) {
+            return (
+              <div key={i} className="text-[10px] leading-relaxed italic" style={{ color: '#7A7A7A' }}>
+                {msg.text || msg.message}
+              </div>
+            )
+          }
+          return (
+            <div key={i} className="text-[11px] leading-relaxed" style={{ color: '#C8C8C8' }}>
+              <span className="font-semibold" style={{ color: player?.color || '#BBF351' }}>{msg.username || msg.senderName || '???'}:</span>{' '}
+              {msg.text || msg.message}
+            </div>
+          )
+        })}
+        <div ref={chatEndRef} />
+      </div>
+
+      <form onSubmit={handleChatSubmit} className="flex gap-1.5 p-2 border-t flex-shrink-0" style={{ borderColor: 'rgba(187,243,81,0.1)' }}>
+        <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Сообщение..." maxLength={200} className="input flex-1 !py-1.5 !text-[11px]" />
+        <button type="submit" className="btn-primary !py-1.5 !px-3 text-[12px]">➤</button>
+      </form>
+    </div>
+  )
+
   return (
-    <div className="h-screen flex overflow-hidden" style={{ background: '#0a0a0c' }}>
+    <div className="h-screen flex overflow-hidden bg-surface-0">
       {/* Left: Players */}
-      <div className="w-52 flex-shrink-0 p-3 hidden md:flex flex-col border-r" style={{ borderColor: 'rgba(255,255,255,0.03)' }}>
+      <div className="w-52 flex-shrink-0 p-3 hidden md:flex flex-col border-r border-neon-400/10">
         <div className="px-1 mb-3">
-          <h3 className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'Space Grotesk' }}>
+          <h3 className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#A0A0A0', fontFamily: 'Quantico, Inter, sans-serif' }}>
             Players {gameState.players?.filter((p) => !p.isBankrupt).length}/{gameState.players?.length}
           </h3>
         </div>
-        <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.06) transparent' }}>
+        <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(187,243,81,0.2) transparent' }}>
           <PlayerPanel players={gameState.players || []} currentPlayerId={user?.id} currentPlayerIndex={gameState.currentPlayerIndex} onPlayerClick={handlePlayerClick} />
         </div>
       </div>
 
       {/* Center: Board */}
       <div className="flex-1 flex flex-col min-w-0 relative">
-        <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: 'rgba(255,255,255,0.03)' }}>
+        <div className="flex items-center justify-between px-4 py-2 border-b border-neon-400/10">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/monopoly')} className="text-[11px] text-white/20 hover:text-white/50 transition-colors">&larr; Lobby</button>
-            <h1 className="text-xs font-bold" style={{ fontFamily: 'Space Grotesk' }}>
-              <span className="text-white/50">xAura</span><span className="text-amber-400 ml-1">Monopoly</span>
+            <button onClick={() => navigate('/monopoly')} className="text-[11px] text-text-muted hover:text-text transition-colors">&larr; Lobby</button>
+              <h1 className="text-xs font-bold" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>
+              <span className="text-text">xAura</span><span className="text-neon-400 ml-1">Monopoly</span>
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            {lastDice && (
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <span className="text-[11px] font-mono" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                  🎲 {(lastDice.d1 || 0)} + {(lastDice.d2 || 0)} = <span className="text-amber-400 font-bold">{(lastDice.d1 || 0) + (lastDice.d2 || 0)}</span>
-                </span>
-              </div>
-            )}
+            <span
+              className="inline-flex items-center gap-1.5 text-[9px] px-2 py-0.5 rounded-full border"
+              style={{
+                color: connected ? '#00CC88' : '#FF6688',
+                borderColor: connected ? 'rgba(0,204,136,0.25)' : 'rgba(255,51,102,0.3)',
+                background: connected ? 'rgba(0,204,136,0.06)' : 'rgba(255,51,102,0.08)',
+              }}
+              title={connected ? 'Соединение с сервером активно' : 'Переподключение к серверу...'}
+            >
+              <motion.span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ background: connected ? '#00CC88' : '#FF6688' }}
+                animate={{ opacity: [1, 0.3, 1] }}
+                transition={{ duration: 1.4, repeat: Infinity }}
+              />
+              {connected ? 'online' : 'reconnecting'}
+            </span>
+            <button
+              onClick={() => setMuted(toggleMute())}
+              className="text-sm w-7 h-7 rounded-lg flex items-center justify-center transition-colors border"
+              style={{ borderColor: 'rgba(187,243,81,0.15)', opacity: muted ? 0.5 : 1 }}
+              title={muted ? 'Включить звук' : 'Выключить звук'}
+            >
+              {muted ? '🔇' : '🔊'}
+            </button>
             {isMyTurn && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.2)' }}>
+              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(187,243,81,0.1)', color: '#BBF351', border: '1px solid rgba(187,243,81,0.2)' }}>
                 YOUR TURN
               </span>
             )}
@@ -389,6 +526,7 @@ export default function MonopolyGame() {
             onCellClick={handleCellClick}
             selectedCell={selectedCell}
             animatingPositions={animatingPositions}
+            centerContent={centerContent}
           />
 
           {/* Center Event Overlay */}
@@ -403,9 +541,9 @@ export default function MonopolyGame() {
                   transition={{ duration: 0.3 }}
                   className="px-4 py-2 rounded-xl text-sm font-medium mb-1"
                   style={{
-                    background: evt.type === 'card' ? 'rgba(168,85,247,0.15)' : evt.type === 'dice' ? 'rgba(251,191,36,0.12)' : 'rgba(255,255,255,0.06)',
-                    border: `1px solid ${evt.type === 'card' ? 'rgba(168,85,247,0.3)' : evt.type === 'dice' ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.08)'}`,
-                    color: evt.type === 'card' ? '#c084fc' : evt.type === 'dice' ? '#fbbf24' : 'rgba(255,255,255,0.6)',
+                    background: evt.type === 'card' ? 'rgba(191,90,242,0.15)' : evt.type === 'dice' ? 'rgba(187,243,81,0.12)' : 'rgba(10,10,10,0.8)',
+                    border: `1px solid ${evt.type === 'card' ? 'rgba(191,90,242,0.3)' : evt.type === 'dice' ? 'rgba(187,243,81,0.25)' : 'rgba(187,243,81,0.1)'}`,
+                    color: evt.type === 'card' ? '#BF5AF2' : evt.type === 'dice' ? '#BBF351' : '#F0F0F0',
                     transform: `translateY(${i * -40}px)`,
                   }}
                 >
@@ -432,8 +570,8 @@ export default function MonopolyGame() {
               {incomingTrades.map((trade) => {
                 const offerer = gameState.players?.find((p) => p.userId === trade.fromId)
                 return (
-                  <motion.div key={trade.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="rounded-xl px-4 py-2 flex items-center gap-3" style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.25)' }}>
-                    <span className="text-[11px] text-white/60">{offerer?.username || 'Player'} offers a trade</span>
+                  <motion.div key={trade.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="rounded-xl px-4 py-2 flex items-center gap-3" style={{ background: 'rgba(191,90,242,0.12)', border: '1px solid rgba(191,90,242,0.25)' }}>
+                    <span className="text-[11px] text-text">{offerer?.username || 'Player'} offers a trade</span>
                     <button onClick={() => handleTradeAccept(trade.id)} className="text-[11px] text-green-400 hover:text-green-300">Accept</button>
                     <button onClick={() => handleTradeDecline(trade.id)} className="text-[11px] text-red-400 hover:text-red-300">Decline</button>
                   </motion.div>
@@ -445,52 +583,34 @@ export default function MonopolyGame() {
       </div>
 
       {/* Right: Actions + Chat */}
-      <div className="w-72 flex-shrink-0 flex flex-col border-l" style={{ borderColor: 'rgba(255,255,255,0.03)' }}>
-        <div className="p-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.03)' }}>
+      <div className="w-72 flex-shrink-0 flex flex-col border-l border-neon-400/10">
+        <div className="p-3 border-b border-neon-400/10">
           <div className="flex items-center gap-2 flex-wrap">
             {getActionContent()}
             {isMyTurn && gameState.phase === 'action' && selectedCell != null && isMySelectedProperty && !selectedCellPropData?.isMortgaged && (
               <>
-                {selectedCellPropData?.houses < 4 && <button onClick={() => handleBuildHouse(selectedCell)} className="text-[10px] px-2 py-1 rounded-lg" style={{ color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}>+House</button>}
-                {selectedCellPropData?.houses === 4 && <button onClick={() => handleBuildHotel(selectedCell)} className="text-[10px] px-2 py-1 rounded-lg" style={{ color: '#f97316', border: '1px solid rgba(249,115,22,0.2)' }}>+Hotel</button>}
-                {selectedCellPropData?.houses > 0 && <button onClick={() => handleSellHouse(selectedCell)} className="text-[10px] px-2 py-1 rounded-lg" style={{ color: '#f43f5e', border: '1px solid rgba(244,63,94,0.2)' }}>Sell</button>}
-                <button onClick={() => handleMortgage(selectedCell)} className="text-[10px] px-2 py-1 rounded-lg" style={{ color: '#8b5cf6', border: '1px solid rgba(139,92,246,0.2)' }}>Mortgage</button>
+                {selectedCellPropData?.houses < 4 && <button onClick={() => handleBuildHouse(selectedCell)} className="text-[10px] px-2 py-1 rounded-lg" style={{ color: '#00CC88', border: '1px solid rgba(0,204,136,0.2)' }}>+House</button>}
+                {selectedCellPropData?.houses === 4 && <button onClick={() => handleBuildHotel(selectedCell)} className="text-[10px] px-2 py-1 rounded-lg" style={{ color: '#FF8A33', border: '1px solid rgba(255,138,51,0.2)' }}>+Hotel</button>}
+                {selectedCellPropData?.houses > 0 && <button onClick={() => handleSellHouse(selectedCell)} className="text-[10px] px-2 py-1 rounded-lg" style={{ color: '#FF6688', border: '1px solid rgba(255,102,136,0.2)' }}>Sell</button>}
+                <button onClick={() => handleMortgage(selectedCell)} className="text-[10px] px-2 py-1 rounded-lg" style={{ color: '#BF5AF2', border: '1px solid rgba(191,90,242,0.2)' }}>Mortgage</button>
               </>
             )}
             {isMyTurn && selectedCell != null && selectedCellPropData?.isMortgaged && isMySelectedProperty && (
-              <button onClick={() => handleUnmortgage(selectedCell)} className="text-[10px] px-2 py-1 rounded-lg" style={{ color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}>Unmortgage</button>
+              <button onClick={() => handleUnmortgage(selectedCell)} className="text-[10px] px-2 py-1 rounded-lg" style={{ color: '#00CC88', border: '1px solid rgba(0,204,136,0.2)' }}>Unmortgage</button>
             )}
           </div>
         </div>
 
-        {/* Chat */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-2" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.06) transparent' }}>
-          <div className="px-1 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.15)', fontFamily: 'Space Grotesk' }}>Chat</span>
-          </div>
-          {chatMessages.map((msg, i) => {
-            const player = gameState.players?.find((p) => p.userId === msg.userId)
-            const isSystem = msg.type === 'system'
-            return (
-              <div key={i} className={`text-[11px] leading-relaxed ${isSystem ? 'italic' : ''}`} style={{ color: isSystem ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.45)' }}>
-                {!isSystem && <span className="font-medium" style={{ color: player?.color || 'rgba(255,255,255,0.5)' }}>{msg.username || msg.senderName || '???'}: </span>}
-                {msg.text || msg.message}
-              </div>
-            )
-          })}
-          <div ref={chatEndRef} />
+        {/* Game log */}
+        <div className="flex-1 min-h-0">
+          <GameLog messages={logMessages} />
         </div>
-
-        <form onSubmit={handleChatSubmit} className="p-2 border-t flex gap-2" style={{ borderColor: 'rgba(255,255,255,0.03)' }}>
-          <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Type a message..." className="flex-1 rounded-lg px-3 py-1.5 text-[11px] text-white/80 placeholder-white/15 focus:outline-none" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }} />
-          <button type="submit" className="text-[11px] px-3 py-1.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)' }}>Send</button>
-        </form>
       </div>
 
       {/* Error Toast */}
       <AnimatePresence>
         {gameError && (
-          <motion.div className="fixed top-20 left-1/2 z-[10000] px-5 py-3 rounded-xl text-xs font-medium" style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }} initial={{ opacity: 0, y: -20, x: '-50%' }} animate={{ opacity: 1, y: 0, x: '-50%' }} exit={{ opacity: 0, y: -20, x: '-50%' }}>
+          <motion.div className="fixed top-20 left-1/2 z-[10000] px-5 py-3 rounded-xl text-xs font-medium" style={{ background: 'rgba(255,51,102,0.15)', border: '1px solid rgba(255,51,102,0.3)', color: '#FF6688' }} initial={{ opacity: 0, y: -20, x: '-50%' }} animate={{ opacity: 1, y: 0, x: '-50%' }} exit={{ opacity: 0, y: -20, x: '-50%' }}>
             {gameError}
           </motion.div>
         )}
@@ -502,7 +622,7 @@ export default function MonopolyGame() {
         {showBankrupt && <BankruptModal player={showBankrupt.player} creditor={showBankrupt.creditor} onClose={() => setShowBankrupt(null)} />}
         {showTrade && <TradeModal myPlayer={currentPlayer} targetPlayer={gameState.players?.find((p) => p.userId === showTrade.targetId)} gameState={gameState} onOffer={handleTradeOffer} onClose={() => setShowTrade(null)} />}
         {gameState.phase === 'auction' && <AuctionModal gameState={gameState} currentPlayer={currentPlayer} onBid={(amount) => emitSafe('auction:bid', { amount })} onClose={() => {}} />}
-        {isGameOver && <GameOverModal winner={gameState.players?.find((p) => p.userId === gameState.winner)} players={gameState.players || []} onClose={() => navigate('/monopoly')} />}
+        {isGameOver && <GameOverModal winner={gameState.players?.find((p) => p.userId === gameState.winner)} players={gameState.players || []} onClose={() => { localStorage.removeItem(ROOM_CODE_KEY); navigate('/monopoly') }} />}
       </AnimatePresence>
     </div>
   )

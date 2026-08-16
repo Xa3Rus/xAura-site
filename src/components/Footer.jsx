@@ -33,23 +33,23 @@ export default function Footer() {
   }, [])
 
   return (
-    <footer className="mt-auto py-8 px-5 sm:px-8" style={{ borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+    <footer className="mt-auto py-8 px-5 sm:px-8 border-t border-neon-400/20 bg-surface-0/50">
       <div className="max-w-[1400px] mx-auto">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <span className="font-bold text-sm tracking-tight" style={{ fontFamily: 'Space Grotesk' }}>
-              <span style={{ color: 'rgba(255,255,255,0.3)' }}>x</span>
-              <span className="text-amber-400">Aura</span>
+            <span className="font-bold text-sm tracking-tight font-display">
+              <span className="text-text-muted">x</span>
+              <span className="text-neon-400">Aura</span>
             </span>
-            <span style={{ color: 'rgba(255,255,255,0.06)' }}>·</span>
-            <span style={{ fontFamily: 'JetBrains Mono', fontSize: '10px', color: 'rgba(255,255,255,0.12)' }}>2025</span>
-            <span style={{ color: 'rgba(255,255,255,0.06)' }}>·</span>
-            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.12)' }}>Данные <a href="https://shikimori.one" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 transition-colors font-medium" style={{ color: 'rgba(255,255,255,0.2)' }}>Shikimori</a></span>
+            <span className="text-text-subtle">·</span>
+            <span className="font-mono text-[10px] text-text-muted">2025</span>
+            <span className="text-text-subtle">·</span>
+            <span className="text-[10px] text-text-muted">Данные <a href="https://shikimori.one" target="_blank" rel="noopener noreferrer" className="hover:text-neon-400 transition-colors font-medium text-text-secondary">Shikimori</a></span>
           </div>
-          <div className="flex items-center gap-4 text-xs" style={{ fontFamily: 'JetBrains Mono' }}>
-            <span style={{ color: 'rgba(255,255,255,0.1)' }}><span className="text-amber-400 font-bold">{animeCount.toLocaleString()}</span> тайтлов</span>
-            <span style={{ color: 'rgba(255,255,255,0.06)' }}>·</span>
-            <span style={{ color: 'rgba(255,255,255,0.1)' }}><span className="text-mint-400 font-bold">{userCount}</span> {userCount === 1 ? 'пользователь' : userCount < 5 ? 'пользователя' : 'пользователей'}</span>
+          <div className="flex items-center gap-4 text-xs font-mono">
+            <span className="text-text-muted"><span className="text-neon-400 font-bold">{animeCount.toLocaleString()}</span> тайтлов</span>
+            <span className="text-text-subtle">·</span>
+            <span className="text-text-muted"><span className="text-cyan-400 font-bold">{userCount}</span> {userCount === 1 ? 'пользователь' : userCount < 5 ? 'пользователя' : 'пользователей'}</span>
           </div>
         </div>
       </div>

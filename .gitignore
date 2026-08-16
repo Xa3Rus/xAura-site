@@ -4,3 +4,7 @@ dist/
 *.log
 parse-err.txt
 parse-log.txt
+.qoder/
+neon-*.png
+ref-monopoly/
+frontend.log
