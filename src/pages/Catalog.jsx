@@ -6,6 +6,7 @@ import { supabase } from '../utils/supabase'
 import Loader from '../components/Loader'
 import Select from '../components/Select'
 import { loadAnimeData, filterAnime } from '../utils/animeData'
+import { shikimoriImg } from '../utils/imgUrl'
 
 const GENRES = [
   'Action', 'Adventure', 'Cars', 'Comedy', 'Dementia', 'Demons', 'Drama',
@@ -88,7 +89,7 @@ export default function Catalog() {
         user_id: user.id,
         anime_id: anime.id,
         anime_name: anime.russian || anime.name,
-        anime_image: anime.image?.original ? `https://shikimori.io${anime.image.original}` : null,
+        anime_image: shikimoriImg(anime.image?.original),
         drawing: 0, idea: 0, realization: 0,
         characters: 0, story: 0, emotional: 0,
         average_score: score,
@@ -111,21 +112,37 @@ export default function Catalog() {
   return (
     <div className="min-h-screen pt-20 pb-12 px-5 sm:px-8">
       <div className="max-w-[1400px] mx-auto">
-        <div className="mb-8 page-enter">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1 neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>Каталог</h1>
-          <p className="text-xs text-text-muted">{filtered.length.toLocaleString()} тайтлов</p>
+        <div className="mb-8 page-enter flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1 neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>Каталог</h1>
+            <p className="text-xs text-text-muted">оценивай с карточки или открывай подробную оценку</p>
+          </div>
+          <div className="flex gap-2">
+            <div className="rounded-lg px-3 py-1.5 bg-surface-1/80 border border-neon-400/10 backdrop-blur-sm">
+              <span className="font-mono text-[10px] text-text-muted">ТАЙТЛОВ </span>
+              <span className="font-mono text-xs font-bold text-neon-400">{filtered.length.toLocaleString()}</span>
+            </div>
+            {Object.keys(ratingsMap).length > 0 && (
+              <div className="rounded-lg px-3 py-1.5 bg-surface-1/80 border border-neon-400/10 backdrop-blur-sm">
+                <span className="font-mono text-[10px] text-text-muted">МОИХ </span>
+                <span className="font-mono text-xs font-bold text-success">{Object.keys(ratingsMap).length}</span>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2.5 mb-8 page-enter" style={{ animationDelay: '0.05s' }}>
-          <div className="relative flex-1">
-            <input type="text" placeholder="Поиск..." value={search} onChange={(e) => setSearch(e.target.value)} className="input !pl-9" />
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+        <div className="rounded-xl p-2.5 mb-8 page-enter bg-surface-1/60 border border-neon-400/10 backdrop-blur-sm" style={{ animationDelay: '0.05s' }}>
+          <div className="flex flex-col sm:flex-row gap-2.5">
+            <div className="relative flex-1">
+              <input type="text" placeholder="Поиск..." value={search} onChange={(e) => setSearch(e.target.value)} className="input !pl-9" />
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <Select value={sort} onChange={setSort} options={sortOptions} className="w-full sm:w-40" />
+            <Select value={year} onChange={setYear} options={yearOptions} className="w-full sm:w-32" />
+            <Select value={genre} onChange={setGenre} options={genreOptions} className="w-full sm:w-40" />
           </div>
-          <Select value={sort} onChange={setSort} options={sortOptions} className="w-full sm:w-40" />
-          <Select value={year} onChange={setYear} options={yearOptions} className="w-full sm:w-32" />
-          <Select value={genre} onChange={setGenre} options={genreOptions} className="w-full sm:w-40" />
         </div>
 
         {loading ? (
@@ -148,7 +165,7 @@ export default function Catalog() {
                     <div className="aspect-[3/4] relative overflow-hidden rounded-t-2xl bg-surface-2">
                       {item.image?.original && !item.image.original.includes('missing_') ? (
                         <img
-                          src={`https://shikimori.io${item.image.original}`}
+                          src={shikimoriImg(item.image.original) || ''}
                           alt={item.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                           loading="lazy"
@@ -166,8 +183,8 @@ export default function Catalog() {
                       )}
 
                       {myRating && (
-                        <div className="absolute top-2 right-2 score-badge bg-neon-400/15 text-neon-400 border border-neon-400/20 font-mono">
-                          {myRating.average_score?.toFixed(2)}
+                        <div className="absolute top-2 right-2 score-badge bg-black/70 backdrop-blur-md text-neon-400 border border-neon-400/25 font-mono" title="Моя оценка">
+                          <span className="opacity-60 mr-0.5">моё</span>{myRating.average_score?.toFixed(2)}
                         </div>
                       )}
 
@@ -233,10 +250,11 @@ export default function Catalog() {
               })}
             </div>
             {hasMore && (
-              <div className="flex justify-center mt-12">
+              <div className="flex flex-col items-center gap-2 mt-12">
                 <button onClick={() => setPage((p) => p + 1)} className="btn-primary btn-shine">
-                  Загрузить ещё
+                  Загрузить ещё <span className="opacity-60 font-mono text-xs">+{Math.min(ITEMS_PER_PAGE, filtered.length - displayAnime.length).toLocaleString()}</span>
                 </button>
+                <p className="text-[10px] text-text-subtle font-mono">показано {displayAnime.length.toLocaleString()} из {filtered.length.toLocaleString()}</p>
               </div>
             )}
             {!hasMore && displayAnime.length > 0 && (

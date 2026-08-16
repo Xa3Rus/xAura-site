@@ -1,6 +1,6 @@
 export function getImageUrl(path) {
   if (!path || path.includes('missing_')) return null
-  return `https://shikimori.one${path}`
+  return path ? `/shikimori-img${path}` : null
 }
 
 export function ImgWithFallback({ src, alt, className, fallbackClassName, fallbackText }) {

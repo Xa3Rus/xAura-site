@@ -1,11 +1,13 @@
 import { useState, useEffect, useContext, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import Loader from '../components/Loader'
 import { loadAnimeData } from '../utils/animeData'
 import { loadFoodData, parseTierMakerUrl, loadTierMakerTemplate } from '../utils/foodData'
+import { shikimoriImg } from '../utils/imgUrl'
 
 const PRESET_COLORS = [
   '#FF2D78', '#FF8A33', '#D4F785', '#BBF351', '#00CC88', '#00E5FF',
@@ -20,6 +22,31 @@ const DEFAULT_TIERS = [
   { id: 'd', name: 'D', color: '#00E5FF', items: [] },
   { id: 'f', name: 'F', color: '#707070', items: [] },
 ]
+
+// Карточка тир-листа: без картинки рендерит заглушку сразу,
+// битая картинка подменяется состоянием, а не трюками с DOM
+function TierCard({ src, name, hoverClass = '' }) {
+  const [broken, setBroken] = useState(false)
+  return (
+    <div
+      className={`w-16 h-20 rounded-md overflow-hidden flex items-center justify-center bg-surface-2 transition-all duration-200 ${hoverClass}`}
+      title={name}
+    >
+      {src && !broken ? (
+        <img
+          src={src}
+          alt={name || ''}
+          className="w-full h-full object-cover pointer-events-none"
+          loading="lazy"
+          draggable={false}
+          onError={() => setBroken(true)}
+        />
+      ) : (
+        <span className="text-sm font-bold text-text-muted">{name?.[0]?.toUpperCase() || '?'}</span>
+      )}
+    </div>
+  )
+}
 
 function hexToHSV(hex) {
   const r = parseInt(hex.slice(1, 3), 16) / 255
@@ -147,9 +174,13 @@ export default function TierMaker() {
   const location = useLocation()
   const [allAnime, setAllAnime] = useState([])
   const [allFood, setAllFood] = useState([])
-  const [loading, setLoading] = useState(true)
+  // Импортированный шаблон применяется в initial state, а не в эффекте:
+  // эффект загрузки данных в первом коммите ещё видит старый тип 'anime'
+  // и успевает перезаписать пул аниме-топом поверх импорта
+  const importedAtMount = location.state?.importedTemplate
+  const [loading, setLoading] = useState(!importedAtMount)
   const [tiers, setTiers] = useState(DEFAULT_TIERS.map((t) => ({ ...t, items: [] })))
-  const [pool, setPool] = useState([])
+  const [pool, setPool] = useState(() => importedAtMount?.items || [])
   const [search, setSearch] = useState('')
   const [draggedItem, setDraggedItem] = useState(null)
   const [dragSource, setDragSource] = useState(null)
@@ -158,7 +189,7 @@ export default function TierMaker() {
   const [editingTier, setEditingTier] = useState(null)
   const [editingName, setEditingName] = useState('')
   const [editingColor, setEditingColor] = useState('')
-  const [tierListName, setTierListName] = useState('Мой Tier List')
+  const [tierListName, setTierListName] = useState(() => importedAtMount?.title || 'Мой Tier List')
   const [savedLists, setSavedLists] = useState([])
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [addSearch, setAddSearch] = useState('')
@@ -166,14 +197,24 @@ export default function TierMaker() {
   const [addResults, setAddResults] = useState([])
   const [poolItemMenu, setPoolItemMenu] = useState(null)
   const [poolItemMenuPos, setPoolItemMenuPos] = useState({ x: 0, y: 0 })
-  const [tierListType, setTierListType] = useState('anime')
+  const [tierListType, setTierListType] = useState(() => importedAtMount ? 'custom' : 'anime')
   const [importUrl, setImportUrl] = useState('')
   const [importLoading, setImportLoading] = useState(false)
   const [importError, setImportError] = useState('')
+  const [importSuccess, setImportSuccess] = useState('')
+  const [showImportModal, setShowImportModal] = useState(false)
   const editingRef = useRef(null)
   const poolRef = useRef(null)
   const addSearchRef = useRef(null)
   const poolItemMenuRef = useRef(null)
+
+  const autoSavedImportRef = useRef(false)
+  useEffect(() => {
+    if (importedAtMount && user && !autoSavedImportRef.current) {
+      autoSavedImportRef.current = true
+      saveImportedList(importedAtMount.title, importedAtMount.items)
+    }
+  }, [user])
 
   useEffect(() => {
     const state = location.state
@@ -182,10 +223,8 @@ export default function TierMaker() {
       if (state.templateType === 'food') setTierListName('Мой Food Tier List')
       else setTierListName('Мой Tier List')
     }
-    if (state?.importSlug) {
-      setImportUrl(`https://tiermaker.com/create/${state.importSlug}`)
-      setTierListType('custom')
-    }
+    // импортированный шаблон уже применён в initial state —
+    // повторно перезаписывать пул здесь нельзя, это стирало импорт
     if (state) window.history.replaceState({}, '')
   }, [location.state])
 
@@ -218,12 +257,6 @@ export default function TierMaker() {
       setLoading(false)
     }
   }, [user, tierListType])
-
-  useEffect(() => {
-    if (importUrl && !loading && !importLoading) {
-      handleImportTierMaker()
-    }
-  }, [importUrl, loading])
 
   useEffect(() => {
     if (!editingTier) return
@@ -419,10 +452,17 @@ export default function TierMaker() {
 
   const saveTierList = async () => {
     if (!user) return
+    // кастомные (импортированные) карточки хранятся объектами с картинкой —
+    // их нет в каталогах аниме/еды, одним id их не восстановить
+    const isCustom = tierListType === 'custom'
+    const toStored = (a) => (isCustom ? { id: a.id, image: a.image, name: a.name } : a.id)
+    const tiersData = tiers.map((t) => ({ id: t.id, name: t.name, color: t.color, items: t.items.map(toStored) }))
     const listData = {
       user_id: user.id,
       name: tierListName,
-      tiers: tiers.map((t) => ({ id: t.id, name: t.name, color: t.color, items: t.items.map((a) => a.id) })),
+      tiers: isCustom && pool.length > 0
+        ? { pool: pool.map(toStored), tiers: tiersData }
+        : tiersData,
     }
     const { data } = await supabase.from('tier_lists').insert(listData).select().single()
     if (data) setSavedLists((prev) => [data, ...prev])
@@ -437,14 +477,49 @@ export default function TierMaker() {
     setShowSaveDialog(false)
   }
 
-  const loadTierList = (list) => {
-    const tiersData = typeof list.tiers === 'string' ? JSON.parse(list.tiers) : list.tiers
+  const loadTierList = async (list) => {
+    const raw = typeof list.tiers === 'string' ? JSON.parse(list.tiers) : list.tiers
+    const tiersData = Array.isArray(raw) ? raw : (raw?.tiers || [])
+    const savedPool = Array.isArray(raw) ? [] : (raw?.pool || [])
+
+    // элементы бывают из аниме- или еды-каталога (id не пересекаются:
+    // у аниме числовые, у еды food_*, у импортов tm_), либо сохранены
+    // объектами с собственной картинкой
+    let sources = [...allAnime, ...allFood]
+    const knownIds = new Set(sources.map((a) => a.id))
+    const allStored = [...savedPool, ...tiersData.flatMap((t) => t.items || [])]
+    const hasUnknown = allStored.some((it) => typeof it !== 'object' && !knownIds.has(it))
+    if (hasUnknown && tierListType !== 'food' && allFood.length === 0) {
+      const food = await loadFoodData()
+      setAllFood(food)
+      sources = [...sources, ...food]
+    }
+    const itemMap = new Map(sources.map((a) => [a.id, a]))
+    const resolve = (it) => (typeof it === 'object' ? it : itemMap.get(it))
+
     const loadedTiers = tiersData.map((t) => ({
       ...t,
-      items: t.items.map((id) => allAnime.find((a) => a.id === id)).filter(Boolean),
+      items: (t.items || []).map(resolve).filter(Boolean),
     }))
     setTiers(loadedTiers)
+    if (savedPool.length > 0) {
+      setPool(savedPool.map(resolve).filter(Boolean))
+      setTierListType('custom')
+    }
     setTierListName(list.name)
+  }
+
+  // импорт сразу сохраняется в «Сохранённые Tier List» — с пулом карточек,
+  // чтобы список отображался и загружался как обычный
+  const saveImportedList = async (title, items) => {
+    if (!user) return
+    const stored = items.map((i) => ({ id: i.id, image: i.image, name: i.name }))
+    const { data } = await supabase.from('tier_lists').insert({
+      user_id: user.id,
+      name: title || 'Импортированный Tier List',
+      tiers: { pool: stored, tiers: DEFAULT_TIERS.map((t) => ({ id: t.id, name: t.name, color: t.color, items: [] })) },
+    }).select().single()
+    if (data) setSavedLists((prev) => [data, ...prev])
   }
 
   const deleteTierList = async (listId) => {
@@ -476,19 +551,10 @@ export default function TierMaker() {
       setTierListType('custom')
       setTierListName(title)
       setImportUrl('')
-
-      if (user) {
-        const preview = items[0]?.image || ''
-        await supabase.from('tier_templates').upsert({
-          slug,
-          title,
-          description: `${items.length} изображений`,
-          image_count: items.length,
-          category: 'Импорт',
-          preview,
-          imported_by: user.id,
-        }, { onConflict: 'slug' })
-      }
+      setShowImportModal(false)
+      setImportSuccess(`Импортировано: ${title} · ${items.length} изображений`)
+      setTimeout(() => setImportSuccess(''), 4000)
+      await saveImportedList(title, items)
     } catch (err) {
       setImportError('Ошибка загрузки шаблона')
     }
@@ -501,8 +567,8 @@ export default function TierMaker() {
   return (
     <div className="min-h-screen pt-24 pb-12 px-5 sm:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6 page-enter">
-          <div className="flex items-center gap-4">
+        <div className="sticky top-14 z-30 -mx-5 sm:-mx-8 px-5 sm:px-8 py-2.5 mb-6 bg-surface-0/90 backdrop-blur-xl border-b border-neon-400/10 flex items-center justify-between gap-3 flex-wrap page-enter">
+          <div className="flex items-center gap-4 min-w-0">
             <input
               value={tierListName}
               onChange={(e) => setTierListName(e.target.value)}
@@ -534,30 +600,26 @@ export default function TierMaker() {
               </div>
             )}
           </div>
-          <button onClick={() => setShowSaveDialog(true)} className="btn-primary btn-shine text-xs !py-2">Сохранить</button>
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => { setShowImportModal(true); setImportError('') }}
+              className="px-3 py-2 rounded-lg text-xs font-medium transition-all hover:opacity-85"
+              style={{ background: 'rgba(191,90,242,0.15)', color: '#BF5AF2', border: '1px solid rgba(191,90,242,0.25)' }}
+            >
+              ↓ Импорт из TierMaker
+            </button>
+            <button onClick={() => setShowSaveDialog(true)} className="btn-primary btn-shine text-xs !py-2">Сохранить</button>
+          </div>
         </div>
 
-        {tierListType !== 'custom' && (
-          <div className="rounded-xl p-3 mb-6 page-enter flex items-center gap-3 bg-surface-1 border border-neon-400/10">
-            <span className="text-xs shrink-0 text-text-muted">Импорт с TierMaker:</span>
-            <input
-              value={importUrl}
-              onChange={(e) => { setImportUrl(e.target.value); setImportError('') }}
-              onKeyDown={(e) => e.key === 'Enter' && handleImportTierMaker()}
-              placeholder="Вставьте ссылку на шаблон tiermaker.com/create/..."
-              className="input !py-1.5 text-xs flex-1"
-              disabled={importLoading}
-            />
-            <button
-              onClick={handleImportTierMaker}
-              disabled={importLoading || !importUrl.trim()}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 disabled:opacity-30"
-              style={{ background: 'rgba(191,90,242,0.15)', color: '#BF5AF2', border: '1px solid rgba(191,90,242,0.2)' }}
-            >
-              {importLoading ? 'Загрузка...' : 'Импортировать'}
-            </button>
-            {importError && <span className="text-[10px] text-danger shrink-0">{importError}</span>}
-          </div>
+        {importSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: 16, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="fixed bottom-5 right-5 z-40 rounded-xl px-4 py-3 bg-surface-1/95 backdrop-blur-md border border-success/30 text-xs text-success font-mono shadow-glow-neon max-w-xs"
+          >
+            ✓ {importSuccess}
+          </motion.div>
         )}
 
         {showSaveDialog && (
@@ -612,22 +674,35 @@ export default function TierMaker() {
                 ) : (
                   <>
                     <div
-                      className="tier-badge cursor-pointer hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: tier.color + '18', border: `1px solid ${tier.color}30`, color: tier.color }}
+                      className="tier-badge cursor-pointer transition-all duration-200 hover:scale-105"
+                      style={{
+                        background: `linear-gradient(180deg, ${tier.color}35, ${tier.color}12)`,
+                        border: `1px solid ${tier.color}50`,
+                        color: tier.color,
+                        textShadow: `0 0 14px ${tier.color}70`,
+                        boxShadow: `0 0 18px -6px ${tier.color}50`,
+                      }}
                       onClick={() => startEditTier(tier)}
                     >
                       {tier.name}
                     </div>
-                    <div className="flex gap-0.5">
-                      <button onClick={() => moveTier(tier.id, 'up')} className="text-[10px] hover:text-text-muted transition-colors text-text-muted/50">▲</button>
-                      <button onClick={() => moveTier(tier.id, 'down')} className="text-[10px] hover:text-text-muted transition-colors text-text-muted/50">▼</button>
+                    <span className="font-mono text-[9px] text-text-subtle" title="Количество элементов">
+                      {tier.items.length}
+                    </span>
+                    <div className="flex gap-0.5 mt-0.5">
+                      <button onClick={() => moveTier(tier.id, 'up')} className="w-4 h-4 rounded flex items-center justify-center text-[8px] text-text-muted/60 hover:text-neon-400 hover:bg-neon-400/10 transition-all" title="Выше">▲</button>
+                      <button onClick={() => moveTier(tier.id, 'down')} className="w-4 h-4 rounded flex items-center justify-center text-[8px] text-text-muted/60 hover:text-neon-400 hover:bg-neon-400/10 transition-all" title="Ниже">▼</button>
                     </div>
                   </>
                 )}
               </div>
 
               <div
-                className="flex-1 min-h-[60px] rounded-xl p-1.5 flex flex-wrap items-center gap-1.5 bg-surface-2 border border-neon-400/10"
+                className={`flex-1 min-h-[76px] rounded-xl p-1.5 flex flex-wrap items-center gap-1.5 border transition-all duration-200 ${
+                  dragOverTierId === tier.id && draggedItem
+                    ? 'bg-neon-400/[0.06] border-neon-400/40 shadow-glow-neon'
+                    : 'bg-surface-2 border-neon-400/10'
+                }`}
                 onDragOver={handleDragOver}
                 onDragLeave={() => { setDragOverTierId(null); setDragOverIndex(null) }}
                 onDrop={(e) => { e.preventDefault(); handleDropOnTier(tier.id) }}
@@ -645,32 +720,24 @@ export default function TierMaker() {
                     onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleDropOnTier(tier.id, itemIdx) }}
                   >
                     {dragOverTierId === tier.id && dragOverIndex === itemIdx && draggedItem && item.id !== draggedItem?.id && (
-                      <div className="w-0.5 h-10 bg-neon-400 rounded-full mr-0.5 animate-pulse flex-shrink-0" />
+                      <div className="w-0.5 h-16 bg-neon-400 rounded-full mr-0.5 animate-pulse flex-shrink-0" />
                     )}
                     <div
                       draggable
                       onDragStart={() => handleDragStart(item, `tier-${tier.id}`)}
                       className="cursor-grab active:cursor-grabbing group/item relative"
                     >
-                      {tierListType === 'anime' ? (
-                        <>
-                          <img
-                            src={item.image?.original && !item.image.original.includes('missing_') ? `https://shikimori.one${item.image.original}` : ''}
-                            alt=""
-                            className="w-14 h-[72px] rounded-lg object-cover group-hover/item:ring-1 ring-neon-600/50 transition-all"
-                            onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
-                          />
-                          <div className={`w-14 h-[72px] rounded-lg bg-surface-2 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
-                            <span className="text-sm font-bold text-text-muted">{(item.russian || item.name || '?')[0]}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <img
-                          src={item.image}
-                          alt=""
-                            className="w-14 h-[72px] rounded-lg object-cover group-hover/item:ring-1 ring-mint-500/50 transition-all"
-                        />
-                      )}
+                      <TierCard
+                        src={
+                          tierListType === 'anime'
+                            ? shikimoriImg(item.image?.original)
+                            : item.image
+                        }
+                        name={item.russian || item.name}
+                        hoverClass={tierListType === 'anime'
+                          ? 'group-hover/item:ring-1 group-hover/item:ring-neon-400/60 group-hover/item:scale-105'
+                          : 'group-hover/item:ring-1 group-hover/item:ring-mint-400/60 group-hover/item:scale-105'}
+                      />
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
@@ -686,16 +753,21 @@ export default function TierMaker() {
                   </div>
                 ))}
                 {dragOverTierId === tier.id && dragOverIndex === tier.items.length && draggedItem && (
-                  <div className="w-0.5 h-10 bg-neon-400 rounded-full animate-pulse flex-shrink-0" />
+                  <div className="w-0.5 h-16 bg-neon-400 rounded-full animate-pulse flex-shrink-0" />
                 )}
               </div>
 
-              <button onClick={() => removeTier(tier.id)} className="text-xs px-1 self-center hover:text-danger transition-colors text-text-muted/50">✕</button>
+              <button onClick={() => removeTier(tier.id)} className="w-5 h-5 rounded-md self-center flex items-center justify-center text-[10px] hover:text-danger hover:bg-danger/10 transition-all text-text-muted/40" title="Удалить тир">✕</button>
             </div>
           ))}
         </div>
 
-        <button onClick={addTier} className="text-neon-400 hover:text-neon-700 text-xs mb-6 transition-colors">+ Добавить тир</button>
+        <button
+          onClick={addTier}
+          className="w-full rounded-xl border border-dashed border-neon-400/25 hover:border-neon-400/60 hover:bg-neon-400/[0.04] hover:text-neon-400 py-2.5 text-xs text-text-muted transition-all mb-6 flex items-center justify-center gap-1.5"
+        >
+          <span className="text-sm leading-none">+</span> Добавить тир
+        </button>
 
         <div className="rounded-xl p-4 page-enter bg-surface-1 border border-neon-400/10">
           <div className="flex items-center gap-3 mb-3">
@@ -703,7 +775,7 @@ export default function TierMaker() {
               {tierListType === 'anime' ? 'Пул аниме' : tierListType === 'food' ? 'Пул еды' : 'Пул изображений'}
             </h3>
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Фильтр..." className="input !py-1.5 text-xs flex-1 max-w-xs" />
-            <span className="text-xs text-text-muted" style={{ fontFamily: 'Source Code Pro' }}>{filteredPool.length}</span>
+            <span className="px-2 py-0.5 rounded-md font-mono text-[10px] text-neon-400 bg-neon-400/10 border border-neon-400/15">{filteredPool.length}</span>
           </div>
 
           <div className="relative mb-3" ref={addSearchRef}>
@@ -730,7 +802,7 @@ export default function TierMaker() {
                     {tierListType === 'anime' ? (
                       <>
                         {a.image?.original && !a.image.original.includes('missing_') ? (
-                          <img src={`https://shikimori.one${a.image.original}`} alt="" className="w-8 h-11 rounded-md object-cover flex-shrink-0" />
+                          <img src={shikimoriImg(a.image?.original) || ''} alt="" className="w-8 h-11 rounded-md object-cover flex-shrink-0" />
                         ) : (
                           <div className="w-8 h-11 rounded-md bg-surface-2 flex items-center justify-center flex-shrink-0">
                             <span className="text-xs font-bold text-text-muted">{(a.russian || a.name || '?')[0]}</span>
@@ -764,7 +836,7 @@ export default function TierMaker() {
 
           <div
             ref={poolRef}
-            className="flex flex-wrap gap-1.5 min-h-[72px] p-2 rounded-xl bg-surface-2 border border-dashed border-neon-400/10"
+            className="flex flex-wrap gap-1.5 min-h-[88px] p-2 rounded-xl bg-surface-2/70 border border-dashed border-neon-400/20"
             onDragOver={handleDragOver}
             onDrop={handleDropOnPoolRef}
           >
@@ -780,30 +852,24 @@ export default function TierMaker() {
                 onDragStart={() => handleDragStart(item, 'pool')}
                 className="flex-shrink-0 cursor-grab active:cursor-grabbing group/pool relative"
               >
-                {tierListType === 'anime' ? (
-                  <>
-                    <img
-                      src={item.image?.original && !item.image.original.includes('missing_') ? `https://shikimori.one${item.image.original}` : ''}
-                      alt=""
-                            className="w-14 h-[72px] rounded-lg object-cover hover:ring-1 ring-neon-600/50 transition-all"
-                      onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
-                    />
-                    <div className={`w-14 h-[72px] rounded-lg bg-surface-2 items-center justify-center ${item.image?.original && !item.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
-                      <span className="text-sm font-bold text-text-muted">{(item.russian || item.name || '?')[0]}</span>
-                    </div>
-                  </>
-                ) : (
-                  <img
-                    src={item.image}
-                    alt=""
-                            className="w-14 h-[72px] rounded-lg object-cover hover:ring-1 ring-mint-500/50 transition-all"
+                <div className="relative">
+                  <TierCard
+                    src={
+                      tierListType === 'anime'
+                        ? shikimoriImg(item.image?.original)
+                        : item.image
+                    }
+                    name={item.russian || item.name}
+                    hoverClass={tierListType === 'anime'
+                      ? 'group-hover/pool:ring-1 group-hover/pool:ring-neon-400/60 group-hover/pool:scale-105'
+                      : 'group-hover/pool:ring-1 group-hover/pool:ring-mint-400/60 group-hover/pool:scale-105'}
                   />
-                )}
-                {tierListType === 'anime' && (
-                  <div className="absolute bottom-0 left-0 right-0 text-center text-[8px] py-0.5 rounded-b-lg truncate px-0.5" style={{ background: 'rgba(0,0,0,0.7)' }}>
-                    {item.russian || item.name}
-                  </div>
-                )}
+                  {tierListType === 'anime' && (
+                    <div className="absolute bottom-0 left-0 right-0 text-center text-[8px] py-0.5 rounded-b-md truncate px-0.5" style={{ background: 'rgba(0,0,0,0.7)' }}>
+                      {item.russian || item.name}
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); removeAnimeFromPool(item.id) }}
                   className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-[8px] flex items-center justify-center opacity-0 group-hover/pool:opacity-100 transition-opacity"
@@ -857,14 +923,21 @@ export default function TierMaker() {
             <h3 className="font-bold text-sm mb-3 neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>Сохранённые Tier List</h3>
             <div className="space-y-1.5">
               {savedLists.map((list) => {
-                const tiersData = typeof list.tiers === 'string' ? JSON.parse(list.tiers) : list.tiers
+                const raw = typeof list.tiers === 'string' ? JSON.parse(list.tiers) : list.tiers
+                const tiersData = Array.isArray(raw) ? raw : (raw?.tiers || [])
+                const poolCount = Array.isArray(raw) ? 0 : (raw?.pool?.length || 0)
                 return (
                   <div key={list.id} className="rounded-xl px-4 py-3 flex items-center gap-3 bg-surface-1 border border-neon-400/10">
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-sm truncate">{list.name}</h4>
                       <p className="text-[10px] text-text-muted" style={{ fontFamily: 'Source Code Pro' }}>{new Date(list.created_at).toLocaleDateString('ru')}</p>
                     </div>
-                    <div className="flex gap-0.5">
+                    <div className="flex gap-0.5 flex-wrap justify-end">
+                      {poolCount > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-lg bg-neon-400/10 text-neon-400 border border-neon-400/20 font-mono">
+                          пул:{poolCount}
+                        </span>
+                      )}
                       {tiersData.filter((t) => t.items.length > 0).map((t) => (
                         <span key={t.id} className="text-[10px] px-1.5 py-0.5 rounded-lg" style={{ backgroundColor: t.color + '15', color: t.color, border: `1px solid ${t.color}20` }}>
                           {t.name}:{t.items.length}
@@ -880,6 +953,109 @@ export default function TierMaker() {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {showImportModal && (
+          <motion.div
+            className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => !importLoading && setShowImportModal(false)} />
+            <motion.div
+              className="relative rounded-2xl p-6 sm:p-8 w-full max-w-md bg-surface-1 border border-[#BF5AF2]/25 shadow-2xl overflow-hidden"
+              initial={{ scale: 0.92, y: 16, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.92, y: 16, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+            >
+              <div className="absolute -top-16 -right-16 w-48 h-48 bg-[#BF5AF2]/[0.12] rounded-full blur-[80px] pointer-events-none" />
+
+              <div className="relative">
+                <div className="w-12 h-12 rounded-xl mx-auto flex items-center justify-center mb-4 bg-[#BF5AF2]/15 border border-[#BF5AF2]/30">
+                  <svg className="w-6 h-6 text-[#BF5AF2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </div>
+
+                <h2 className="text-lg font-bold text-center mb-1" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>
+                  Импорт из TierMaker
+                </h2>
+                <p className="text-xs text-text-muted text-center mb-5 leading-relaxed">
+                  Найди шаблон на{' '}
+                  <a href="https://tiermaker.com/" target="_blank" rel="noopener noreferrer" className="text-[#BF5AF2] hover:underline font-medium">
+                    tiermaker.com
+                  </a>{' '}
+                  и вставь сюда ссылку — картинки подтянутся автоматически
+                </p>
+
+                <div className="relative mb-3">
+                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-subtle pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                  <input
+                    value={importUrl}
+                    onChange={(e) => { setImportUrl(e.target.value); setImportError('') }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && importUrl.trim() && !importLoading) handleImportTierMaker() }}
+                    placeholder="https://tiermaker.com/create/..."
+                    autoFocus
+                    disabled={importLoading}
+                    className="input !pl-10 !py-3 text-sm"
+                  />
+                </div>
+
+                <div className="rounded-lg px-3 py-2 mb-4 bg-surface-2/60 border border-neon-400/10">
+                  <p className="text-[10px] text-text-muted leading-relaxed">
+                    <span className="text-text-secondary font-medium">Поддерживаются ссылки:</span>
+                    <br />tiermaker.com/create/… · /categories/… · /tier-lists/…
+                    <br />или просто slug шаблона
+                  </p>
+                </div>
+
+                {importError && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-xs text-danger mb-3 text-center"
+                  >
+                    {importError}
+                  </motion.p>
+                )}
+
+                <div className="flex gap-2.5">
+                  <button
+                    onClick={() => setShowImportModal(false)}
+                    disabled={importLoading}
+                    className="flex-1 px-4 py-2.5 rounded-lg text-xs font-medium text-text-muted border border-surface-3 hover:bg-surface-2 transition-all disabled:opacity-40"
+                  >
+                    Отмена
+                  </button>
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleImportTierMaker}
+                    disabled={importLoading || !importUrl.trim()}
+                    className="flex-1 px-4 py-2.5 rounded-lg text-xs font-bold transition-all disabled:opacity-40"
+                    style={{ background: 'linear-gradient(135deg, rgba(191,90,242,0.25), rgba(191,90,242,0.15))', color: '#D98BF7', border: '1px solid rgba(191,90,242,0.4)' }}
+                  >
+                    {importLoading ? (
+                      <span className="inline-flex items-center gap-2">
+                        <motion.span
+                          className="inline-block w-3 h-3 rounded-full border-2 border-[#BF5AF2]/30 border-t-[#BF5AF2]"
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
+                        />
+                        Загрузка...
+                      </span>
+                    ) : 'Импортировать'}
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

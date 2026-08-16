@@ -8,7 +8,7 @@ import Register from './pages/Register'
 import Rate from './pages/Rating'
 import Catalog from './pages/Catalog'
 import TierMaker from './pages/TierMaker'
-import TierListTemplates from './pages/TierListTemplates'
+import TierTemplatesSelect from './pages/TierTemplatesSelect'
 import Profile from './pages/Profile'
 import PublicProfile from './pages/PublicProfile'
 import TierListDetail from './pages/TierListDetail'
@@ -67,7 +67,7 @@ export default function App() {
           path="/tier-templates"
           element={
             <ProtectedRoute>
-              <TierListTemplates />
+              <TierTemplatesSelect />
             </ProtectedRoute>
           }
         />

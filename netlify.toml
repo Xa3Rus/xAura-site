@@ -8,13 +8,22 @@
   NODE_VERSION = "18"
 
 [[edge_functions]]
-  path = "/tiermaker-api/*"
-  function = "tiermaker-proxy"
+path = "/tiermaker-api/*"
+function = "tiermaker-proxy"
+
+[[edge_functions]]
+path = "/shikimori-img/*"
+function = "shikimori-proxy"
 
 [[redirects]]
-  from = "/tiermaker-api/*"
-  to = "/.netlify/edge-functions/tiermaker-proxy"
-  status = 200
+from = "/tiermaker-api/*"
+to = "/.netlify/edge-functions/tiermaker-proxy"
+status = 200
+
+[[redirects]]
+from = "/shikimori-img/*"
+to = "/.netlify/edge-functions/shikimori-proxy"
+status = 200
 
 [[redirects]]
   from = "/*"

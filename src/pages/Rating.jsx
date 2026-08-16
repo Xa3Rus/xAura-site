@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, useContext } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import Loader from '../components/Loader'
 import Select from '../components/Select'
 import { loadAnimeData, getRandomAnime } from '../utils/animeData'
+import { shikimoriImg } from '../utils/imgUrl'
 
 const SLIDERS = [
   { key: 'drawing', label: 'Рисовка', short: 'Рис.' },
@@ -15,11 +17,44 @@ const SLIDERS = [
   { key: 'emotional', label: 'Эмоциональность', short: 'Эмоц.' },
 ]
 
+function scoreColorValue(score) {
+  if (score >= 8) return '#00CC88'
+  if (score >= 7) return '#BBF351'
+  if (score >= 5.5) return '#A0A0A0'
+  return '#FF3366'
+}
+
 function scoreColorClass(score) {
   if (score >= 8) return 'text-success'
   if (score >= 7) return 'text-neon-400'
   if (score >= 5.5) return 'text-text-muted'
   return 'text-danger'
+}
+
+function ScoreGauge({ value }) {
+  const r = 30
+  const c = 2 * Math.PI * r
+  const color = scoreColorValue(value)
+  return (
+    <div className="relative w-[84px] h-[84px] flex-shrink-0">
+      <svg className="w-full h-full -rotate-90" viewBox="0 0 84 84">
+        <circle cx="42" cy="42" r={r} fill="none" stroke="#1E1E1E" strokeWidth="7" />
+        <motion.circle
+          cx="42" cy="42" r={r} fill="none"
+          stroke={color} strokeWidth="7" strokeLinecap="round"
+          strokeDasharray={c}
+          initial={{ strokeDashoffset: c }}
+          animate={{ strokeDashoffset: c * (1 - value / 10) }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          style={{ filter: `drop-shadow(0 0 6px ${color}55)` }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="font-mono font-bold text-xl leading-none" style={{ color }}>{value.toFixed(2)}</span>
+        <span className="text-[8px] text-text-muted uppercase tracking-wider mt-0.5">из 10</span>
+      </div>
+    </div>
+  )
 }
 
 async function fetchRatings(userId) {
@@ -37,6 +72,7 @@ export default function Rate() {
   const [anime, setAnime] = useState(null)
   const [loading, setLoading] = useState(true)
   const [ratingLoading, setRatingLoading] = useState(false)
+  const [justSaved, setJustSaved] = useState(false)
   const [yearFrom, setYearFrom] = useState('')
   const [yearTo, setYearTo] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -137,7 +173,7 @@ export default function Rate() {
       user_id: user.id,
       anime_id: anime.id,
       anime_name: anime.russian || anime.name,
-      anime_image: anime.image?.original ? `https://shikimori.io${anime.image.original}` : null,
+      anime_image: shikimoriImg(anime.image?.original),
       drawing: scores.drawing,
       idea: scores.idea,
       realization: scores.realization,
@@ -159,6 +195,8 @@ export default function Rate() {
 
     setRatedIds((p) => new Set([...p, anime.id]))
     setRatingLoading(false)
+    setJustSaved(true)
+    setTimeout(() => setJustSaved(false), 1800)
   }
 
   const years = Array.from({ length: 32 }, (_, i) => 2026 - i)
@@ -183,34 +221,52 @@ export default function Rate() {
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-5 sm:px-8 relative">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-neon-400/[0.03] rounded-full blur-[150px]" />
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/4 left-[15%] w-[420px] h-[420px] bg-neon-400/[0.05] rounded-full blur-[140px]" />
+        <div className="absolute bottom-1/4 right-[10%] w-[380px] h-[380px] bg-cyan-400/[0.04] rounded-full blur-[130px]" />
       </div>
 
-      <div className="max-w-3xl mx-auto relative z-10">
-        <div className="rounded-2xl p-5 sm:p-6 page-enter bg-surface-0 border border-neon-400/10 shadow-soft glass">
-          <div className="flex flex-col sm:flex-row gap-2.5 mb-5">
-            <div className="flex items-center gap-2">
-              <span className="label">С</span>
-              <Select value={yearFrom} onChange={(v) => handleYearChange('from', v)} options={yearOptions} className="w-28" />
+      <div className="max-w-4xl mx-auto relative z-10">
+        <div className="flex items-center justify-between mb-5 page-enter">
+          <Link to="/catalog" className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-neon-400 transition-colors group">
+            <span className="inline-block group-hover:-translate-x-0.5 transition-transform">←</span> Каталог
+          </Link>
+          <span className="label !mb-0">Подробная оценка</span>
+        </div>
+
+        <motion.div
+          className="rounded-2xl relative overflow-hidden bg-surface-0 border border-neon-400/10 shadow-soft glass"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="absolute top-0 right-0 w-48 h-48 bg-neon-400/[0.05] rounded-full blur-[90px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+
+          {/* Тулбар */}
+          <div className="relative flex flex-wrap items-center gap-2.5 p-4 sm:px-6 border-b border-neon-400/10 bg-surface-1/40">
+            <div className="flex items-center gap-1.5">
+              <span className="label">Годы</span>
+              <Select value={yearFrom} onChange={(v) => handleYearChange('from', v)} options={yearOptions} className="!w-24" />
+              <span className="text-text-subtle text-xs">—</span>
+              <Select value={yearTo} onChange={(v) => handleYearChange('to', v)} options={yearOptions} className="!w-24" />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="label">По</span>
-              <Select value={yearTo} onChange={(v) => handleYearChange('to', v)} options={yearOptions} className="w-28" />
-            </div>
-            <button onClick={() => setShowSearch(!showSearch)} className="btn-primary btn-shine text-xs !py-2">
-              {showSearch ? 'Закрыть' : 'Найти аниме'}
+            <div className="flex-1" />
+            <button onClick={() => setShowSearch(!showSearch)} className="btn-ghost text-xs !py-1.5">
+              {showSearch ? 'Закрыть поиск' : '⌕ Найти аниме'}
+            </button>
+            <button onClick={fetchRandomAnime} disabled={loading} className="btn-primary btn-shine text-xs !py-1.5">
+              ⤫ Случайное
             </button>
           </div>
 
           {showSearch && (
-            <div className="mb-5">
+            <div className="relative px-4 sm:px-6 py-3 border-b border-neon-400/10 bg-surface-1/40">
               <input type="text" placeholder="Введите название..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="input" autoFocus />
               {searchResults.length > 0 && (
-                <div className="mt-2 max-h-72 overflow-y-auto rounded-xl bg-surface-1 border border-neon-400/10">
+                <div className="mt-2 max-h-72 overflow-y-auto rounded-xl bg-surface-1 border border-neon-400/10 shadow-neon-lg">
                   {searchResults.map((a) => (
                     <button key={a.id} onClick={() => selectAnime(a)} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-surface-2 transition-colors text-left border-b border-neon-400/10 last:border-b-0">
-                      {a.image?.original && !a.image.original.includes('missing_') ? <img src={`https://shikimori.io${a.image.original}`} alt="" className="w-9 h-12 rounded-lg object-cover flex-shrink-0" /> : <div className="w-9 h-12 rounded-lg bg-surface-2 flex items-center justify-center flex-shrink-0"><span className="text-sm font-bold text-text-subtle">{(a.russian || a.name || '?')[0]}</span></div>}
+                      {a.image?.original && !a.image.original.includes('missing_') ? <img src={shikimoriImg(a.image?.original) || ''} alt="" className="w-9 h-12 rounded-lg object-cover flex-shrink-0" /> : <div className="w-9 h-12 rounded-lg bg-surface-2 flex items-center justify-center flex-shrink-0"><span className="text-sm font-bold text-text-subtle">{(a.russian || a.name || '?')[0]}</span></div>}
                       <div className="min-w-0">
                         <div className="text-xs font-medium truncate text-text-secondary">{a.russian || a.name}</div>
                         <div className="text-[10px] text-text-muted font-mono">{a.aired_on?.split('-')[0] || '—'} · ★ {a.score || '—'}</div>
@@ -224,53 +280,90 @@ export default function Rate() {
             </div>
           )}
 
-          {loading ? <Loader text="Загрузка..." /> : anime ? (
-            <div className="flex flex-col md:flex-row gap-5">
-              <div className="w-full md:w-52 flex-shrink-0">
-                {anime.image?.original && !anime.image.original.includes('missing_') ? (
-                  <img src={`https://shikimori.io${anime.image.original}`} alt={anime.name} className="w-full rounded-2xl object-cover aspect-[3/4] bg-surface-2" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }} />
-                ) : null}
-                <div className={`w-full aspect-[3/4] rounded-2xl bg-surface-2 items-center justify-center ${anime.image?.original && !anime.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
-                  <span className="text-4xl font-bold text-text-subtle" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>{(anime.russian || anime.name || '?')[0]}</span>
+          {loading ? <div className="py-24"><Loader text="Загрузка..." /></div> : anime ? (
+            <div className="relative flex flex-col md:flex-row gap-6 p-4 sm:p-6">
+              {/* Постер */}
+              <div className="w-full md:w-56 flex-shrink-0">
+                <div className="relative rounded-2xl overflow-hidden border border-neon-400/15 group">
+                  {anime.image?.original && !anime.image.original.includes('missing_') ? (
+                    <img src={shikimoriImg(anime.image?.original) || ''} alt={anime.name} className="w-full object-cover aspect-[3/4] bg-surface-2" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }} />
+                  ) : null}
+                  <div className={`w-full aspect-[3/4] bg-surface-2 items-center justify-center ${anime.image?.original && !anime.image.original.includes('missing_') ? 'hidden' : 'flex'}`}>
+                    <span className="text-4xl font-bold text-text-subtle" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>{(anime.russian || anime.name || '?')[0]}</span>
+                  </div>
+                  {anime.score > 0 && (
+                    <div className="absolute top-2.5 left-2.5 px-2.5 py-1.5 rounded-lg bg-black/70 backdrop-blur-md border border-neon-400/25 font-mono text-sm font-bold text-neon-400">
+                      ★ {Number(anime.score).toFixed(2)}
+                    </div>
+                  )}
+                  {ratedIds.has(anime.id) && (
+                    <div className="absolute top-2.5 right-2.5 px-2 py-1 rounded-md bg-success/15 border border-success/30 text-[9px] font-bold text-success uppercase tracking-wider backdrop-blur-md">
+                      Оценено
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
+                  <div className="absolute bottom-2.5 left-2.5 right-2.5 flex flex-wrap gap-1">
+                    {(anime.genres || []).slice(0, 3).map((g) => (
+                      <span key={g.id || g.name} className="tag !text-[9px] !bg-black/50 !border-white/10 !text-white/80 backdrop-blur-sm">{g.russian || g.name}</span>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div className="flex-1">
-                <h2 className="text-xl font-bold mb-2 neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>{anime.russian || anime.name}</h2>
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <span className="tag font-mono">{anime.aired_on?.split('-')[0] || '—'}</span>
-                  {anime.rating && <span className="tag">{anime.rating}</span>}
-                  {anime.score > 0 && <span className="tag !bg-neon-400/10 !text-neon-400 !border-neon-400/15 font-mono">★ {Number(anime.score).toFixed(2)}</span>}
+
+              {/* Инфо + оценка */}
+              <div className="flex-1 min-w-0">
+                <span className="label block mb-1.5">{anime.aired_on?.split('-')[0] || '—'}{anime.rating ? ` · ${anime.rating}` : ''}{anime.episodes ? ` · ${anime.episodes} эп.` : ''}</span>
+                <h1 className="text-2xl font-bold mb-5 neon-text leading-tight" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>{anime.russian || anime.name}</h1>
+
+                <div className="rounded-xl bg-surface-1/60 border border-neon-400/10 p-4 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-sm" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>
+                      Критерии <span className="text-text-subtle font-normal font-mono text-[10px]">1–10</span>
+                    </h3>
+                  </div>
+                  <div className="space-y-2.5">
+                    {SLIDERS.map(({ key, label, short }) => (
+                      <div key={key} className="flex items-center gap-3 group/slider">
+                        <span className="text-xs w-28 hidden sm:block text-text-muted group-hover/slider:text-text-secondary transition-colors">{label}</span>
+                        <span className="text-[10px] w-10 sm:hidden text-text-muted">{short}</span>
+                        <input type="range" min="1" max="10" value={scores[key]} onChange={(e) => handleScoreChange(key, e.target.value)}
+                          className="flex-1 rating-slider" style={{ '--val': `${((scores[key] - 1) / 9) * 100}%` }} />
+                        <span className={`text-xs font-bold w-5 text-right font-mono transition-colors ${scoreColorClass(scores[key])}`}>{scores[key]}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-1 mb-5">
-                  {(anime.genres || []).map((g) => <span key={g.id || g.name} className="tag">{g.name}</span>)}
-                </div>
-                <div className="space-y-3">
-                  <h3 className="font-bold text-sm neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>Оценка</h3>
-                  {SLIDERS.map(({ key, label, short }) => (
-                    <div key={key} className="flex items-center gap-3">
-                      <span className="text-xs w-28 hidden sm:block text-text-muted">{label}</span>
-                      <span className="text-[10px] w-10 sm:hidden text-text-muted">{short}</span>
-                      <input type="range" min="1" max="10" value={scores[key]} onChange={(e) => handleScoreChange(key, e.target.value)}
-                        className="flex-1 rating-slider" style={{ '--val': `${((scores[key] - 1) / 9) * 100}%` }} />
-                      <span className={`text-xs font-bold w-6 text-right font-mono ${scoreColorClass(scores[key])}`}>{scores[key]}</span>
+
+                {/* Итог */}
+                <div className="rounded-xl bg-surface-1/60 border border-neon-400/10 p-4 flex items-center gap-5">
+                  <ScoreGauge value={averageScore} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold mb-1">Итоговая оценка</div>
+                    <p className="text-[10px] text-text-muted leading-relaxed">Среднее по шести критериям. Сохраняется в профиле и учитывается в тир-листах.</p>
+                    <div className="flex flex-wrap items-center gap-2 mt-3">
+                      <button onClick={handleRate} disabled={ratingLoading} className="btn-primary btn-shine text-xs !py-2 disabled:opacity-40">
+                        {ratingLoading ? 'Сохранение...' : ratedIds.has(anime.id) ? 'Переоценить' : 'Оценить'}
+                      </button>
+                      {justSaved && (
+                        <motion.span
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="inline-flex items-center gap-1 text-[10px] font-bold text-success"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          Сохранено
+                        </motion.span>
+                      )}
+                      <button onClick={fetchRandomAnime} disabled={loading} className="text-xs text-text-muted hover:text-neon-400 transition-colors ml-auto">
+                        Следующее →
+                      </button>
                     </div>
-                  ))}
-                  <div className="divider my-4" />
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold">Средняя: <span className={`font-mono ${scoreColorClass(averageScore)}`}>{averageScore.toFixed(2)}</span></span>
-                    <button onClick={handleRate} disabled={ratingLoading} className="btn-primary btn-shine text-xs !py-2 disabled:opacity-40">
-                      {ratingLoading ? '...' : ratedIds.has(anime.id) ? 'Переоценить' : 'Оценить'}
-                    </button>
                   </div>
                 </div>
               </div>
             </div>
           ) : <p className="text-sm text-center py-8 text-text-muted">Не удалось загрузить аниме</p>}
-
-          <div className="flex justify-center mt-5">
-            <button onClick={fetchRandomAnime} disabled={loading} className="btn-primary btn-shine text-xs">Далее →</button>
-          </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   )

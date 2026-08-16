@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { supabase } from '../utils/supabase'
+import { getAuraLevel } from '../utils/aura'
+import { shikimoriImg } from '../utils/imgUrl'
+import { AuraTitleBadge } from '../components/AuraBadge'
 
 function scoreColor(score) {
   if (score >= 8) return 'bg-success/10 text-success border-success/20'
@@ -67,6 +70,8 @@ export default function PublicProfile() {
 
   const getAvatarLetter = () => profileUser?.username?.[0]?.toUpperCase() || 'U'
 
+  const aura = getAuraLevel(ratings.length, tierLists.length, battleStats?.total ?? 0)
+
   if (notFound) return (
     <div className="min-h-screen pt-24 flex items-center justify-center">
       <div className="text-center">
@@ -95,24 +100,50 @@ export default function PublicProfile() {
           <div className="rounded-2xl p-6 sm:p-8 relative overflow-hidden bg-surface-1 border border-neon-400/10 shadow-soft">
             <div className="absolute top-0 right-0 w-40 h-40 bg-neon-400/[0.06] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
 
-            <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-5">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 bg-neon-400/10 border border-neon-400/20">
-                <span className="text-2xl font-bold text-neon-400" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>{getAvatarLetter()}</span>
+            <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-6">
+              <div className="relative flex-shrink-0">
+                <div className={`absolute -inset-1.5 rounded-3xl bg-gradient-to-br ${aura.gradient} opacity-60 blur-md animate-pulse-slow`} />
+                <div className="relative w-20 h-20 rounded-3xl flex items-center justify-center bg-surface-1 border border-neon-400/25">
+                  <span className="text-3xl font-bold text-neon-400" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>{getAvatarLetter()}</span>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-success flex items-center justify-center" style={{ border: '2px solid #0A0A0A' }}>
+                    <span className="text-[8px] font-bold text-black font-mono">{aura.level}</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex-1 text-center sm:text-left">
-                <h1 className="text-xl font-bold tracking-tight" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>{profileUser.username}</h1>
+              <div className="flex-1 text-center sm:text-left min-w-0">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
+                  <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>{profileUser.username}</h1>
+                  <AuraTitleBadge aura={aura} />
+                </div>
+                <div className="max-w-xs mx-auto sm:mx-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-mono text-[10px] text-text-muted">AURA · {aura.xp} XP</span>
+                    <span className="font-mono text-[10px] text-neon-400">LVL {aura.level}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-surface-3 overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-r from-neon-600 via-neon-400 to-neon-300"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${aura.progress}%` }}
+                      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 relative">
-              <div className="rounded-xl px-4 py-3.5 flex items-center gap-3 bg-surface-1 border border-neon-400/10">
-                <div className="text-xl font-bold text-neon-400 font-mono">{ratings.length}</div>
-                <div className="label">Оценок</div>
-              </div>
-              <div className="rounded-xl px-4 py-3.5 flex items-center gap-3 bg-surface-1 border border-neon-400/10">
-                <div className="text-xl font-bold text-mint-500 font-mono">{battleRank ? `#${battleRank}` : '—'}</div>
-                <div className="label">В рейтинге</div>
-              </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 relative">
+              {[
+                { value: ratings.length, label: 'Оценок', color: 'text-neon-400' },
+                { value: tierLists.length, label: 'Tier Lists', color: 'text-cyan-400' },
+                { value: battleStats?.total ?? 0, label: 'Битв', color: 'text-mint-400' },
+                { value: battleRank ? `#${battleRank}` : '—', label: 'В рейтинге', color: 'text-coral-400' },
+              ].map((stat) => (
+                <div key={stat.label} className="rounded-xl px-4 py-3.5 bg-surface-1 border border-neon-400/10">
+                  <div className={`text-xl font-bold font-mono ${stat.color}`}>{stat.value}</div>
+                  <div className="label !mb-0">{stat.label}</div>
+                </div>
+              ))}
             </div>
           </div>
         </motion.div>
@@ -155,7 +186,7 @@ export default function PublicProfile() {
                   >
                     <div className="aspect-[3/4] relative overflow-hidden rounded-t-2xl bg-surface-2">
                       {rating.anime_image ? (
-                        <img src={rating.anime_image} alt={rating.anime_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" loading="lazy" />
+                        <img src={shikimoriImg(rating.anime_image) || ''} alt={rating.anime_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" loading="lazy" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-text-subtle">Нет</div>
                       )}
