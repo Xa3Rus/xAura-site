@@ -8,3 +8,13 @@ parse-log.txt
 neon-*.png
 ref-monopoly/
 frontend.log
+
+# Local Netlify folder
+.netlify
+
+# Local tool folders
+.zcode/
+
+# Verification screenshots
+step*.png
+verify-*.png

@@ -340,6 +340,11 @@ h1, h2, h3, h4, h5, h6 {
   left: 100%;
 }
 
+/* ASCII aura canvas background */
+.ascii-aura-canvas {
+  animation: fadeIn 1.4s ease-out;
+}
+
 /* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .animate-scroll {
@@ -350,6 +355,9 @@ h1, h2, h3, h4, h5, h6 {
   }
   .page-enter {
     animation: none;
+  }
+  .ascii-aura-canvas {
+    display: none;
   }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

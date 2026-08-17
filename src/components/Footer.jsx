@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useInView } from 'framer-motion'
 import { supabase } from '../utils/supabase'
 import { loadAnimeData } from '../utils/animeData'
+import { AURA_CHARACTERS } from '../data/auraCharacters'
 
 function Counter({ target }) {
   const [count, setCount] = useState(0)
@@ -106,7 +107,21 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="pt-5 border-t border-neon-400/10 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <span className="font-mono text-[10px] text-text-muted">© 2025 xAura</span>
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[10px] text-text-muted">© 2025 xAura</span>
+            {/* Пасхалка: Годжо наблюдает */}
+            <span className="relative inline-block group/easter cursor-pointer" title="Во всём Поднебесной лишь я достоин 10/10">
+              <picture>
+                <source srcSet={AURA_CHARACTERS[7].webp} type="image/webp" />
+                <img
+                  src={AURA_CHARACTERS[7].gif}
+                  alt="Годжо наблюдает"
+                  loading="lazy"
+                  className="w-5 h-5 rounded object-cover opacity-30 transition-all duration-500 group-hover/easter:opacity-100 group-hover/easter:scale-[2.2] group-hover/easter:-translate-y-1.5 group-hover/easter:shadow-[0_0_16px_rgba(123,140,255,0.7)]"
+                />
+              </picture>
+            </span>
+          </div>
           <span className="text-[10px] text-text-muted">
             Данные:{' '}
             <a

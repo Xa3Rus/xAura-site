@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import AsciiAuraBg from './components/AsciiAuraBg'
 import ProtectedRoute from './components/ProtectedRoute'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
@@ -39,6 +40,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col underwave-bg text-text vignette">
+      <AsciiAuraBg />
 
       <Navbar />
       <div className="flex-1">

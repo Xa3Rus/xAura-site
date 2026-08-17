@@ -4,6 +4,10 @@ export const AURA_XP = { rating: 12, tierList: 40, battle: 8 }
 
 export const AURA_TITLES = ['Новичок', 'Зритель', 'Критик', 'Аналитик', 'Эксперт', 'Мастер', 'Легенда', 'Бог аниме']
 
+// Насколько дорого растёт уровень: XP для уровня L = LEVEL_FACTOR * (L - 1)^2.
+// При 16 Годжо (уровень 15) требует 3136 XP — это сотни оценок, а не пара вечеров
+const LEVEL_FACTOR = 16
+
 export const AURA_GRADIENTS = [
   'from-surface-4 via-surface-3 to-surface-4',
   'from-emerald-900 via-emerald-700 to-emerald-900',
@@ -11,14 +15,15 @@ export const AURA_GRADIENTS = [
   'from-indigo-900 via-violet-600 to-indigo-900',
   'from-violet-900 via-fuchsia-600 to-violet-900',
   'from-fuchsia-900 via-amber-500 to-fuchsia-900',
-  'from-amber-500 via-yellow-300 to-amber-500',
+  'from-amber-600 via-amber-400 to-amber-600',
+  'from-amber-300 via-yellow-200 to-white',
 ]
 
 export function getAuraLevel(ratingsCount = 0, tierListsCount = 0, battlesCount = 0) {
   const xp = ratingsCount * AURA_XP.rating + tierListsCount * AURA_XP.tierList + battlesCount * AURA_XP.battle
-  const level = Math.max(1, Math.floor(Math.sqrt(xp / 4)) + 1)
-  const curFloor = Math.pow(level - 1, 2) * 4
-  const nextFloor = Math.pow(level, 2) * 4
+  const level = Math.max(1, Math.floor(Math.sqrt(xp / LEVEL_FACTOR)) + 1)
+  const curFloor = Math.pow(level - 1, 2) * LEVEL_FACTOR
+  const nextFloor = Math.pow(level, 2) * LEVEL_FACTOR
   const progress = Math.min(100, Math.round(((xp - curFloor) / (nextFloor - curFloor)) * 100))
   return {
     xp,

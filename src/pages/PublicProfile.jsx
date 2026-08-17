@@ -3,15 +3,16 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { supabase } from '../utils/supabase'
 import { getAuraLevel } from '../utils/aura'
-import { shikimoriImg } from '../utils/imgUrl'
-import { AuraTitleBadge } from '../components/AuraBadge'
-
-function scoreColor(score) {
-  if (score >= 8) return 'bg-success/10 text-success border-success/20'
-  if (score >= 7) return 'bg-neon-400/10 text-neon-400 border-neon-400/15'
-  if (score >= 5.5) return 'bg-surface-2 text-text-muted border-surface-3'
-  return 'bg-danger/10 text-danger border-danger/15'
-}
+import { parseTierListData } from '../utils/tierLists'
+import ProfileHeader from '../components/profile/ProfileHeader'
+import RadarChart from '../components/charts/RadarChart'
+import ActivityChart from '../components/charts/ActivityChart'
+import Achievements from '../components/profile/Achievements'
+import { achievementsProgress } from '../components/profile/Achievements'
+import {
+  TabBar, StatCard, RatingGrid, ScoreHistogram,
+  EmptyState,
+} from '../components/profile/SharedBits'
 
 export default function PublicProfile() {
   const { userId } = useParams()
@@ -22,13 +23,14 @@ export default function PublicProfile() {
   const [battleStats, setBattleStats] = useState(null)
   const [battleRank, setBattleRank] = useState(null)
   const [notFound, setNotFound] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('ratings')
 
   useEffect(() => { loadProfile() }, [userId])
 
   const loadProfile = async () => {
     const { data: profile } = await supabase.from('profiles').select('id, username').eq('id', userId).single()
-    if (!profile) { setNotFound(true); return }
+    if (!profile) { setNotFound(true); setLoading(false); return }
     setProfileUser(profile)
 
     const [ratingsRes, tierListsRes, battleRes] = await Promise.all([
@@ -60,171 +62,163 @@ export default function PublicProfile() {
             bestByUser[g.user_id] = g.score
           }
         }
-        const sorted = Object.entries(bestByUser)
-          .sort((a, b) => b[1] - a[1])
+        const sorted = Object.entries(bestByUser).sort((a, b) => b[1] - a[1])
         const rank = sorted.findIndex(([uid]) => uid === userId)
         if (rank !== -1) setBattleRank(rank + 1)
       }
     }
+    setLoading(false)
   }
 
-  const getAvatarLetter = () => profileUser?.username?.[0]?.toUpperCase() || 'U'
-
   const aura = getAuraLevel(ratings.length, tierLists.length, battleStats?.total ?? 0)
+
+  // Средние покритерийно для радара
+  const avgScores = ratings.length ? ratings.reduce((acc, r) => {
+    acc.drawing += Number(r.drawing || 0)
+    acc.idea += Number(r.idea || 0)
+    acc.realization += Number(r.realization || 0)
+    acc.characters += Number(r.characters || 0)
+    acc.story += Number(r.story || 0)
+    acc.emotional += Number(r.emotional || 0)
+    return acc
+  }, { drawing: 0, idea: 0, realization: 0, characters: 0, story: 0, emotional: 0 }) : null
+  if (avgScores) for (const k of Object.keys(avgScores)) avgScores[k] = Number((avgScores[k] / ratings.length).toFixed(1))
+
+  const avgRating = ratings.length
+    ? (ratings.reduce((sum, r) => sum + (r.average_score || 0), 0) / ratings.length).toFixed(2)
+    : '—'
 
   if (notFound) return (
     <div className="min-h-screen pt-24 flex items-center justify-center">
       <div className="text-center">
+        <span className="block text-4xl text-text-subtle mb-3">?</span>
         <p className="text-sm mb-3 text-text-muted">Пользователь не найден</p>
-        <Link to="/" className="text-neon-400 hover:text-neon-500 text-xs">На главную</Link>
+        <Link to="/" className="btn-primary btn-shine text-xs">На главную</Link>
       </div>
     </div>
   )
 
-  if (!profileUser) return (
-    <div className="min-h-screen pt-24 flex items-center justify-center">
-      <p className="text-sm text-text-muted">Загрузка...</p>
-    </div>
-  )
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-24 pb-12 px-5 sm:px-8">
+        <div className="max-w-[1400px] mx-auto text-center py-24">
+          <div className="inline-block w-8 h-8 rounded-full border-2 border-neon-400/30 border-t-neon-400 animate-spin" />
+          <p className="mt-3 text-xs text-text-muted font-mono">загрузка профиля...</p>
+        </div>
+      </div>
+    )
+  }
 
   const tabs = [
     { id: 'ratings', label: 'Оценки', count: ratings.length },
-    { id: 'tierlists', label: 'Tier Lists', count: tierLists.length },
+    { id: 'tierlists', label: 'Тир-листы', count: tierLists.length },
   ]
   if (battleStats) tabs.push({ id: 'battle', label: 'Битва', count: battleStats.total })
 
+  const achieveStats = {
+    ratings: ratings.length,
+    tierLists: tierLists.length,
+    battles: battleStats?.total ?? 0,
+    avgScore: ratings.length ? Number(avgRating) : 0,
+    bestScore: battleStats?.best ?? 0,
+    animeCount: ratings.length,
+    level: aura.level,
+  }
+
   return (
-    <div className="min-h-screen pt-24 pb-12 px-5 sm:px-8">
+    <div className="min-h-screen pt-24 pb-12 px-5 sm:px-8 page-enter">
       <div className="max-w-[1400px] mx-auto">
-        <motion.div className="mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
-          <div className="rounded-2xl p-6 sm:p-8 relative overflow-hidden bg-surface-1 border border-neon-400/10 shadow-soft">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-neon-400/[0.06] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
+        {/* Hero-баннер (без email, read-only) */}
+        <ProfileHeader
+          username={profileUser.username}
+          aura={aura}
+          isOwner={false}
+          shareUrl={window.location.href}
+        />
 
-            <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-6">
-              <div className="relative flex-shrink-0">
-                <div className={`absolute -inset-1.5 rounded-3xl bg-gradient-to-br ${aura.gradient} opacity-60 blur-md animate-pulse-slow`} />
-                <div className="relative w-20 h-20 rounded-3xl flex items-center justify-center bg-surface-1 border border-neon-400/25">
-                  <span className="text-3xl font-bold text-neon-400" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>{getAvatarLetter()}</span>
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-success flex items-center justify-center" style={{ border: '2px solid #0A0A0A' }}>
-                    <span className="text-[8px] font-bold text-black font-mono">{aura.level}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex-1 text-center sm:text-left min-w-0">
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
-                  <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>{profileUser.username}</h1>
-                  <AuraTitleBadge aura={aura} />
-                </div>
-                <div className="max-w-xs mx-auto sm:mx-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-mono text-[10px] text-text-muted">AURA · {aura.xp} XP</span>
-                    <span className="font-mono text-[10px] text-neon-400">LVL {aura.level}</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-surface-3 overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full bg-gradient-to-r from-neon-600 via-neon-400 to-neon-300"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${aura.progress}%` }}
-                      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 relative">
-              {[
-                { value: ratings.length, label: 'Оценок', color: 'text-neon-400' },
-                { value: tierLists.length, label: 'Tier Lists', color: 'text-cyan-400' },
-                { value: battleStats?.total ?? 0, label: 'Битв', color: 'text-mint-400' },
-                { value: battleRank ? `#${battleRank}` : '—', label: 'В рейтинге', color: 'text-coral-400' },
-              ].map((stat) => (
-                <div key={stat.label} className="rounded-xl px-4 py-3.5 bg-surface-1 border border-neon-400/10">
-                  <div className={`text-xl font-bold font-mono ${stat.color}`}>{stat.value}</div>
-                  <div className="label !mb-0">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        <div className="flex gap-1 mb-6 p-1 rounded-xl w-fit bg-surface-1 border border-neon-400/10">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className="px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-300"
-              style={activeTab === tab.id ? {
-                color: '#8fc420',
-                background: 'rgba(187,243,81,0.12)',
-                border: '1px solid rgba(187,243,81,0.18)',
-              } : {
-                color: '#9CA3AF',
-                border: '1px solid transparent',
-              }}
-            >
-              {tab.label} <span className="font-mono opacity-50">({tab.count})</span>
-            </button>
-          ))}
+        {/* Статистика */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+          <StatCard label="Оценок" value={ratings.length} color="#BBF351" delay={0} />
+          <StatCard label="Тир-листов" value={tierLists.length} color="#00E5FF" delay={0.05} />
+          <StatCard label="Битв" value={battleStats?.total ?? 0} color="#00CC88" sub={battleRank ? `#${battleRank}` : undefined} delay={0.1} />
+          <StatCard label="Средний балл" value={avgRating} color="#FF9F0A" delay={0.15} />
         </div>
 
-        {activeTab === 'ratings' && (
-          <div>
-            {ratings.length === 0 ? (
-              <div className="text-center py-16 rounded-2xl bg-surface-1 border border-neon-400/10 shadow-soft">
-                <p className="text-sm text-text-muted">Пока нет оценок</p>
+        {/* Визуализация + Достижения */}
+        {ratings.length > 0 && (
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            <div className="card p-5 flex items-center justify-center">
+              <RadarChart values={avgScores} className="w-full max-w-[260px]" />
+            </div>
+
+            <div className="card p-5 flex flex-col gap-6">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="label">Распределение оценок</span>
+                  <span className="font-mono text-[9px] text-text-subtle">1 — 10</span>
+                </div>
+                <ScoreHistogram ratings={ratings} />
+                <div className="flex gap-3 mt-3 font-mono text-[8px] text-text-subtle">
+                  <span className="text-danger">■ 1–2</span>
+                  <span className="text-coral-500">■ 2–4</span>
+                  <span className="text-warning">■ 4–6</span>
+                  <span className="text-neon-400">■ 6–8</span>
+                  <span className="text-success">■ 8–10</span>
+                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
-                {ratings.map((rating, index) => (
-                  <motion.div
-                    key={rating.id}
-                    className="card-hover overflow-hidden group"
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.02, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <div className="aspect-[3/4] relative overflow-hidden rounded-t-2xl bg-surface-2">
-                      {rating.anime_image ? (
-                        <img src={shikimoriImg(rating.anime_image) || ''} alt={rating.anime_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" loading="lazy" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-text-subtle">Нет</div>
-                      )}
-                      <div className={`absolute top-2 left-2 score-badge border font-mono ${scoreColor(rating.average_score)}`}>
-                        {rating.average_score?.toFixed(2)}
-                      </div>
-                    </div>
-                    <div className="p-2.5">
-                      <h3 className="font-medium text-xs truncate text-text-secondary">{rating.anime_name || `#${rating.anime_id}`}</h3>
-                    </div>
-                  </motion.div>
-                ))}
+              <div>
+                <span className="label block mb-3">Активность по месяцам</span>
+                <ActivityChart items={ratings.map((r) => r.created_at)} />
               </div>
-            )}
-          </div>
+            </div>
+
+            <div className="card p-5">
+              <div className="flex items-center justify-between mb-4">
+                <span className="label">Достижения</span>
+                <span className="font-mono text-[9px] text-neon-400 font-bold">
+                  {achievementsProgress(achieveStats).unlocked}/{achievementsProgress(achieveStats).total}
+                </span>
+              </div>
+              <Achievements stats={achieveStats} />
+            </div>
+          </motion.div>
         )}
 
-        {activeTab === 'tierlists' && (
-          <div>
-            {tierLists.length === 0 ? (
-              <div className="text-center py-16 rounded-2xl bg-surface-1 border border-neon-400/10 shadow-soft">
-                <p className="text-sm text-text-muted">Пока нет Tier List</p>
-              </div>
+        {/* Вкладки */}
+        <TabBar tabs={tabs} active={activeTab} onChange={setActiveTab} />
+
+        <div className="mt-6">
+          {activeTab === 'ratings' && (
+            ratings.length === 0 ? (
+              <EmptyState icon="★" text="Пока нет оценок" />
+            ) : (
+              <RatingGrid ratings={ratings} />
+            )
+          )}
+
+          {activeTab === 'tierlists' && (
+            tierLists.length === 0 ? (
+              <EmptyState icon="▦" text="Пока нет тир-листов" />
             ) : (
               <div className="space-y-2">
                 {tierLists.map((list, index) => {
-                  const tiers = typeof list.tiers === 'string' ? JSON.parse(list.tiers) : list.tiers
+                  const { tiers } = parseTierListData(list.tiers)
                   return (
                     <motion.div
                       key={list.id}
-                      className="rounded-xl px-4 py-3.5 flex items-center gap-3 cursor-pointer group transition-all duration-300 bg-surface-1 border border-neon-400/10 shadow-soft hover:border-neon-400/20"
+                      className="rounded-xl px-4 py-3.5 flex items-center gap-3 cursor-pointer group card hover:border-neon-400/30"
                       onClick={() => navigate(`/tierlist/${list.id}`)}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.04, duration: 0.3 }}
                     >
                       <div className="flex gap-0.5 flex-shrink-0">
-                        {tiers.filter((t) => t.items.length > 0).slice(0, 6).map((t) => (
+                        {tiers.filter((t) => (t.items || []).length > 0).slice(0, 6).map((t) => (
                           <div key={t.id} className="w-6 h-6 rounded-lg flex items-center justify-center text-[7px] font-bold" style={{ backgroundColor: t.color + '15', color: t.color, border: `1px solid ${t.color}30` }}>
                             {t.name}
                           </div>
@@ -238,28 +232,34 @@ export default function PublicProfile() {
                   )
                 })}
               </div>
-            )}
-          </div>
-        )}
+            )
+          )}
 
-        {activeTab === 'battle' && battleStats && (
-          <div className="rounded-2xl p-6 bg-surface-1 border border-neon-400/10 shadow-soft">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-neon-400 mb-1 font-mono">{battleStats.best}</div>
-                <div className="label">Лучший результат</div>
+          {activeTab === 'battle' && battleStats && (
+            <div className="card p-6 sm:p-8 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-neon-400/[0.05] rounded-full blur-[90px] -translate-y-1/2 translate-x-1/2" />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 relative">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-neon-400 mb-1 font-mono drop-shadow-[0_0_14px_rgba(187,243,81,0.3)]">{battleStats.best}</div>
+                  <div className="label">Лучший результат</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-mint-400 mb-1 font-mono">{battleStats.total}</div>
+                  <div className="label">Всего игр</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-text-muted mb-1 font-mono">{battleStats.avg}</div>
+                  <div className="label">Средний счёт</div>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-mint-500 mb-1 font-mono">{battleStats.total}</div>
-                <div className="label">Всего игр</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-text-muted mb-1 font-mono">{battleStats.avg}</div>
-                <div className="label">Средний счёт</div>
-              </div>
+              {battleRank && (
+                <p className="mt-4 text-center font-mono text-[9px] text-text-subtle">
+                  место #{battleRank}
+                </p>
+              )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )

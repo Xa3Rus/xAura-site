@@ -1,6 +1,11 @@
 import { useState, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
+import AuraCharacterCard from '../components/AuraCharacterCard'
+import { AURA_CHARACTERS } from '../data/auraCharacters'
+
+// Маскот страницы входа — Лелуш (Критик)
+const MASCOT = AURA_CHARACTERS[2]
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -32,6 +37,13 @@ export default function Login() {
       </div>
 
       <div className="w-full max-w-sm relative z-10">
+        <div className="hidden lg:block absolute -left-[290px] top-1/2 -translate-y-1/2 pointer-events-none">
+          <div className="relative">
+            <div className="absolute -inset-4 rounded-2xl blur-2xl" style={{ background: `radial-gradient(circle, ${MASCOT.accent}26, transparent 70%)` }} />
+            <AuraCharacterCard char={MASCOT} size="md" index={1} />
+          </div>
+        </div>
+
         <div className="mb-10 text-center page-enter">
           <h1 className="text-2xl font-bold tracking-tight mb-1 neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>Вход</h1>
           <p className="text-xs text-text-muted">Войдите в свой аккаунт</p>
