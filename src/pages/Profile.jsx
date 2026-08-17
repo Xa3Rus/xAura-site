@@ -13,7 +13,7 @@ import Achievements from '../components/profile/Achievements'
 import { achievementsProgress } from '../components/profile/Achievements'
 import {
   TabBar, StatCard, RatingGrid, ScoreHistogram,
-  EmptyState, scoreColor,
+  EmptyState, scoreColor, SectionTitle, DossierPanel, Corners,
 } from '../components/profile/SharedBits'
 
 export default function Profile() {
@@ -72,7 +72,7 @@ export default function Profile() {
     setLoading(false)
   }
 
-  const handleDeleteRating = (rating) => setConfirmModal({ type: 'rating', id: rating.id, text: 'Удалить эту оценку?' })
+  const handleDeleteRating = (rating) => setConfirmModal({ type: 'rating', id: rating.id, text: `Удалить оценку «${rating.anime_name}»?` })
   const handleDeleteTierList = (listId) => setConfirmModal({ type: 'tierlist', id: listId, text: 'Удалить tier list?' })
 
   const confirmAction = async () => {
@@ -131,6 +131,12 @@ export default function Profile() {
     level: aura.level,
   }
 
+  // сильнейший критерий и самый «горячий» месяц для аннотаций
+  const topAxis = avgScores
+    ? Object.entries(avgScores).sort((a, b) => b[1] - a[1])[0]
+    : null
+  const AXIS_NAMES = { drawing: 'рисунок', idea: 'идея', realization: 'реализация', characters: 'персонажи', story: 'сюжет', emotional: 'эмоции' }
+
   if (loading) {
     return (
       <div className="min-h-screen pt-24 pb-12 px-5 sm:px-8">
@@ -145,71 +151,78 @@ export default function Profile() {
   return (
     <div className="min-h-screen pt-24 pb-12 px-5 sm:px-8 page-enter">
       <div className="max-w-[1400px] mx-auto">
-        {/* Hero-баннер */}
+        {/* Досье: шапка */}
         <ProfileHeader
           username={user?.username}
           email={user?.email}
           aura={aura}
           isOwner
+          idCode={user?.id?.slice(0, 8).toUpperCase()}
         />
 
-        {/* Статистика */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        {/* 01 // Сводка */}
+        <SectionTitle index="01" title="Сводка" note={`аура ${aura.xp.toLocaleString('ru')} xp · ур. ${aura.level}`} />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
           <StatCard label="Оценок" value={ratings.length} color="#BBF351" delay={0} />
           <StatCard label="Тир-листов" value={tierLists.length} color="#00E5FF" delay={0.05} />
-          <StatCard label="Битв" value={battleStats?.total ?? 0} color="#00CC88" sub={battleRank ? `#${battleRank}` : undefined} delay={0.1} />
-          <StatCard label="Средний балл" value={avgRating} color="#FF9F0A" delay={0.15} />
+          <StatCard label="Битв" value={battleStats?.total ?? 0} color="#33EBD4" sub={battleRank ? `РАНГ ${battleRank}` : undefined} delay={0.1} />
+          <StatCard label="Ср. балл" value={avgRating} color="#FF9F0A" delay={0.15} />
         </div>
 
-        {/* Визуализация + Достижения (если есть оценки) */}
+        {/* 02 // Аналитика */}
         {ratings.length > 0 && (
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
-            {/* Радар 6 критериев */}
-            <div className="card p-5 flex items-center justify-center">
-              <RadarChart values={avgScores} className="w-full max-w-[260px]" />
-            </div>
+          <>
+            <SectionTitle
+              index="02"
+              title="Аналитика"
+              note={topAxis ? `сильная сторона: ${AXIS_NAMES[topAxis[0]]} ${topAxis[1].toFixed(1)}` : undefined}
+            />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+              {/* Радар 6 критериев */}
+              <DossierPanel cut="cut-sm" className="p-5">
+                <Corners inset={4} size={8} color="rgba(187,243,81,0.35)" />
+                <div className="flex items-center justify-between mb-2">
+                  <span className="dossier-note">профиль критика</span>
+                  <span className="dossier-note">6 осей</span>
+                </div>
+                <div className="flex items-center justify-center">
+                  <RadarChart values={avgScores} className="w-full max-w-[280px]" />
+                </div>
+              </DossierPanel>
 
-            {/* Гистограмма + ActivityChart */}
-            <div className="card p-5 flex flex-col gap-6">
-              <div>
+              {/* Гистограмма + активность */}
+              <DossierPanel cut="cut-sm" className="p-5 flex flex-col gap-5">
+                <Corners inset={4} size={8} color="rgba(187,243,81,0.35)" />
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="dossier-note">распределение</span>
+                    <span className="dossier-note">шкала 1–10</span>
+                  </div>
+                  <ScoreHistogram ratings={ratings} />
+                </div>
+                <div className="border-t border-dashed border-brand-medium/40 pt-4">
+                  <span className="dossier-note block mb-3">активность</span>
+                  <ActivityChart items={ratings.map((r) => r.created_at)} />
+                </div>
+              </DossierPanel>
+
+              {/* Достижения */}
+              <DossierPanel cut="cut-sm" className="p-5">
+                <Corners inset={4} size={8} color="rgba(187,243,81,0.35)" />
                 <div className="flex items-center justify-between mb-3">
-                  <span className="label">Распределение оценок</span>
-                  <span className="font-mono text-[9px] text-text-subtle">1 — 10</span>
+                  <span className="dossier-note">достижения</span>
+                  <span className="font-mono text-[9px] font-bold text-neon-400">
+                    {achievementsProgress(achieveStats).unlocked}/{achievementsProgress(achieveStats).total}
+                  </span>
                 </div>
-                <ScoreHistogram ratings={ratings} />
-                <div className="flex gap-3 mt-3 font-mono text-[8px] text-text-subtle">
-                  <span className="text-danger">■ 1–2</span>
-                  <span className="text-coral-500">■ 2–4</span>
-                  <span className="text-warning">■ 4–6</span>
-                  <span className="text-neon-400">■ 6–8</span>
-                  <span className="text-success">■ 8–10</span>
-                </div>
-              </div>
-              <div>
-                <span className="label block mb-3">Активность по месяцам</span>
-                <ActivityChart items={ratings.map((r) => r.created_at)} />
-              </div>
+                <Achievements stats={achieveStats} />
+              </DossierPanel>
             </div>
-
-            {/* Достижения */}
-            <div className="card p-5">
-              <div className="flex items-center justify-between mb-4">
-                <span className="label">Достижения</span>
-                <span className="font-mono text-[9px] text-neon-400 font-bold">
-                  {achievementsProgress(achieveStats).unlocked}/{achievementsProgress(achieveStats).total}
-                </span>
-              </div>
-              <Achievements stats={achieveStats} />
-            </div>
-          </motion.div>
+          </>
         )}
 
-        {/* Вкладки */}
+        {/* 03 // Архив */}
+        <SectionTitle index={ratings.length > 0 ? '03' : '02'} title="Архив" note={`${ratings.length + tierLists.length + (battleStats?.total ?? 0)} записей`} />
         <TabBar tabs={tabs} active={activeTab} onChange={setActiveTab} />
 
         <div className="mt-6">
@@ -228,27 +241,53 @@ export default function Profile() {
               <div className="space-y-2">
                 {tierLists.map((list, index) => {
                   const { tiers } = parseTierListData(list.tiers)
+                  const filled = tiers.filter((t) => (t.items || []).length > 0)
                   return (
                     <motion.div
                       key={list.id}
-                      className="rounded-xl px-4 py-3.5 flex items-center gap-3 cursor-pointer group card hover:border-neon-400/30"
+                      className="group relative flex items-stretch gap-4 cursor-pointer border border-brand-medium/70 bg-[#070905] hover:border-neon-400/50 transition-colors duration-300"
                       onClick={() => navigate(`/tierlist/${list.id}`)}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.04, duration: 0.3 }}
                     >
-                      <div className="flex gap-0.5 flex-shrink-0">
-                        {tiers.filter((t) => (t.items || []).length > 0).slice(0, 6).map((t) => (
-                          <div key={t.id} className="w-6 h-6 rounded-lg flex items-center justify-center text-[7px] font-bold" style={{ backgroundColor: t.color + '15', color: t.color, border: `1px solid ${t.color}30` }}>
+                      {/* Порядковый номер-код */}
+                      <div className="hidden sm:flex flex-col items-center justify-center w-14 flex-shrink-0 border-r border-brand-medium/50 hatch">
+                        <span className="font-mono text-[8px] text-text-subtle">REC</span>
+                        <span className="font-display font-bold text-lg text-neon-400/80 leading-none">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                      </div>
+
+                      {/* Полосы тиров */}
+                      <div className="flex gap-1 items-center py-3 flex-shrink-0">
+                        {filled.slice(0, 6).map((t) => (
+                          <div
+                            key={t.id}
+                            className="w-5 h-10 flex items-center justify-center font-display text-[8px] font-bold"
+                            style={{
+                              color: t.color,
+                              border: `1px solid ${t.color}55`,
+                              background: `linear-gradient(to top, ${t.color}30, transparent)`,
+                            }}
+                          >
                             {t.name}
                           </div>
                         ))}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-sm truncate group-hover:text-neon-400 transition-colors duration-200 text-text-secondary">{list.name}</h3>
-                        <p className="text-[10px] text-text-muted font-mono">{new Date(list.created_at).toLocaleDateString('ru')}</p>
+
+                      <div className="flex-1 min-w-0 flex flex-col justify-center py-3 pr-3">
+                        <h3 className="font-display font-bold text-sm text-text-secondary group-hover:text-neon-400 transition-colors truncate uppercase tracking-wide">
+                          {list.name}
+                        </h3>
+                        <p className="dossier-note mt-1">
+                          {filled.reduce((n, t) => n + (t.items || []).length, 0)} тайтлов · {new Date(list.created_at).toLocaleDateString('ru')}
+                        </p>
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); handleDeleteTierList(list.id) }} className="text-[10px] hover:text-danger transition-colors flex-shrink-0 text-text-muted cursor-pointer">Удалить</button>
+
+                      <div className="flex items-center pr-4">
+                        <span className="dossier-note group-hover:text-neon-400 transition-colors">открыть →</span>
+                      </div>
                     </motion.div>
                   )
                 })}
@@ -260,43 +299,77 @@ export default function Profile() {
             !battleStats ? (
               <EmptyState icon="◈" text="Вы ещё не играли в Битву" to="/battle" linkText="Начать" />
             ) : (
-              <div className="card p-6 sm:p-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-48 h-48 bg-neon-400/[0.05] rounded-full blur-[90px] -translate-y-1/2 translate-x-1/2" />
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 relative">
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-neon-400 mb-1 font-mono drop-shadow-[0_0_14px_rgba(187,243,81,0.3)]">{battleStats.best}</div>
-                    <div className="label">Лучший результат</div>
+              <DossierPanel cut="cut-sm" className="p-6 sm:p-8">
+                <Corners inset={6} size={10} color="rgba(51,235,212,0.45)" accent="#33EBD4" />
+                {/* Верхняя техническая строка */}
+                <div className="flex items-center justify-between mb-6">
+                  <span className="dossier-note">арена · режим рейтинга</span>
+                  {battleRank && (
+                    <span className="font-mono text-[10px] font-bold text-mint-400 tracking-widest">
+                      RANK #{String(battleRank).padStart(2, '0')}
+                    </span>
+                  )}
+                </div>
+
+                {/* Счётчики с разделителями-линейками */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-0">
+                  <div className="sm:px-6 sm:first:pl-0 text-center sm:text-left relative">
+                    <div className="dossier-note mb-1">лучший счёт</div>
+                    <div className="font-display font-bold text-5xl text-neon-400 leading-none tracking-tight">
+                      {battleStats.best}
+                    </div>
+                    <div className="dossier-note mt-2 normal-case">рекорд сессии</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-mint-400 mb-1 font-mono">{battleStats.total}</div>
-                    <div className="label">Всего игр</div>
+                  <div className="sm:px-6 text-center sm:text-left relative ruled-v sm:border-l border-brand-medium/40">
+                    <div className="dossier-note mb-1">всего игр</div>
+                    <div className="font-display font-bold text-5xl text-mint-400 leading-none tracking-tight">
+                      {battleStats.total}
+                    </div>
+                    <div className="dossier-note mt-2 normal-case">заходов на арену</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-text-muted mb-1 font-mono">{battleStats.avg}</div>
-                    <div className="label">Средний счёт</div>
+                  <div className="sm:px-6 text-center sm:text-left relative ruled-v sm:border-l border-brand-medium/40">
+                    <div className="dossier-note mb-1">средний счёт</div>
+                    <div className="font-display font-bold text-5xl text-text-secondary leading-none tracking-tight">
+                      {battleStats.avg}
+                    </div>
+                    <div className="dossier-note mt-2 normal-case">по всем играм</div>
                   </div>
                 </div>
+
+                {/* Шкала до лидера */}
                 {leaderScore && battleRank && (
-                  <div className="mt-7 relative">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-mono text-[10px] text-text-muted">Догнать лидера: {leaderScore - battleStats.best} очков</span>
-                      <span className="font-mono text-[10px] text-neon-400">{Math.round((battleStats.best / leaderScore) * 100)}%</span>
+                  <div className="mt-8 pt-5 border-t border-dashed border-brand-medium/40">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="dossier-note">
+                        до лидера: <span className="text-neon-400 font-bold">{leaderScore - battleStats.best}</span> очков
+                      </span>
+                      <span className="font-mono text-[10px] font-bold text-neon-400">
+                        {Math.round((battleStats.best / leaderScore) * 100)}%
+                      </span>
                     </div>
-                    <div className="h-2 rounded-full bg-surface-3 overflow-hidden">
+                    <div className="relative h-[14px] bg-[#0A0D07] border border-brand-medium overflow-hidden">
+                      <div className="absolute inset-0 gauge-ticks opacity-60 z-10 pointer-events-none" />
                       <motion.div
-                        className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-mint-400 to-neon-400"
+                        className="absolute inset-y-0 left-0"
+                        style={{
+                          background: 'linear-gradient(to right, #00E5FF33, #00E5FF66 30%, #BBF351 100%)',
+                          boxShadow: 'inset 0 0 0 1px rgba(187,243,81,0.4)',
+                        }}
                         initial={{ width: 0 }}
                         animate={{ width: `${Math.min(100, (battleStats.best / leaderScore) * 100)}%` }}
                         transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
                       />
                     </div>
-                    <p className="mt-1.5 font-mono text-[9px] text-text-subtle">место #{battleRank} · лидер: {leaderScore} очков</p>
+                    <p className="dossier-note mt-2">
+                      лидер: {leaderScore} очков · цель {leaderScore + 1}
+                    </p>
                   </div>
                 )}
-                <div className="mt-8 text-center relative">
+
+                <div className="mt-8 text-center sm:text-left">
                   <Link to="/battle" className="btn-primary btn-shine text-xs">Играть</Link>
                 </div>
-              </div>
+              </DossierPanel>
             )
           )}
         </div>
@@ -314,12 +387,14 @@ export default function Profile() {
           >
             <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setConfirmModal(null)} />
             <motion.div
-              className="relative rounded-2xl p-5 w-[90%] max-w-xs bg-surface-1 border border-neon-400/10 shadow-soft-lg"
+              className="relative p-5 w-[90%] max-w-xs bg-[#070905] border border-brand-medium shadow-soft-lg cut-wrap cut-sm"
               initial={{ scale: 0.95, y: 10 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 10 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
+              <Corners inset={4} size={7} />
+              <p className="dossier-note mb-2">подтверждение</p>
               <p className="text-sm font-medium mb-5 text-text-secondary">{confirmModal.text}</p>
               <div className="flex gap-2 justify-end">
                 <button onClick={() => setConfirmModal(null)} className="btn-ghost text-xs !py-1.5 !px-4">Отмена</button>

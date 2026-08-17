@@ -345,6 +345,141 @@ h1, h2, h3, h4, h5, h6 {
   animation: fadeIn 1.4s ease-out;
 }
 
+/* ============================================================
+   DOSSIER — рукотворный техно-слой профиля: срезы, уголки,
+   штриховки, приборные шкалы. Не трогает остальной сайт.
+   ============================================================ */
+
+/* Панель со срезанными противоположными углами (рамка через обёртку .cut-wrap) */
+.cut-wrap {
+  --cut: 14px;
+  clip-path: polygon(
+    var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)),
+    calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut)
+  );
+}
+
+.cut-inner {
+  clip-path: polygon(
+    var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)),
+    calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut)
+  );
+}
+
+.cut-sm {
+  --cut: 8px;
+}
+
+.cut-lg {
+  --cut: 22px;
+}
+
+/* Диагональная штриховка (залоченное, фоновые зоны) */
+.hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(187, 243, 81, 0.05) 0px,
+    rgba(187, 243, 81, 0.05) 1px,
+    transparent 1px,
+    transparent 6px
+  );
+}
+
+.hatch-dense {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(112, 112, 112, 0.08) 0px,
+    rgba(112, 112, 112, 0.08) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+}
+
+/* ЭЛТ-полосы поверх изображений */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.22) 0px,
+    rgba(0, 0, 0, 0.22) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* Тонкая точечная матрица — фон панелей досье */
+.dots-bg {
+  background-image: radial-gradient(rgba(187, 243, 81, 0.07) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+
+/* Техническая аннотация: мелкий разреженный моно-текст */
+.dossier-note {
+  font-family: 'Source Code Pro', monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #525252;
+}
+
+/* Секционный заголовок досье: номер + линия + правая аннотация */
+.dossier-rule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dossier-rule::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, #2D4A0F 0%, rgba(45, 74, 15, 0.15) 100%);
+}
+
+/* Приборная шкала XP: сегменты с рисками */
+.gauge-ticks {
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(187, 243, 81, 0.35) 0px,
+    rgba(187, 243, 81, 0.35) 1px,
+    transparent 1px,
+    transparent 10%
+  );
+}
+
+/* Шевронная лента прогресса */
+.chevron-fill {
+  background-image: repeating-linear-gradient(
+    -55deg,
+    rgba(187, 243, 81, 0.85) 0px,
+    rgba(187, 243, 81, 0.85) 2px,
+    rgba(122, 176, 40, 0.85) 2px,
+    rgba(122, 176, 40, 0.85) 7px
+  );
+}
+
+/* Вертикальные деления на панели */
+.ruled-v {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 7px,
+    rgba(187, 243, 81, 0.16) 7px,
+    rgba(187, 243, 81, 0.16) 8px
+  );
+}
+
+/* Штамп-бейдж уровня: рамка с двойным контуром под печать */
+.stamp {
+  position: relative;
+  border: 1px solid rgba(187, 243, 81, 0.45);
+  box-shadow: inset 0 0 0 3px #000000, inset 0 0 0 4px rgba(187, 243, 81, 0.25);
+  background: rgba(187, 243, 81, 0.06);
+}
+
 /* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .animate-scroll {
