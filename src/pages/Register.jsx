@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import AuraCharacterCard from '../components/AuraCharacterCard'
 import { AURA_CHARACTERS } from '../data/auraCharacters'
+import { DossierPanel, Corners } from '../components/profile/SharedBits'
 
 // Маскот регистрации — Годжо (Бог аниме): «тебя ждёт путь наверх»
 const MASCOT = AURA_CHARACTERS[7]
@@ -46,41 +47,58 @@ export default function Register() {
           </div>
         </div>
 
-        <div className="mb-10 text-center page-enter">
-          <h1 className="text-2xl font-bold tracking-tight mb-1 neon-text" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>Регистрация</h1>
-          <p className="text-xs text-text-muted">Создайте аккаунт</p>
+        <div className="page-enter">
+          <DossierPanel cut="cut-lg" className="px-6 sm:px-8 pt-7 pb-8">
+            <div className="absolute inset-0 dots-bg opacity-30 pointer-events-none" />
+            <Corners inset={4} size={11} />
+            <div className="absolute bottom-0 inset-x-0 h-2 gauge-ticks opacity-20 pointer-events-none" />
+
+            <div className="relative">
+              <div className="flex items-center gap-2.5 mb-6">
+                <span className="w-1.5 h-1.5 bg-neon-400 animate-pulse" />
+                <span className="dossier-note !text-neon-400/75">auth // новый агент</span>
+                <span className="h-px flex-1 bg-gradient-to-r from-brand-medium/60 to-transparent" />
+              </div>
+
+              <h1 className="font-display font-bold text-2xl tracking-wide mb-1 neon-text">Регистрация</h1>
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted mb-6">создайте аккаунт — 0 ₽</p>
+
+              {error && (
+                <div className="cut-wrap cut-sm mb-4" style={{ background: 'linear-gradient(150deg, rgba(255,51,102,0.3), rgba(77,0,26,0.3))' }}>
+                  <div className="cut-inner cut-sm relative bg-[#0A0305] px-3.5 py-3 text-xs text-center text-danger">
+                    <span className="dossier-note !text-danger/70 block mb-1">ошибка регистрации</span>
+                    {error}
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-3.5">
+                <div>
+                  <label className="dossier-note block mb-1.5">имя пользователя</label>
+                  <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="input !rounded-sm font-mono !text-[13px]" required minLength={2} />
+                </div>
+                <div>
+                  <label className="dossier-note block mb-1.5">почта</label>
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input !rounded-sm font-mono !text-[13px]" required />
+                </div>
+                <div>
+                  <label className="dossier-note block mb-1.5">пароль · мин. 6</label>
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input !rounded-sm font-mono !text-[13px]" required minLength={6} />
+                </div>
+                <button type="submit" disabled={loading} className="btn-primary btn-shine w-full !py-3 !text-sm mt-2">
+                  {loading ? 'Создание...' : 'Зарегистрироваться'}
+                </button>
+              </form>
+
+              <p className="mt-6 pt-4 border-t border-brand-medium/40 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-text-muted">
+                уже есть аккаунт?{' '}
+                <Link to="/login" className="text-neon-400 hover:text-neon-300 font-bold transition-colors">
+                  войти
+                </Link>
+              </p>
+            </div>
+          </DossierPanel>
         </div>
-
-        {error && (
-          <div className="mb-4 p-3.5 rounded-xl text-xs text-center bg-danger/10 border border-danger/20 text-danger">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-3 page-enter" style={{ animationDelay: '0.05s' }}>
-          <div>
-            <label className="label mb-1.5 block">Имя пользователя</label>
-            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="input" required minLength={2} />
-          </div>
-          <div>
-            <label className="label mb-1.5 block">Почта</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input" required />
-          </div>
-          <div>
-            <label className="label mb-1.5 block">Пароль</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" required minLength={6} />
-          </div>
-          <button type="submit" disabled={loading} className="btn-primary btn-shine w-full !py-3 !text-sm mt-2">
-            {loading ? 'Создание...' : 'Зарегистрироваться'}
-          </button>
-        </form>
-
-        <p className="text-center text-xs mt-10 page-enter text-text-muted" style={{ animationDelay: '0.1s' }}>
-          Уже есть аккаунт?{' '}
-          <Link to="/login" className="text-neon-400 hover:text-neon-300 font-medium transition-colors neon-text">
-            Войти
-          </Link>
-        </p>
       </div>
     </div>
   )

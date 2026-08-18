@@ -4,6 +4,7 @@ import { useInView } from 'framer-motion'
 import { supabase } from '../utils/supabase'
 import { loadAnimeData } from '../utils/animeData'
 import { AURA_CHARACTERS } from '../data/auraCharacters'
+import { Corners } from './profile/SharedBits'
 
 function Counter({ target }) {
   const [count, setCount] = useState(0)
@@ -28,11 +29,12 @@ function Counter({ target }) {
 const NAV = [
   {
     title: 'Разделы',
+    index: '01',
     links: [
-      { label: 'Каталог', to: '/catalog' },
-      { label: 'Тир-лист', to: '/tier-templates' },
-      { label: 'Битва', to: '/battle' },
-      { label: 'Угадай OP/ED', to: '/anime-oped' },
+      { label: 'Каталог', to: '/catalog', code: 'DB' },
+      { label: 'Тир-лист', to: '/tier-templates', code: 'TIR' },
+      { label: 'Битва', to: '/battle', code: 'PVP' },
+      { label: 'Угадай OP/ED', to: '/anime-oped', code: 'OPD' },
     ],
   },
 ]
@@ -47,12 +49,22 @@ export default function Footer() {
   }, [])
 
   return (
-    <footer className="mt-auto relative border-t border-neon-400/20 bg-surface-0/80">
+    <footer className="mt-auto relative bg-[#070905]">
+      {/* приборная лента-разделитель сверху */}
+      <div className="h-[3px] chevron-fill opacity-50" />
       <div
-        className="absolute inset-x-0 top-0 h-px pointer-events-none"
+        className="absolute inset-x-0 top-[3px] h-px pointer-events-none"
         style={{ background: 'linear-gradient(90deg, transparent, rgba(187, 243, 81, 0.5), transparent)' }}
       />
+
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 py-10">
+        {/* системная лента */}
+        <div className="flex items-center gap-3 mb-8">
+          <span className="dossier-note !text-neon-400/70 whitespace-nowrap">xAURA // FOOTER</span>
+          <span className="h-px flex-1 bg-gradient-to-r from-brand-medium/60 via-brand-medium/20 to-transparent" />
+          <span className="dossier-note hidden sm:inline">канал связи закрыт</span>
+        </div>
+
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8 mb-10">
           {/* Brand */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-2">
@@ -64,22 +76,26 @@ export default function Footer() {
               Оценивай. Ранжируй. Сражайся. Вся аниме-вселенная в одном неоновом месте.
             </p>
             <div className="mt-4 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-success-DEFAULT animate-pulse" />
-              <span className="font-mono text-[10px] text-text-muted">сервис активен</span>
+              <span className="w-1.5 h-1.5 bg-success-DEFAULT animate-pulse" />
+              <span className="font-mono text-[10px] text-text-muted uppercase tracking-[0.14em]">sys: online</span>
             </div>
           </div>
 
           {/* Nav */}
           {NAV.map((col) => (
             <div key={col.title}>
-              <h3 className="label !mb-4">{col.title}</h3>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="font-mono text-[9px] font-bold text-text-subtle">{col.index}</span>
+                <h3 className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-secondary font-semibold">{col.title}</h3>
+              </div>
               <ul className="space-y-2.5">
                 {col.links.map((l) => (
                   <li key={l.to}>
                     <Link
                       to={l.to}
-                      className="text-xs text-text-secondary hover:text-neon-400 transition-colors inline-flex items-center gap-1.5 group"
+                      className="text-xs text-text-secondary hover:text-neon-400 transition-colors inline-flex items-center gap-2 group"
                     >
+                      <span className="font-mono text-[8px] text-text-subtle group-hover:text-neon-400/60 transition-colors">{l.code}</span>
                       <span className="w-0 group-hover:w-2 h-px bg-neon-400 transition-all duration-200" />
                       {l.label}
                     </Link>
@@ -89,50 +105,67 @@ export default function Footer() {
             </div>
           ))}
 
-          {/* Stats */}
+          {/* Stats — приборные показания */}
           <div>
-            <h3 className="label !mb-4">Статистика</h3>
-            <div className="font-mono text-xs space-y-2.5">
-              <div>
-                <span className="text-neon-400 font-bold text-base"><Counter target={animeCount} /></span>
-                <span className="text-text-muted"> тайтлов</span>
-              </div>
-              <div>
-                <span className="text-cyan-400 font-bold text-base"><Counter target={userCount} /></span>
-                <span className="text-text-muted"> {userCount === 1 ? 'пользователь' : userCount < 5 ? 'пользователя' : 'пользователей'}</span>
-              </div>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="font-mono text-[9px] font-bold text-text-subtle">02</span>
+              <h3 className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-secondary font-semibold">Телеметрия</h3>
+            </div>
+            <div className="space-y-2">
+              {[
+                { label: 'тайтлов', value: animeCount, color: '#BBF351', code: 'DB' },
+                { label: userCount === 1 ? 'пользователь' : userCount < 5 ? 'пользователя' : 'пользователей', value: userCount, color: '#00E5FF', code: 'USR' },
+              ].map((s) => (
+                <div
+                  key={s.code}
+                  className="cut-wrap cut-sm w-fit min-w-[130px]"
+                  style={{ background: `linear-gradient(150deg, ${s.color}26, rgba(45,74,15,0.2))` }}
+                >
+                  <div className="cut-inner cut-sm relative bg-[#0A0A0A] px-3 py-2 overflow-hidden">
+                    <div className="absolute bottom-0 inset-x-0 h-1.5 gauge-ticks opacity-25" />
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="font-mono font-bold text-sm" style={{ color: s.color }}><Counter target={s.value} /></span>
+                      <span className="font-mono text-[8px] text-text-subtle">{s.code}</span>
+                    </div>
+                    <span className="block mt-0.5 text-[8px] uppercase tracking-[0.14em] font-mono text-text-subtle">{s.label}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-5 border-t border-neon-400/10 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[10px] text-text-muted">© 2025 xAura</span>
-            {/* Пасхалка: Годжо наблюдает */}
-            <span className="relative inline-block group/easter cursor-pointer" title="Во всём Поднебесной лишь я достоин 10/10">
-              <picture>
-                <source srcSet={AURA_CHARACTERS[7].webp} type="image/webp" />
-                <img
-                  src={AURA_CHARACTERS[7].gif}
-                  alt="Годжо наблюдает"
-                  loading="lazy"
-                  className="w-5 h-5 rounded object-cover opacity-30 transition-all duration-500 group-hover/easter:opacity-100 group-hover/easter:scale-[2.2] group-hover/easter:-translate-y-1.5 group-hover/easter:shadow-[0_0_16px_rgba(123,140,255,0.7)]"
-                />
-              </picture>
+        <div className="relative pt-5 border-t border-brand-medium/40">
+          <Corners size={8} inset={-1} color="rgba(187,243,81,0.3)" />
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-[10px] text-text-muted uppercase tracking-[0.14em]">© 2025 xAura</span>
+              {/* Пасхалка: Годжо наблюдает */}
+              <span className="relative inline-block group/easter cursor-pointer" title="Во всём Поднебесной лишь я достоин 10/10">
+                <picture>
+                  <source srcSet={AURA_CHARACTERS[7].webp} type="image/webp" />
+                  <img
+                    src={AURA_CHARACTERS[7].gif}
+                    alt="Годжо наблюдает"
+                    loading="lazy"
+                    className="w-5 h-5 rounded object-cover opacity-30 transition-all duration-500 group-hover/easter:opacity-100 group-hover/easter:scale-[2.2] group-hover/easter:-translate-y-1.5 group-hover/easter:shadow-[0_0_16px_rgba(123,140,255,0.7)]"
+                  />
+                </picture>
+              </span>
+            </div>
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
+              данные:{' '}
+              <a
+                href="https://shikimori.one"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-neon-400 transition-colors font-semibold text-text-secondary"
+              >
+                shikimori
+              </a>
             </span>
           </div>
-          <span className="text-[10px] text-text-muted">
-            Данные:{' '}
-            <a
-              href="https://shikimori.one"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-neon-400 transition-colors font-medium text-text-secondary"
-            >
-              Shikimori
-            </a>
-          </span>
         </div>
       </div>
     </footer>

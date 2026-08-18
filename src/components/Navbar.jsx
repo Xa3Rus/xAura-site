@@ -188,8 +188,8 @@ export default function Navbar() {
                       transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
                       className="absolute top-full mt-2 left-0 w-60 rounded-xl overflow-hidden glass border border-neon-400/10 shadow-neon-lg z-50"
                     >
-                      <div className="py-1.5 px-4">
-                        <span className="text-[9px] uppercase tracking-widest text-text-subtle font-medium">Развлечения</span>
+                      <div className="py-1.5 px-4 border-b border-brand-medium/30">
+                        <span className="dossier-note">развлечения · 4 модуля</span>
                       </div>
                       {featureLinks.map((link) => (
                         <Link
@@ -228,7 +228,7 @@ export default function Navbar() {
                   onChange={(e) => handleSearch(e.target.value)}
                   onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
                   placeholder="Найти пользователя..."
-                  className="w-44 rounded-lg px-3 py-1.5 pl-8 pr-12 text-xs text-text placeholder-text-muted focus:outline-none transition-all duration-500 bg-surface-1/80 border border-neon-400/10 focus:border-neon-400/50 focus:shadow-[0_0_0_3px_rgba(187,243,81,0.12)] focus:w-56 backdrop-blur-sm"
+                  className="w-44 rounded-sm px-3 py-1.5 pl-8 pr-12 font-mono text-[11px] text-text placeholder-text-muted focus:outline-none transition-all duration-500 bg-surface-1/80 border border-neon-400/10 focus:border-neon-400/50 focus:shadow-[0_0_0_3px_rgba(187,243,81,0.12)] focus:w-56 backdrop-blur-sm"
                 />
                 <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -310,8 +310,8 @@ export default function Navbar() {
                             <span className="font-mono text-[10px] text-text-muted">{aura.title}</span>
                             <span className="font-mono text-[10px] text-neon-400">LVL {aura.level}</span>
                           </div>
-                          <div className="h-1.5 rounded-full bg-surface-3 overflow-hidden">
-                            <div className="h-full rounded-full bg-gradient-to-r from-neon-600 to-neon-400" style={{ width: `${aura.progress}%` }} />
+                          <div className="relative h-1.5 bg-surface-3 overflow-hidden">
+                            <div className="absolute inset-y-0 left-0 chevron-fill opacity-70" style={{ width: `${aura.progress}%` }} />
                           </div>
                           <p className="mt-1 font-mono text-[9px] text-text-subtle">{aura.xp} XP · до след. уровня {aura.next}</p>
                         </div>
