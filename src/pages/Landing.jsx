@@ -7,6 +7,7 @@ import { loadAnimeData } from '../utils/animeData'
 import { shikimoriImg } from '../utils/imgUrl'
 import { getAuraLevel } from '../utils/aura'
 import { AuraLevelChip } from '../components/AuraBadge'
+import { AURA_CHARACTERS } from '../data/auraCharacters'
 import { Corners, DossierPanel, SectionTitle } from '../components/profile/SharedBits'
 
 // Техническая лента-заголовок: подпись + градиентная линейка + правая аннотация
@@ -239,14 +240,48 @@ function Ticker({ anime }) {
   )
 }
 
-// Карточка «аура-фармера» для гостей: гифка Субару + плавающие XP-чипы,
-// обыгрывающие систему уровней сайта
-function AuraFarmerCard() {
-  const chips = [
-    { text: '+12 XP · оценка', className: '-top-3 -left-5', delay: 0, dy: -7 },
-    { text: '+40 XP · тир-лист', className: 'top-1/3 -right-6', delay: 0.6, dy: 6 },
-    { text: '+8 XP · битва', className: '-bottom-4 left-8', delay: 1.1, dy: -6 },
-  ]
+// Ротация агентов в герое: Субару (фармер ауры) ↔ Лелуш (глаз Гасс) —
+// разные гифки, акценты, чипы и аннотации, сменяются по таймеру
+const HERO_ROTATE_MS = 7000
+
+const HERO_AGENTS = [
+  {
+    key: 'subaru',
+    char: AURA_CHARACTERS[0], // СУБАРУ · Re:Zero
+    mode: 'aura farmer mode',
+    side: 'XP FARMING PROTOCOL',
+    badge: '+∞ AURA',
+    badgeStyle: { background: '#BBF351', color: '#000' },
+    chips: [
+      { text: '+12 XP · оценка', className: '-top-3 -left-5', delay: 0, dy: -7 },
+      { text: '+40 XP · тир-лист', className: 'top-1/3 -right-6', delay: 0.6, dy: 6 },
+      { text: '+8 XP · битва', className: '-bottom-4 left-8', delay: 1.1, dy: -6 },
+    ],
+  },
+  {
+    key: 'lelouch',
+    char: AURA_CHARACTERS[2], // ЛЕЛУШ · Code Geass
+    mode: 'geass activated',
+    side: 'GEASS EYE ONLINE',
+    badge: '10/10',
+    badgeStyle: { background: '#BF5AF2', color: '#fff' },
+    chips: [
+      { text: 'LVL 5+ · критик', className: '-top-3 -left-5', delay: 0, dy: -7 },
+      { text: '+8 XP · приказ', className: 'top-1/3 -right-6', delay: 0.6, dy: 6 },
+      { text: 'император вкуса', className: '-bottom-4 left-8', delay: 1.1, dy: -6 },
+    ],
+  },
+]
+
+function HeroShowcaseCard() {
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setI((v) => (v + 1) % HERO_AGENTS.length), HERO_ROTATE_MS)
+    return () => clearInterval(t)
+  }, [])
+  const a = HERO_AGENTS[i]
+  const accent = a.char.accent
+
   return (
     <motion.div
       className="relative flex-shrink-0 hidden lg:block"
@@ -259,83 +294,128 @@ function AuraFarmerCard() {
         transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
         className="relative"
       >
-        <div className="absolute -inset-3 bg-gradient-to-br from-neon-400/25 via-transparent to-cyan-400/20 blur-xl pointer-events-none" />
+        {/* свечение под карточкой — цвет текущего агента */}
+        <motion.div
+          key={a.key + '-glow'}
+          className="absolute -inset-3 pointer-events-none"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.1 }}
+          style={{ background: `radial-gradient(circle at 50% 45%, ${accent}2E, transparent 72%)` }}
+        />
         <div
-          className="cut-wrap cut-lg relative w-[300px] xl:w-[330px]"
-          style={{ background: 'linear-gradient(160deg, rgba(187,243,81,0.45), rgba(45,74,15,0.45))' }}
+          className="cut-wrap cut-lg relative w-[300px] xl:w-[330px] transition-all duration-700"
+          style={{ background: `linear-gradient(160deg, ${accent}70, #2D4A0F55)` }}
         >
-          <div className="cut-inner cut-lg relative overflow-hidden bg-surface-1">
-            <picture>
-              <source srcSet="https://i.giphy.com/media/mSVGTMHDu6NoXkmcpJ/giphy.webp" type="image/webp" />
-              <img
-                src="https://media.giphy.com/media/mSVGTMHDu6NoXkmcpJ/giphy.gif"
-                alt="Субару Нацики фармит ауру"
-                className="w-full aspect-[4/5] object-cover"
-              />
-            </picture>
-            <div className="absolute inset-0 scanlines pointer-events-none" />
-            <div className="absolute inset-x-0 bottom-0 p-3.5 pt-10 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end justify-between gap-2">
-              <div className="min-w-0">
-                <span className="block font-mono text-[9px] text-neon-300/80 uppercase tracking-widest">aura farmer mode</span>
-                <span className="block font-display font-bold text-sm text-white truncate" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>
-                  СУБАРУ-СЭМПАЙ
-                </span>
-              </div>
-              <motion.span
-                className="px-2 py-1 bg-neon-400 text-black font-mono text-[10px] font-bold flex-shrink-0"
-                animate={{ scale: [1, 1.08, 1] }}
-                transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+          <div className="cut-inner cut-lg relative overflow-hidden bg-surface-1 aspect-[4/5]">
+            <Corners color={`${accent}AA`} size={10} inset={6} />
+
+            {/* кроссфейд гифок агентов */}
+            <AnimatePresence mode="sync">
+              <motion.div
+                key={a.key + '-gif'}
+                className="absolute inset-0"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.9, ease: 'easeInOut' }}
               >
-                +∞ AURA
-              </motion.span>
+                <picture>
+                  <source srcSet={a.char.webp} type="image/webp" />
+                  <img src={a.char.gif} alt={`${a.char.name} — ${a.char.anime}`} className="w-full h-full object-cover" />
+                </picture>
+              </motion.div>
+            </AnimatePresence>
+
+            <div className="absolute inset-0 scanlines pointer-events-none" />
+
+            {/* вертикальная аннотация по правому краю */}
+            <motion.span
+              key={a.key + '-side'}
+              className="absolute top-3 right-0 px-1.5 py-3 font-mono text-[8px] uppercase tracking-[0.3em] border-l"
+              style={{ writingMode: 'vertical-rl', color: `${accent}AA`, borderColor: `${accent}33` }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              {a.side}
+            </motion.span>
+
+            {/* бейдж режима */}
+            <motion.span
+              key={a.key + '-badge'}
+              className="absolute top-3 left-3 px-2 py-1 font-mono text-[10px] font-bold z-10"
+              style={a.badgeStyle}
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.45, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {a.badge}
+            </motion.span>
+
+            {/* нижняя информационная панель */}
+            <div className="absolute inset-x-0 bottom-0 p-3.5 pt-12 bg-gradient-to-t from-black/95 via-black/55 to-transparent">
+              <motion.div
+                key={a.key + '-info'}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <span className="block font-mono text-[9px] uppercase tracking-widest" style={{ color: `${accent}CC` }}>
+                  {a.mode} · {a.char.anime}
+                </span>
+                <span className="block font-display font-bold text-sm text-white truncate" style={{ fontFamily: 'Quantico, Inter, sans-serif' }}>
+                  {a.char.name}
+                </span>
+                <span className="block text-[10px] italic text-white/55 mt-0.5 leading-snug">
+                  «{a.char.quote}»
+                </span>
+              </motion.div>
+
+              {/* сегментный индикатор ротации */}
+              <div className="flex gap-1.5 mt-3">
+                {HERO_AGENTS.map((ag, idx) => (
+                  <div key={ag.key} className="h-[3px] flex-1 bg-white/15 overflow-hidden">
+                    {idx === i ? (
+                      <motion.div
+                        key={a.key + '-bar'}
+                        className="h-full"
+                        style={{ background: accent }}
+                        initial={{ width: '0%' }}
+                        animate={{ width: '100%' }}
+                        transition={{ duration: HERO_ROTATE_MS / 1000, ease: 'linear' }}
+                      />
+                    ) : idx < i ? (
+                      <div className="h-full w-full" style={{ background: `${HERO_AGENTS[idx].char.accent}55` }} />
+                    ) : null}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        {chips.map((c) => (
-          <motion.div
-            key={c.text}
-            className={`absolute ${c.className} px-2.5 py-1.5 bg-surface-1/95 backdrop-blur-md border border-neon-400/35 font-mono text-[10px] font-bold text-neon-300 shadow-glow-neon whitespace-nowrap z-10`}
-            animate={{ y: [0, c.dy, 0] }}
-            transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut', delay: c.delay }}
-          >
-            {c.text}
-          </motion.div>
-        ))}
+        {/* плавающие XP-чипы текущего агента */}
+        <motion.div
+          key={a.key + '-chips'}
+          className="absolute inset-0 pointer-events-none"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          {a.chips.map((c) => (
+            <motion.div
+              key={c.text}
+              className={`absolute ${c.className} px-2.5 py-1.5 bg-surface-1/95 backdrop-blur-md border font-mono text-[10px] font-bold whitespace-nowrap z-10`}
+              style={{ borderColor: `${accent}59`, color: accent }}
+              animate={{ y: [0, c.dy, 0] }}
+              transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut', delay: c.delay }}
+            >
+              {c.text}
+            </motion.div>
+          ))}
+        </motion.div>
       </motion.div>
-    </motion.div>
-  )
-}
-
-// Глаз Гасса Лелуша — «приказываю» для секции «Твой вкус. Твои правила.»
-function GeassBadge() {
-  return (
-    <motion.div
-      className="relative inline-flex items-center justify-center mb-4"
-      initial={{ opacity: 0, scale: 0.6 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.15 }}
-    >
-      <motion.div
-        className="absolute w-20 h-20 rounded-full border border-accent-purple/30"
-        animate={{ scale: [1, 1.5], opacity: [0.6, 0] }}
-        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
-      />
-      <motion.div
-        className="absolute w-20 h-20 rounded-full border border-accent-purple/20"
-        animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
-        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut', delay: 0.6 }}
-      />
-      <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-accent-purple/50 shadow-[0_0_24px_-4px_rgba(191,90,242,0.55)]">
-        <picture>
-          <source srcSet="https://i.giphy.com/media/e9U5tYwBssdLG/giphy.webp" type="image/webp" />
-          <img src="https://media.giphy.com/media/e9U5tYwBssdLG/giphy.gif" alt="Глаз Гасса Лелуша" className="w-full h-full object-cover" />
-        </picture>
-      </div>
-      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-px bg-surface-1/95 backdrop-blur-sm border border-accent-purple/30 font-mono text-[8px] uppercase tracking-widest text-accent-purple whitespace-nowrap">
-        geass
-      </span>
     </motion.div>
   )
 }
@@ -428,8 +508,8 @@ export default function Landing() {
           <DossierPanel cut="cut-lg" className="overflow-hidden px-6 sm:px-12 py-14 sm:py-20">
             <div className="absolute inset-0 dots-bg opacity-25 pointer-events-none" />
             <div className="absolute inset-0 neon-grid opacity-60 pointer-events-none" />
-            <div className="absolute -top-10 -right-10 w-64 h-64 bg-neon-400/[0.07] rounded-full blur-[100px] animate-float pointer-events-none" />
-            <div className="absolute -bottom-16 left-1/3 w-56 h-56 bg-cyan-400/[0.05] rounded-full blur-[90px] animate-float pointer-events-none" style={{ animationDelay: '-3s' }} />
+            <div className="absolute -top-10 -right-10 w-64 h-64 rounded-full pointer-events-none opacity-60" style={{ background: 'radial-gradient(circle, rgba(187,243,81,0.12), transparent 70%)' }} />
+            <div className="absolute -bottom-16 left-1/3 w-56 h-56 rounded-full pointer-events-none opacity-50" style={{ background: 'radial-gradient(circle, rgba(0,229,255,0.08), transparent 70%)' }} />
 
             <div className="relative flex flex-col lg:flex-row items-center gap-10 lg:justify-between">
               <div className="relative max-w-3xl">
@@ -477,7 +557,7 @@ export default function Landing() {
                 )}
               </div>
 
-              <AuraFarmerCard />
+              <HeroShowcaseCard />
             </div>
           </DossierPanel>
         </motion.section>
@@ -549,54 +629,6 @@ export default function Landing() {
           </div>
         </div>
 
-        <motion.section
-          className="mb-16"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          <SectionTitle index="03" title="Активация" note={!user ? 'аккаунт — 0 ₽' : 'зал славы ждёт'} />
-          <DossierPanel cut="cut-lg" className="overflow-hidden px-6 sm:px-12 py-10 sm:py-14 text-center">
-            <div className="absolute inset-0 dots-bg opacity-15 pointer-events-none" />
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-40 bg-neon-400/[0.08] rounded-full blur-[100px] pointer-events-none" />
-            <div className="relative">
-              {!user ? (
-                <>
-                  <span className="stamp inline-block px-3 py-1.5 font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-neon-400 mb-5">
-                    субару уже фармит · ты пока нет
-                  </span>
-                  <h2 className="font-display font-bold text-white text-2xl sm:text-4xl tracking-wide mb-3">
-                    Фарми <span className="text-neon-400 drop-shadow-[0_0_16px_rgba(187,243,81,0.4)]">ауру.</span> Стань легендой.
-                  </h2>
-                  <p className="text-sm sm:text-base text-white/65 mb-7 max-w-xl mx-auto">
-                    Оценки, тир-листы и битвы дают XP и повышают уровень ауры — от «Новичка» до «Бога аниме». Аккаунт бесплатный, зал славы ждёт.
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-3">
-                    <Link to="/register" className="btn-primary btn-shine">Создать аккаунт</Link>
-                    <Link to="/login" className="btn-ghost">Войти</Link>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <GeassBadge />
-                  <span className="label block mb-3">ГОТОВ ПОКАЗАТЬ СВОЙ ВКУС?</span>
-                  <h2 className="font-display font-bold text-white text-2xl sm:text-4xl tracking-wide mb-3">
-                    Твой вкус. <span className="text-neon-400 drop-shadow-[0_0_16px_rgba(187,243,81,0.4)]">Твои правила.</span>
-                  </h2>
-                  <p className="text-sm sm:text-base text-white/65 mb-7 max-w-xl mx-auto">
-                    Лелуш одобряет: составь тир-лист, который разнесёт интернет, или выбей рекорд в Битве — зал славы ждёт.
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-3">
-                    <Link to="/tier-templates" className="btn-primary btn-shine">Создать тир-лист</Link>
-                    <Link to="/battle" className="btn-ghost">В Битву →</Link>
-                  </div>
-                </>
-              )}
-            </div>
-          </DossierPanel>
-        </motion.section>
-
         {leaderboard.length > 0 && (
           <motion.div
             className="mb-24"
@@ -605,7 +637,7 @@ export default function Landing() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <SectionTitle index="04" title="Зал славы" note="битва · лучшие результаты" />
+            <SectionTitle index="03" title="Зал славы" note="битва · лучшие результаты" />
 
             <Leaderboard entries={leaderboard} />
 
