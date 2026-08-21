@@ -16,6 +16,7 @@ import TierListDetail from './pages/TierListDetail'
 import BattlePage from './pages/BattlePage'
 import AnimeOPED from './pages/AnimeOPED'
 import ScreenshotQuiz from './pages/ScreenshotQuiz'
+import DailyChallenge from './pages/DailyChallenge'
 import DominionLobby from './pages/DominionLobby'
 import DominionGame from './pages/DominionGame'
 import DraftLobby from './pages/DraftLobby'
@@ -80,6 +81,11 @@ export default function App() {
         <Route path="/screenshot-quiz" element={
           <ProtectedRoute>
             <ScreenshotQuiz />
+          </ProtectedRoute>
+        } />
+        <Route path="/daily" element={
+          <ProtectedRoute>
+            <DailyChallenge />
           </ProtectedRoute>
         } />
         <Route path="/draft" element={

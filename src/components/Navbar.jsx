@@ -61,12 +61,13 @@ export default function Navbar() {
   useEffect(() => {
     if (!user) { setAura(null); return }
     const load = async () => {
-      const [ratingsRes, tierRes, battleRes] = await Promise.all([
+      const [ratingsRes, tierRes, battleRes, dailyRes] = await Promise.all([
         supabase.from('ratings').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('tier_lists').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('battle_games').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('daily_results').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
       ])
-      setAura(getAuraLevel(ratingsRes.count || 0, tierRes.count || 0, battleRes.count || 0))
+      setAura(getAuraLevel(ratingsRes.count || 0, tierRes.count || 0, battleRes.count || 0, dailyRes.count || 0))
     }
     load()
   }, [user, location.pathname])
@@ -111,6 +112,7 @@ export default function Navbar() {
   ]
 
   const featureLinks = [
+    { to: '/daily', label: 'Челлендж дня', desc: 'Общий для всех' },
     { to: '/tier-templates', label: 'Тир-лист', desc: 'Выбери шаблон' },
     { to: '/battle', label: 'Битва', desc: 'Угадывай рейтинг' },
     { to: '/anime-oped', label: 'Угадай OP/ED', desc: 'По музыке' },

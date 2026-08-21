@@ -472,20 +472,22 @@ export default function Landing() {
 
       // Уровни ауры для топ-10: считаем активность каждого игрока
       const topIds = sorted.map((e) => e.user_id)
-      const [ratingsRes, tierRes, battlesRes] = await Promise.all([
+      const [ratingsRes, tierRes, battlesRes, dailyRes] = await Promise.all([
         supabase.from('ratings').select('user_id').in('user_id', topIds),
         supabase.from('tier_lists').select('user_id').in('user_id', topIds),
         supabase.from('battle_games').select('user_id').in('user_id', topIds),
+        supabase.from('daily_results').select('user_id').in('user_id', topIds),
       ])
       const activity = {}
-      const bump = (uid, key) => { activity[uid] = activity[uid] || { r: 0, t: 0, b: 0 }; activity[uid][key]++ }
+      const bump = (uid, key) => { activity[uid] = activity[uid] || { r: 0, t: 0, b: 0, d: 0 }; activity[uid][key]++ }
       for (const r of ratingsRes.data || []) bump(r.user_id, 'r')
       for (const t of tierRes.data || []) bump(t.user_id, 't')
       for (const b of battlesRes.data || []) bump(b.user_id, 'b')
+      for (const d of dailyRes.data || []) bump(d.user_id, 'd')
 
       setLeaderboard(sorted.map((e) => ({
         ...e,
-        level: getAuraLevel(activity[e.user_id]?.r || 0, activity[e.user_id]?.t || 0, activity[e.user_id]?.b || 0).level,
+        level: getAuraLevel(activity[e.user_id]?.r || 0, activity[e.user_id]?.t || 0, activity[e.user_id]?.b || 0, activity[e.user_id]?.d || 0).level,
       })))
     }
     fetchStats()

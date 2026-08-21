@@ -1,6 +1,6 @@
 // Система уровней «ауры»: XP начисляется за активность и определяет уровень
 // пользователя. Используется в профиле, публичном профиле и таблице лидеров.
-export const AURA_XP = { rating: 12, tierList: 40, battle: 8 }
+export const AURA_XP = { rating: 12, tierList: 40, battle: 8, daily: 15 }
 
 export const AURA_TITLES = ['Новичок', 'Зритель', 'Критик', 'Аналитик', 'Эксперт', 'Мастер', 'Легенда', 'Бог аниме']
 
@@ -19,8 +19,12 @@ export const AURA_GRADIENTS = [
   'from-amber-300 via-yellow-200 to-white',
 ]
 
-export function getAuraLevel(ratingsCount = 0, tierListsCount = 0, battlesCount = 0) {
-  const xp = ratingsCount * AURA_XP.rating + tierListsCount * AURA_XP.tierList + battlesCount * AURA_XP.battle
+export function getAuraLevel(ratingsCount = 0, tierListsCount = 0, battlesCount = 0, dailyCount = 0) {
+  const xp =
+    ratingsCount * AURA_XP.rating +
+    tierListsCount * AURA_XP.tierList +
+    battlesCount * AURA_XP.battle +
+    dailyCount * AURA_XP.daily
   const level = Math.max(1, Math.floor(Math.sqrt(xp / LEVEL_FACTOR)) + 1)
   const curFloor = Math.pow(level - 1, 2) * LEVEL_FACTOR
   const nextFloor = Math.pow(level, 2) * LEVEL_FACTOR

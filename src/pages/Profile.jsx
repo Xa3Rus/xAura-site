@@ -27,6 +27,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('ratings')
   const [confirmModal, setConfirmModal] = useState(null)
+  const [dailyCount, setDailyCount] = useState(0)
 
   useEffect(() => {
     if (user) loadData()
@@ -34,11 +35,13 @@ export default function Profile() {
   }, [user])
 
   const loadData = async () => {
-    const [ratingsRes, tierListsRes, battleRes] = await Promise.all([
+    const [ratingsRes, tierListsRes, battleRes, dailyRes] = await Promise.all([
       supabase.from('ratings').select('*').eq('user_id', user.id),
       supabase.from('tier_lists').select('*').eq('user_id', user.id),
       supabase.from('battle_games').select('score').eq('user_id', user.id),
+      supabase.from('daily_results').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
     ])
+    setDailyCount(dailyRes.count || 0)
     setRatings((ratingsRes.data || []).sort((a, b) => (b.average_score || 0) - (a.average_score || 0)))
     setTierLists(tierListsRes.data || [])
     if (battleRes.data?.length) {
@@ -113,7 +116,7 @@ export default function Profile() {
     ? (ratings.reduce((sum, r) => sum + (r.average_score || 0), 0) / ratings.length).toFixed(2)
     : '—'
 
-  const aura = getAuraLevel(ratings.length, tierLists.length, battleStats?.total ?? 0)
+  const aura = getAuraLevel(ratings.length, tierLists.length, battleStats?.total ?? 0, dailyCount)
 
   const tabs = [
     { id: 'ratings', label: 'Оценки', count: ratings.length },

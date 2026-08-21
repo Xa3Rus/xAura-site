@@ -25,6 +25,7 @@ export default function PublicProfile() {
   const [notFound, setNotFound] = useState(false)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('ratings')
+  const [dailyCount, setDailyCount] = useState(0)
 
   useEffect(() => { loadProfile() }, [userId])
 
@@ -33,11 +34,13 @@ export default function PublicProfile() {
     if (!profile) { setNotFound(true); setLoading(false); return }
     setProfileUser(profile)
 
-    const [ratingsRes, tierListsRes, battleRes] = await Promise.all([
+    const [ratingsRes, tierListsRes, battleRes, dailyRes] = await Promise.all([
       supabase.from('ratings').select('*').eq('user_id', userId),
       supabase.from('tier_lists').select('*').eq('user_id', userId),
       supabase.from('battle_games').select('score').eq('user_id', userId),
+      supabase.from('daily_results').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     ])
+    setDailyCount(dailyRes.count || 0)
     setRatings((ratingsRes.data || []).sort((a, b) => (b.average_score || 0) - (a.average_score || 0)))
     setTierLists(tierListsRes.data || [])
     if (battleRes.data?.length) {
@@ -70,7 +73,7 @@ export default function PublicProfile() {
     setLoading(false)
   }
 
-  const aura = getAuraLevel(ratings.length, tierLists.length, battleStats?.total ?? 0)
+  const aura = getAuraLevel(ratings.length, tierLists.length, battleStats?.total ?? 0, dailyCount)
 
   // Средние покритерийно для радара
   const avgScores = ratings.length ? ratings.reduce((acc, r) => {
