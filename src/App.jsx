@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import AsciiAuraBg from './components/AsciiAuraBg'
@@ -15,29 +15,13 @@ import PublicProfile from './pages/PublicProfile'
 import TierListDetail from './pages/TierListDetail'
 import BattlePage from './pages/BattlePage'
 import AnimeOPED from './pages/AnimeOPED'
+import ScreenshotQuiz from './pages/ScreenshotQuiz'
 import DominionLobby from './pages/DominionLobby'
 import DominionGame from './pages/DominionGame'
-import MonopolyLobby from './pages/MonopolyLobby'
-import MonopolyGame from './pages/MonopolyGame'
-
-const FULLSCREEN_ROUTES = ['/monopoly/game']
+import DraftLobby from './pages/DraftLobby'
+import DraftGame from './pages/DraftGame'
 
 export default function App() {
-  const location = useLocation()
-  const isFullscreen = FULLSCREEN_ROUTES.includes(location.pathname)
-
-  if (isFullscreen) {
-    return (
-      <Routes>
-        <Route path="/monopoly/game" element={
-          <ProtectedRoute>
-            <MonopolyGame />
-          </ProtectedRoute>
-        } />
-      </Routes>
-    )
-  }
-
   return (
     <div className="min-h-screen flex flex-col underwave-bg text-text vignette">
       <AsciiAuraBg />
@@ -93,6 +77,21 @@ export default function App() {
             <AnimeOPED />
           </ProtectedRoute>
         } />
+        <Route path="/screenshot-quiz" element={
+          <ProtectedRoute>
+            <ScreenshotQuiz />
+          </ProtectedRoute>
+        } />
+        <Route path="/draft" element={
+          <ProtectedRoute>
+            <DraftLobby />
+          </ProtectedRoute>
+        } />
+        <Route path="/draft/game" element={
+          <ProtectedRoute>
+            <DraftGame />
+          </ProtectedRoute>
+        } />
         <Route path="/dominion" element={
           <ProtectedRoute>
             <DominionLobby />
@@ -101,11 +100,6 @@ export default function App() {
         <Route path="/dominion/game" element={
           <ProtectedRoute>
             <DominionGame />
-          </ProtectedRoute>
-        } />
-        <Route path="/monopoly" element={
-          <ProtectedRoute>
-            <MonopolyLobby />
           </ProtectedRoute>
         } />
       </Routes>

@@ -1,3 +1,6 @@
+# Game-сервер (socket.io: dominion + драфт сезона) для деплоя на Render.
+# Имя сервиса не меняем, чтобы не orphan-ить уже созданный сервис в Render.
+# Netlify хостит только статику фронта — вебсокеты живут здесь.
 services:
   - type: web
     name: xaura-monopoly-server
@@ -10,9 +13,5 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "18"
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
       - key: CLIENT_URL
         sync: false

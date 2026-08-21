@@ -1,6 +1,6 @@
 # xAura Game Server
 
-Сервер для онлайн мини-игр xAura (Dominion + Monopoly)
+Сервер для онлайн мини-игр xAura (Dominion + Драфт сезона)
 
 ## Зависимости
 
@@ -20,15 +20,13 @@ npm install
 
 ```
 PORT=3001
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_KEY=your-service-role-key
+CLIENT_URL=https://your-frontend-url
 ```
 
 | Переменная | Описание | По умолчанию |
 |---|---|---|
 | `PORT` | Порт сервера | `3001` |
-| `SUPABASE_URL` | URL проекта Supabase | — |
-| `SUPABASE_SERVICE_KEY` | Service Role Key из Supabase | — |
+| `CLIENT_URL` | Разрешённые CORS-источники клиента (через запятую) | — |
 
 ## Запуск
 
@@ -40,18 +38,25 @@ npm start
 npm run dev
 ```
 
-## SQL миграции
-
-Выполните `server/monopoly/schema.sql` в Supabase SQL Editor для создания таблиц.
-
 ## Деплой
 
-### Render (рекомендуется)
-1. Создайте Web Service на render.com
-2. Подключите репозиторий
-3. Build Command: `cd server && npm install`
-4. Start Command: `node index.js`
-5. Переменные: `PORT`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`
+Схема прода: фронт — статика на Netlify, этот сервер — Web Service на Render.
+Netlify не держит постоянные websocket-соединения, поэтому socket.io-сервер
+живёт на Render, а фронт подключается к нему по адресу из `VITE_SOCKET_URL`.
+
+### Render
+1. Создайте Web Service на render.com (или используйте существующий — `render.yaml` в корне репозитория)
+2. Подключите репозиторий, root dir: `server`
+3. Build Command: `npm install`, Start Command: `npm start`
+4. Переменные: `CLIENT_URL=https://<ваш-сайт>.netlify.app`
+5. После деплоя адрес сервиса (вида `https://<имя>.onrender.com`) — это `VITE_SOCKET_URL`
+
+### Netlify
+1. Site settings → Environment variables → добавьте `VITE_SOCKET_URL=https://<имя>.onrender.com`
+2. Пересоберите сайт (Deploy → Trigger deploy) — переменная вшивается в бандл при сборке
+
+На бесплатном тарифе Render сервис засыпает после ~15 минут бездействия:
+первое подключение к драфту может занять до 30 секунд, пока сервис просыпается.
 
 ### Railway
 ```bash
@@ -65,14 +70,14 @@ railway up
 WebSocket: `ws://localhost:3001`
 
 ### Авторизация
-Клиент отправляет Supabase JWT токен при подключении:
+Клиент отправляет идентификатор пользователя при подключении:
 ```js
 const socket = io(SERVER_URL, {
-  auth: { token: supabaseAccessToken }
+  auth: { userId, username }
 })
 ```
 
-### События клиента (Monopoly)
+### Основные события клиента
 
 | Событие | Описание |
 |---|---|
@@ -80,30 +85,6 @@ const socket = io(SERVER_URL, {
 | `room:join` (code) | Присоединиться |
 | `room:leave` | Покинуть |
 | `room:start` | Начать (хост) |
-| `game:rollDice` | Бросить кубики |
-| `game:buy` | Купить собственность |
-| `game:declineBuy` | Отказаться (→ аукцион) |
-| `game:payRent` | Заплатить аренду |
-| `game:endTurn` | Завершить ход |
-| `game:buildHouse` | Построить дом |
-| `game:buildHotel` | Построить отель |
-| `game:mortgage` | Заложить |
-| `game:payJail` | Заплатить за выход |
-| `chat:send` | Отправить сообщение |
-| `chat:private` | Личное сообщение |
-| `trade:offer` | Предложить обмен |
-| `trade:accept` | Принять обмен |
-| `auction:bid` | Ставка на аукционе |
-
-### События сервера
-
-| Событие | Описание |
-|---|---|
-| `room:updated` | Обновление комнаты |
-| `game:started` | Игра начата |
-| `game:updated` | Обновление состояния |
-| `chat:message` | Сообщение |
-| `auction:started` | Аукцион начат |
-| `auction:ended` | Аукцион завершён |
-| `trade:offered` | Предложение обмена |
-| `error` | Ошибка |
+| `game:action` | Действие в игре |
+| `chat:send` | Сообщение в чат |
+| `trade:offer` / `trade:accept` / `trade:decline` | Обмен |

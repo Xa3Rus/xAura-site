@@ -61,7 +61,7 @@ export default function BattleCard({ anime, side, accent = 'neon', kbd, result, 
       whileHover={!disabled ? { scale: 1.02, y: -4 } : {}}
       whileTap={!disabled ? { scale: 0.98 } : {}}
       onClick={!disabled ? onClick : undefined}
-      className={`group relative overflow-hidden cursor-pointer rounded-2xl transition-opacity duration-300 ${
+      className={`group relative overflow-hidden cursor-pointer transition-opacity duration-300 ${
         disabled ? 'pointer-events-none' : ''
       } ${isLoser ? 'opacity-30 saturate-50' : ''} ${isWrong ? 'shadow-[0_0_35px_-5px_rgba(255,51,102,0.35)]' : ''}`}
       style={{
@@ -99,14 +99,15 @@ export default function BattleCard({ anime, side, accent = 'neon', kbd, result, 
         )}
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+        <div className="absolute inset-0 scanlines pointer-events-none opacity-60" />
 
         {/* верхняя кромка со стороной и клавишей */}
         <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between">
-          <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold font-display border backdrop-blur-sm ${a.key} bg-black/40`} style={{ borderColor: 'currentColor' }}>
+          <span className={`w-6 h-6 flex items-center justify-center text-[10px] font-bold font-display border backdrop-blur-sm ${a.key} bg-black/40`} style={{ borderColor: 'currentColor' }}>
             {isLeft ? 'A' : 'B'}
           </span>
           {!disabled && !result && kbd && (
-            <kbd className="px-1.5 py-0.5 rounded-md border border-white/15 bg-black/40 backdrop-blur-sm font-mono text-[10px] text-white/50">
+            <kbd className="px-1.5 py-0.5 border border-white/15 bg-black/40 backdrop-blur-sm font-mono text-[10px] text-white/50">
               {kbd}
             </kbd>
           )}
@@ -120,7 +121,7 @@ export default function BattleCard({ anime, side, accent = 'neon', kbd, result, 
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             className="absolute top-12 left-1/2 -translate-x-1/2"
           >
-            <div className={`px-3 py-1.5 rounded-xl font-mono font-bold text-lg backdrop-blur-md border ${
+            <div className={`px-3 py-1.5 font-mono font-bold text-lg backdrop-blur-md border ${
               isHigher ? 'bg-success/20 border-success/50 text-success' : 'bg-black/50 border-danger/40 text-danger'
             }`}>
               ★ {scoreNum.toFixed(2)}

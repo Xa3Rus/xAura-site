@@ -3,8 +3,8 @@ import express from 'express'
 import { createServer } from 'http'
 import cors from 'cors'
 import { Server } from 'socket.io'
-import { authenticateSocket } from './middleware/auth.js'
-import { registerSocketHandlers } from './monopoly/socketHandlers.js'
+import { registerSocketHandlers } from './dominion/socketHandlers.js'
+import { registerDraftHandlers } from './draft/socketHandlers.js'
 
 const app = express()
 const server = createServer(app)
@@ -30,11 +30,10 @@ const io = new Server(server, {
   pingInterval: 10000,
 })
 
-io.use(authenticateSocket)
-
 registerSocketHandlers(io)
+registerDraftHandlers(io)
 
 const PORT = process.env.PORT || 3001
 server.listen(PORT, () => {
-  console.log(`xAura Monopoly server running on port ${PORT}`)
+  console.log(`xAura game server (dominion + draft) running on port ${PORT}`)
 })

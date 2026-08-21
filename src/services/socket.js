@@ -5,7 +5,10 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001'
 let socket = null
 
 export function getSocket(userId, username) {
-  if (socket?.connected) return socket
+  // Одно соединение на всё приложение: отдаём существующее даже пока оно
+  // коннектится, иначе каждый вызов плодил бы параллельные сокеты
+  if (socket && !socket.disconnected) return socket
+  if (socket) socket.disconnect()
 
   socket = io(SOCKET_URL, {
     auth: { userId, username },

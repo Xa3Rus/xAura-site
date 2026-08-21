@@ -114,7 +114,8 @@ export default function Navbar() {
     { to: '/tier-templates', label: 'Тир-лист', desc: 'Выбери шаблон' },
     { to: '/battle', label: 'Битва', desc: 'Угадывай рейтинг' },
     { to: '/anime-oped', label: 'Угадай OP/ED', desc: 'По музыке' },
-    { to: '/monopoly', label: 'Monopoly', desc: 'Классическая игра' },
+    { to: '/screenshot-quiz', label: 'Угадай кадр', desc: 'По скриншоту' },
+    { to: '/draft', label: 'Драфт сезона', desc: 'Фэнтези-лига' },
   ]
 
   const avatarLetter = user?.username?.[0]?.toUpperCase() || 'U'

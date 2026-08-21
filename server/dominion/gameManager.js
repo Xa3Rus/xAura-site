@@ -1,5 +1,5 @@
 import { CELLS, EVENTS, START_BALANCE, PASS_START_BONUS, JAIL_POSITION, JAIL_TURNS, TOTAL_CELLS, PLAYER_COLORS } from './gameData.js'
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID as uuidv4 } from 'crypto'
 
 export function createGame(players) {
   return {
