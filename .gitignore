@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.env
+*.log
+parse-err.txt
+parse-log.txt
+.qoder/
+neon-*.png
+ref-monopoly/
+frontend.log
+
+# Local Netlify folder
+.netlify
+
+# Local tool folders
+.zcode/
+
+# Verification screenshots
+step*.png
+verify-*.png
+shot-*.png
+shot-*.jpg

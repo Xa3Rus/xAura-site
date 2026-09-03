@@ -1,0 +1,29 @@
+export function getImageUrl(path) {
+  if (!path || path.includes('missing_')) return null
+  return path ? `/shikimori-img${path}` : null
+}
+
+export function ImgWithFallback({ src, alt, className, fallbackClassName, fallbackText }) {
+  if (!src) {
+    return (
+      <div className={`${className} ${fallbackClassName || 'bg-surface-3 flex items-center justify-center'}`}>
+        <span className="text-white/15 text-3xl font-bold">{fallbackText?.[0]?.toUpperCase() || '?'}</span>
+      </div>
+    )
+  }
+  return (
+    <img
+      src={src}
+      alt={alt || ''}
+      className={className}
+      onError={(e) => {
+        e.target.onerror = null
+        e.target.style.display = 'none'
+        const div = document.createElement('div')
+        div.className = `${className} ${fallbackClassName || 'bg-surface-3 flex items-center justify-center'}`
+        div.innerHTML = `<span class="text-white/15 text-3xl font-bold">${fallbackText?.[0]?.toUpperCase() || '?'}</span>`
+        e.target.parentNode.appendChild(div)
+      }}
+    />
+  )
+}
