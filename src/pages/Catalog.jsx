@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import Loader from '../components/Loader'
 import Select from '../components/Select'
 import { loadAnimeData, filterAnime } from '../utils/animeData'
 import { shikimoriImg } from '../utils/imgUrl'
+import AnimeDetailModal from '../components/AnimeDetailModal'
 
 const GENRES = [
   'Action', 'Adventure', 'Cars', 'Comedy', 'Dementia', 'Demons', 'Drama',
@@ -39,6 +40,7 @@ export default function Catalog() {
   const [sort, setSort] = useState('score')
   const [ratingsMap, setRatingsMap] = useState({})
   const [quickRatingId, setQuickRatingId] = useState(null)
+  const [selectedAnimeModal, setSelectedAnimeModal] = useState(null)
 
   useEffect(() => {
     loadAnimeData().then((data) => {
@@ -157,7 +159,8 @@ export default function Catalog() {
                 return (
                   <motion.div
                     key={item.id}
-                    className="card-hover overflow-hidden group"
+                    className="card-hover overflow-hidden group cursor-pointer"
+                    onClick={() => setSelectedAnimeModal(item)}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: Math.min(index * 0.012, 0.35), ease: [0.16, 1, 0.3, 1] }}
@@ -188,9 +191,9 @@ export default function Catalog() {
                         </div>
                       )}
 
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-400 flex flex-col items-center justify-end pb-3 gap-1.5">
+                      <div className="hidden md:flex absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-400 flex-col items-center justify-end pb-3 gap-1.5 pointer-events-none group-hover:pointer-events-auto">
                         {quickRatingId === item.id ? (
-                          <div className="flex flex-wrap justify-center gap-0.5 px-2">
+                          <div className="flex flex-wrap justify-center gap-0.5 px-2" onClick={(e) => e.stopPropagation()}>
                             {[1,2,3,4,5,6,7,8,9,10].map((s) => {
                               const colors = {
                                 1: { bg: 'rgba(255,51,102,0.95)', text: '#fff' },
@@ -207,24 +210,39 @@ export default function Catalog() {
                               return (
                                 <button
                                   key={s}
-                                  onClick={() => handleQuickRate(item, s)}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleQuickRate(item, s)
+                                  }}
                                   className="w-7 h-7 rounded-lg text-[10px] font-bold transition-all duration-150 active:scale-90 font-mono"
                                   style={{ background: colors[s].bg, color: colors[s].text }}
                                 >{s}</button>
                               )
                             })}
-                            <button onClick={() => setQuickRatingId(null)} className="w-7 h-7 rounded-lg text-[10px] bg-surface-3/80 hover:bg-surface-4 text-text-muted">✕</button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setQuickRatingId(null)
+                              }}
+                              className="w-7 h-7 rounded-lg text-[10px] bg-surface-3/80 hover:bg-surface-4 text-text-muted"
+                            >✕</button>
                           </div>
                         ) : (
-                          <div className="flex gap-1.5 px-2">
+                          <div className="flex gap-1.5 px-2" onClick={(e) => e.stopPropagation()}>
                             <button
-                              onClick={() => setQuickRatingId(item.id)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setQuickRatingId(item.id)
+                              }}
                               className="text-[11px] !px-3 !py-1.5 !rounded-lg btn-primary btn-shine"
                             >
                               {myRating ? 'Изменить' : 'Оценить'}
                             </button>
                             <button
-                              onClick={() => handleRate(item)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleRate(item)
+                              }}
                               className="text-[11px] !px-3 !py-1.5 !rounded-lg btn-ghost"
                             >
                               Подробно
@@ -263,6 +281,21 @@ export default function Catalog() {
           </>
         )}
       </div>
+
+      <AnimatePresence>
+        {selectedAnimeModal && (
+          <AnimeDetailModal
+            anime={selectedAnimeModal}
+            myRating={ratingsMap[selectedAnimeModal.id]}
+            onClose={() => setSelectedAnimeModal(null)}
+            onQuickRate={(anime, score) => handleQuickRate(anime, score)}
+            onFullRate={(anime) => {
+              setSelectedAnimeModal(null)
+              handleRate(anime)
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
