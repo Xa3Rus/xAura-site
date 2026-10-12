@@ -106,13 +106,14 @@ export default function Navbar() {
     navigate('/')
   }
 
-  const isActive = (path) => location.pathname === path
+  const isActive = (path) => location.pathname === path || (path !== '/' && location.pathname.startsWith(path + '/'))
 
   const navLinks = [
     { to: '/catalog', label: 'Каталог' },
   ]
 
   const featureLinks = [
+    { to: '/dominion', label: 'Доминион', desc: 'Аниме-монополия PvP', badge: 'PvP' },
     { to: '/daily', label: 'Челлендж дня', desc: 'Общий для всех' },
     { to: '/tier-templates', label: 'Тир-лист', desc: 'Выбери шаблон' },
     { to: '/battle', label: 'Битва', desc: 'Угадывай рейтинг' },
@@ -192,7 +193,7 @@ export default function Navbar() {
                       className="dropdown-surface absolute top-full mt-2 left-0 w-60 overflow-hidden"
                     >
                       <div className="py-2.5 px-4 border-b border-brand-medium/50">
-                        <span className="dossier-note text-text-secondary">развлечения · 4 модуля</span>
+                        <span className="dossier-note text-text-secondary">развлечения · {featureLinks.length} модулей</span>
                       </div>
                       {featureLinks.map((link) => (
                         <Link
@@ -206,8 +207,13 @@ export default function Navbar() {
                           }`}
                         >
                           <div className="flex flex-col">
-                            <span className={`text-[13px] font-medium ${isActive(link.to) ? 'text-neon-400' : 'text-text-secondary group-hover/item:text-text'} transition-colors`}>
+                            <span className={`text-[13px] font-medium ${isActive(link.to) ? 'text-neon-400' : 'text-text-secondary group-hover/item:text-text'} transition-colors flex items-center gap-2`}>
                               {link.label}
+                              {link.badge && (
+                                <span className="px-1.5 py-0.5 rounded font-mono text-[9px] uppercase tracking-wider bg-neon-400/15 text-neon-400 border border-neon-400/30">
+                                  {link.badge}
+                                </span>
+                              )}
                             </span>
                             <span className="block text-[10px] text-text-secondary mt-1 leading-snug">{link.desc}</span>
                           </div>
@@ -451,11 +457,16 @@ export default function Navbar() {
                   key={link.to}
                   to={link.to}
                   onClick={() => setMenuOpen(false)}
-                  className={`block py-2.5 px-3 rounded-lg text-sm transition-all duration-200 ${
+                  className={`flex items-center justify-between py-2.5 px-3 rounded-lg text-sm transition-all duration-200 ${
                     isActive(link.to) ? 'text-neon-400 bg-neon-400/10' : 'text-text-secondary hover:text-text hover:bg-surface-2/50'
                   }`}
                 >
-                  {link.label}
+                  <span>{link.label}</span>
+                  {link.badge && (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-neon-400/20 text-neon-400 border border-neon-400/30">
+                      {link.badge}
+                    </span>
+                  )}
                 </Link>
               ))}
 
