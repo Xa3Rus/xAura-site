@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { loadAnimeData } from '../utils/animeData'
 import { getScreenshots } from '../utils/screenshotData'
+import { shikimoriImg } from '../utils/imgUrl'
 import { Corners, DossierPanel } from '../components/profile/SharedBits'
 import Loader from '../components/Loader'
 
@@ -355,10 +356,25 @@ export default function ScreenshotQuiz() {
                       onClick={() => handlePick(opt.id)}
                       disabled={revealing}
                       whileTap={!revealing ? { scale: 0.98 } : undefined}
-                      className={`relative text-left px-4 py-3 border cut-sm transition-colors ${cls} ${revealing ? 'cursor-default' : 'cursor-pointer'}`}
+                      className={`relative flex items-center gap-3 text-left px-4 py-2.5 border cut-sm transition-colors ${cls} ${revealing ? 'cursor-default' : 'cursor-pointer'}`}
                     >
-                      <span className="font-mono text-[10px] text-text-subtle mr-2">{i + 1}</span>
-                      <span className="text-sm text-text">{titleOf(opt)}</span>
+                      {shikimoriImg(opt.image?.original) ? (
+                        <img
+                          src={shikimoriImg(opt.image.original)}
+                          alt=""
+                          loading="lazy"
+                          className="w-9 h-12 rounded-sm object-cover flex-shrink-0"
+                          onError={(e) => { e.target.style.display = 'none' }}
+                        />
+                      ) : (
+                        <span className="w-9 h-12 rounded-sm bg-surface-3 flex items-center justify-center flex-shrink-0 font-display font-bold text-text-muted">
+                          {titleOf(opt)[0]}
+                        </span>
+                      )}
+                      <span className="flex-1 min-w-0">
+                        <span className="font-mono text-[10px] text-text-subtle mr-2">{i + 1}</span>
+                        <span className="text-sm text-text">{titleOf(opt)}</span>
+                      </span>
                       {revealing && isAnswer && (
                         <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute right-3 top-1/2 -translate-y-1/2 text-neon-400 font-display font-bold">✓</motion.span>
                       )}

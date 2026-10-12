@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { shikimoriImg } from '../../utils/imgUrl'
 
@@ -28,7 +29,7 @@ export function Corners({ color = 'rgba(187,243,81,0.55)', size = 10, inset = 0 
 // Панель досье: срезанные углы через двойную обёртку (рамка не режется clip-path)
 export function DossierPanel({ children, className = '', accent = '#BBF351', cut = 'cut-lg', style }) {
   return (
-    <div className={`cut-wrap ${cut}`} style={{ background: `linear-gradient(160deg, ${accent}2E, ${accent}14 30%, #2D4A0F66 100%)`, ...style }}>
+    <div className={`cut-wrap ${cut}`} style={{ background: 'transparent', ...style }}>
       <div className={`cut-inner ${cut} bg-[#070905] relative ${className}`}>{children}</div>
     </div>
   )
@@ -187,6 +188,131 @@ export function RatingGrid({ ratings, isOwner = false, onDelete, onRerate }) {
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       {ratings.map((r, i) => (
         <RatingCard key={r.id} rating={r} index={i} isOwner={isOwner} onDelete={onDelete} onRerate={onRerate} />
+      ))}
+    </div>
+  )
+}
+
+const RATING_CRITERIA = [
+  ['drawing', 'Рисование'],
+  ['idea', 'Идея'],
+  ['realization', 'Реализация'],
+  ['characters', 'Персонажи'],
+  ['story', 'Сюжет'],
+  ['emotional', 'Эмоции'],
+]
+
+// Архивная карточка оценки: крупный постер, средний балл, раскрывающиеся критерии, переоценка
+export function ArchiveRatingCard({ rating, index = 0, isOwner = false, onDelete, onRerate }) {
+  const [open, setOpen] = useState(false)
+  const score = Number(rating.average_score)
+  const color = scoreColor(score)
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: Math.min(index * 0.03, 0.3), duration: 0.35 }}
+      className={`relative border bg-[#070905] transition-colors duration-300 ${open ? 'border-neon-400/50' : 'border-brand-medium/60 hover:border-neon-400/40'}`}
+    >
+      <div className="flex gap-3.5 p-2.5">
+        {/* Постер тайтла */}
+        <div className="relative w-[72px] h-[104px] sm:w-20 sm:h-[116px] flex-shrink-0 overflow-hidden bg-surface-2 border border-brand-medium/50">
+          {rating.anime_image ? (
+            <img
+              src={shikimoriImg(rating.anime_image)}
+              alt={rating.anime_name}
+              loading="lazy"
+              className="w-full h-full object-cover"
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+            />
+          ) : (
+            <span className="w-full h-full flex items-center justify-center font-display text-xl text-neon-400">{rating.anime_name?.[0] || '?'}</span>
+          )}
+          <span className="absolute bottom-0 inset-x-0 py-0.5 bg-black/85 text-center font-mono text-[10px] font-bold" style={{ color }}>{score.toFixed(2)}</span>
+        </div>
+
+        {/* Название, дата и действия */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="min-w-0 text-[13px] sm:text-sm font-medium leading-snug text-text-secondary" title={rating.anime_name}>
+              {rating.anime_name}
+            </h3>
+            <span className="font-display font-bold text-lg leading-none flex-shrink-0 pt-0.5" style={{ color }}>{score.toFixed(2)}</span>
+          </div>
+          <span className="mt-1 font-mono text-[9px] text-text-subtle">
+            {rating.created_at ? new Date(rating.created_at).toLocaleDateString('ru') : 'xAura'} · шкала 1–10
+          </span>
+
+          <div className="mt-auto pt-2.5 flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setOpen(!open)}
+              className="px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.12em] border border-brand-medium/70 text-text-muted hover:text-text hover:border-text-muted/60 transition-colors cursor-pointer"
+            >
+              Критерии {open ? '▴' : '▾'}
+            </button>
+            {isOwner && onRerate && (
+              <button
+                onClick={() => onRerate(rating)}
+                className="px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.12em] border border-neon-400/40 text-neon-400 hover:bg-neon-400 hover:text-black transition-all cursor-pointer"
+              >
+                Переоценить
+              </button>
+            )}
+            {isOwner && onDelete && (
+              <button
+                onClick={() => onDelete(rating)}
+                aria-label="Удалить оценку"
+                className="ml-auto px-2 py-1 font-mono text-[9px] font-bold border border-danger/30 text-danger hover:bg-danger hover:text-black transition-all cursor-pointer"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Раскрывающиеся критерии оценки */}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="px-3 pb-3 pt-2.5 border-t border-dashed border-brand-medium/40 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+              {RATING_CRITERIA.map(([key, label]) => {
+                const val = Number(rating[key] || 0)
+                return (
+                  <div key={key} className="flex items-center gap-2">
+                    <span className="w-[86px] flex-shrink-0 text-[10px] text-text-muted">{label}</span>
+                    <div className="flex-1 h-1.5 bg-surface-3 overflow-hidden">
+                      <motion.div
+                        className="h-full"
+                        style={{ background: scoreColor(val) }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${val * 10}%` }}
+                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                      />
+                    </div>
+                    <span className="w-5 text-right font-mono text-[10px] font-bold" style={{ color: scoreColor(val) }}>{val}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+
+export function ArchiveRatingGrid({ ratings, isOwner = false, onDelete, onRerate, className = '' }) {
+  return (
+    <div className={`grid grid-cols-1 sm:grid-cols-2 gap-2.5 ${className}`}>
+      {ratings.map((rating, index) => (
+        <ArchiveRatingCard key={rating.id} rating={rating} index={index} isOwner={isOwner} onDelete={onDelete} onRerate={onRerate} />
       ))}
     </div>
   )

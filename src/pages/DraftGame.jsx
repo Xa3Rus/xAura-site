@@ -20,7 +20,7 @@ function Poster({ anime, color, small = false }) {
     <div
       className={`relative overflow-hidden cut-sm bg-surface-2 ${small ? 'w-9 h-12' : ''}`}
       style={{ border: `1px solid ${color}55` }}
-      title={`${titleOf(anime)} · ${Number(anime.score).toFixed(2)}`}
+      title={titleOf(anime)}
     >
       {url ? (
         <img src={url} alt={titleOf(anime)} loading="lazy" className="w-full h-full object-cover"
@@ -209,9 +209,6 @@ export default function DraftGame() {
                       </span>
                     )}
                     <div className="absolute inset-0 scanlines pointer-events-none opacity-20" />
-                    <span className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/75 text-[9px] font-mono text-neon-400">
-                      {Number(a.score).toFixed(2)}
-                    </span>
                     {isMyTurn && (
                       <span className="absolute inset-0 bg-neon-400/0 group-hover:bg-neon-400/10 transition-colors" />
                     )}
@@ -239,7 +236,9 @@ export default function DraftGame() {
                 <span className="text-xs font-medium text-text truncate flex-1">
                   {p.name}{p.id === user?.id ? ' (ты)' : ''}
                 </span>
-                <span className="font-mono text-[10px]" style={{ color: colorOf(i) }}>{teamScore(i).toFixed(2)}</span>
+                {draft.phase === 'done' && (
+                  <span className="font-mono text-[10px]" style={{ color: colorOf(i) }}>{teamScore(i).toFixed(2)}</span>
+                )}
               </div>
               <div className="flex gap-1.5">
                 {Array.from({ length: TEAM_SIZE }).map((_, slot) => {

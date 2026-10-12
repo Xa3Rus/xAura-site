@@ -6,10 +6,16 @@ import { buildDraftState, pickAnime, randomPick, buildStandings, TEAM_SIZE } fro
 export function registerDraftHandlers(io) {
   const socketRoom = new Map() // socket.id -> code
   const userRoom = new Map() // userId -> code (reconnect после перезагрузки страницы)
+  const userSockets = new Map() // userId -> Set<socket.id> — для личных приглашений
 
   const findRoomOf = (userId) => {
     const code = userRoom.get(userId)
     return code ? roomManager.getRoom(code) : null
+  }
+
+  // Пушим всем актуальный список открытых лобби
+  const broadcastRooms = () => {
+    io.emit('draft:rooms:updated', roomManager.listOpenRooms())
   }
 
   const finalizeIfDone = (room) => {
@@ -24,12 +30,51 @@ export function registerDraftHandlers(io) {
     const username = socket.handshake.auth?.username
     if (!userId || !username) return // невалидные дисконектит dominion-хендлер
 
+    if (!userSockets.has(userId)) userSockets.set(userId, new Set())
+    userSockets.get(userId).add(socket.id)
+    socket.emit('draft:rooms:updated', roomManager.listOpenRooms())
+
+    socket.on('draft:rooms:list', (_, cb = () => {}) => {
+      cb({ rooms: roomManager.listOpenRooms() })
+    })
+
     socket.on('draft:room:create', (settings, cb = () => {}) => {
       const room = roomManager.createRoom(userId, username, settings)
       socketRoom.set(socket.id, room.code)
       userRoom.set(userId, room.code)
       socket.join(room.code)
       cb({ success: true, room })
+      broadcastRooms()
+    })
+
+    socket.on('draft:room:visibility', ({ visibility }, cb = () => {}) => {
+      const room = findRoomOf(userId)
+      if (!room) return cb({ error: 'Ты не в комнате' })
+      const res = roomManager.setVisibility(room.code, userId, visibility)
+      if (res.error) return cb({ error: res.error })
+      io.to(room.code).emit('draft:room:updated', res.room)
+      cb({ success: true, room: res.room })
+      broadcastRooms()
+    })
+
+    // Личное приглашение в лобби: отправитель должен быть в этой комнате
+    socket.on('draft:invite', ({ code, toUserId }, cb = () => {}) => {
+      const room = roomManager.getRoom(code)
+      if (!room) return cb({ error: 'Комната не найдена' })
+      if (room.status !== 'waiting') return cb({ error: 'Драфт уже начался' })
+      if (!room.players.some((p) => p.id === userId)) return cb({ error: 'Ты не в этой комнате' })
+      if (room.players.some((p) => p.id === toUserId)) return cb({ error: 'Игрок уже в комнате' })
+      const targets = userSockets.get(toUserId)
+      if (!targets || !targets.size) return cb({ error: 'Игрок сейчас офлайн' })
+      for (const sid of targets) {
+        io.to(sid).emit('draft:invited', {
+          code: room.code,
+          fromId: userId,
+          fromName: username,
+          seasonLabel: room.settings.seasonLabel || '',
+        })
+      }
+      cb({ success: true })
     })
 
     socket.on('draft:room:join', (code, cb = () => {}) => {
@@ -40,6 +85,7 @@ export function registerDraftHandlers(io) {
       socket.join(res.room.code)
       io.to(res.room.code).emit('draft:room:updated', res.room)
       cb({ success: true, room: res.room })
+      broadcastRooms()
     })
 
     socket.on('draft:room:leave', (_, cb = () => {}) => {
@@ -55,6 +101,7 @@ export function registerDraftHandlers(io) {
         userRoom.delete(userId)
       }
       cb({ success: true })
+      broadcastRooms()
     })
 
     socket.on('draft:room:state', (_, cb = () => {}) => {
@@ -80,6 +127,7 @@ export function registerDraftHandlers(io) {
       room.draftState = buildDraftState(room.players, pool)
       io.to(room.code).emit('draft:started', room.draftState, room)
       cb({ success: true })
+      broadcastRooms()
     })
 
     socket.on('draft:pick', ({ animeId }, cb = () => {}) => {
@@ -118,6 +166,11 @@ export function registerDraftHandlers(io) {
     socket.on('disconnect', () => {
       const code = socketRoom.get(socket.id)
       socketRoom.delete(socket.id)
+      const sockets = userSockets.get(userId)
+      if (sockets) {
+        sockets.delete(socket.id)
+        if (!sockets.size) userSockets.delete(userId)
+      }
       if (!code) return
       const room = roomManager.getRoom(code)
       if (!room) return
@@ -127,6 +180,7 @@ export function registerDraftHandlers(io) {
         const res = roomManager.leaveRoom(code, userId)
         if (res.deleted) {
           userRoom.delete(userId)
+          broadcastRooms()
           return
         }
         updated = roomManager.getRoom(code)
@@ -137,6 +191,7 @@ export function registerDraftHandlers(io) {
       if (!roomManager.getRoom(code)?.players.some((p) => p.id === userId)) {
         userRoom.delete(userId)
       }
+      broadcastRooms()
     })
   })
 }

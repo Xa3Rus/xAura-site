@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import { getAuraLevel } from '../utils/aura'
 import { parseTierListData } from '../utils/tierLists'
@@ -16,8 +17,11 @@ import {
 
 export default function PublicProfile() {
   const { userId } = useParams()
+  const { user: me } = useContext(AuthContext)
   const navigate = useNavigate()
   const [profileUser, setProfileUser] = useState(null)
+  const [friendState, setFriendState] = useState('none') // none | friend | outgoing | incoming | self
+  const [friendBusy, setFriendBusy] = useState(false)
   const [ratings, setRatings] = useState([])
   const [tierLists, setTierLists] = useState([])
   const [battleStats, setBattleStats] = useState(null)
@@ -27,12 +31,54 @@ export default function PublicProfile() {
   const [activeTab, setActiveTab] = useState('ratings')
   const [dailyCount, setDailyCount] = useState(0)
 
-  useEffect(() => { loadProfile() }, [userId])
+  useEffect(() => { loadProfile() }, [userId, me?.id])
+
+  const addFriend = async () => {
+    if (!me) return navigate('/login')
+    setFriendBusy(true)
+    const { error } = await supabase.from('friendships').insert({ requester_id: me.id, addressee_id: userId })
+    setFriendBusy(false)
+    if (!error) setFriendState('outgoing')
+  }
+
+  const removeFriend = async () => {
+    setFriendBusy(true)
+    await supabase
+      .from('friendships')
+      .delete()
+      .or(`and(requester_id.eq.${me.id},addressee_id.eq.${userId}),and(requester_id.eq.${userId},addressee_id.eq.${me.id})`)
+    setFriendBusy(false)
+    setFriendState('none')
+  }
+
+  const acceptFriend = async () => {
+    setFriendBusy(true)
+    await supabase
+      .from('friendships')
+      .update({ status: 'accepted' })
+      .match({ requester_id: userId, addressee_id: me.id })
+    setFriendBusy(false)
+    setFriendState('friend')
+  }
 
   const loadProfile = async () => {
-    const { data: profile } = await supabase.from('profiles').select('id, username').eq('id', userId).single()
+    const { data: profile } = await supabase.from('profiles').select('id, username, avatar_url').eq('id', userId).single()
     if (!profile) { setNotFound(true); setLoading(false); return }
     setProfileUser(profile)
+
+    // статус дружбы с текущим пользователем
+    if (me && me.id !== userId) {
+      const { data: links } = await supabase
+        .from('friendships')
+        .select('id, requester_id, addressee_id, status')
+        .or(`and(requester_id.eq.${me.id},addressee_id.eq.${userId}),and(requester_id.eq.${userId},addressee_id.eq.${me.id})`)
+      const link = links?.[0]
+      if (!link) setFriendState('none')
+      else if (link.status === 'accepted') setFriendState('friend')
+      else setFriendState(link.requester_id === me.id ? 'outgoing' : 'incoming')
+    } else if (me) {
+      setFriendState('self')
+    }
 
     const [ratingsRes, tierListsRes, battleRes, dailyRes] = await Promise.all([
       supabase.from('ratings').select('*').eq('user_id', userId),
@@ -142,11 +188,43 @@ export default function PublicProfile() {
         {/* Досье: шапка (read-only) */}
         <ProfileHeader
           username={profileUser.username}
+          avatarUrl={profileUser.avatar_url}
           aura={aura}
           isOwner={false}
           shareUrl={window.location.href}
           idCode={userId.slice(0, 8).toUpperCase()}
         />
+
+        {/* Кнопка дружбы */}
+        {me && friendState !== 'self' && (
+          <div className="mb-8 -mt-4 flex gap-2">
+            {friendState === 'none' && (
+              <button onClick={addFriend} disabled={friendBusy} className="btn-primary btn-shine text-xs !py-2 disabled:opacity-40">
+                + Добавить в друзья
+              </button>
+            )}
+            {friendState === 'outgoing' && (
+              <button onClick={removeFriend} disabled={friendBusy} className="btn-ghost text-xs !py-2">
+                Заявка отправлена · отменить
+              </button>
+            )}
+            {friendState === 'incoming' && (
+              <>
+                <button onClick={acceptFriend} disabled={friendBusy} className="btn-primary btn-shine text-xs !py-2 disabled:opacity-40">
+                  Принять заявку
+                </button>
+                <button onClick={removeFriend} disabled={friendBusy} className="btn-ghost text-xs !py-2">
+                  Отклонить
+                </button>
+              </>
+            )}
+            {friendState === 'friend' && (
+              <button onClick={removeFriend} disabled={friendBusy} className="btn-ghost text-xs !py-2">
+                <span className="text-neon-400">✓</span> В друзьях · удалить
+              </button>
+            )}
+          </div>
+        )}
 
         {/* 01 // Сводка */}
         <SectionTitle index="01" title="Сводка" note={`аура ${aura.xp.toLocaleString('ru')} xp · ур. ${aura.level}`} />

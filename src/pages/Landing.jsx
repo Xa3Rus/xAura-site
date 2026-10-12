@@ -575,8 +575,62 @@ export default function Landing() {
         )}
 
         <div className="mb-16">
-          <SectionTitle index="02" title="Режимы" note="4 модуля · выбери свой" />
+          <SectionTitle index="02" title="Режимы" note="5 модулей · выбери свой" />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {/* Доминион — режим аниме-монополии */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="col-span-2 sm:col-span-4"
+            >
+              <Link
+                to="/dominion"
+                className="cut-wrap cut-sm group block relative overflow-hidden"
+                style={{ background: 'linear-gradient(135deg, rgba(187,243,81,0.35), rgba(45,74,15,0.4), rgba(187,243,81,0.15))' }}
+              >
+                <div className="cut-inner cut-sm relative overflow-hidden bg-[#070905] p-5 sm:p-6 transition-colors duration-300">
+                  <Corners size={10} inset={3} />
+                  <div className="absolute inset-0 dots-bg opacity-15 pointer-events-none" />
+                  <div className="absolute inset-0 hatch opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    style={{ boxShadow: 'inset 0 0 40px rgba(187, 243, 81, 0.12)' }}
+                  />
+                  <span className="absolute top-2.5 right-3 font-mono text-[10px] font-bold text-white/25 group-hover:text-neon-400/70 transition-colors duration-300">
+                    01
+                  </span>
+
+                  <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="max-w-xl">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-mono text-[8px] tracking-[0.2em] text-neon-400 bg-neon-400/10 border border-neon-400/30 px-2 py-0.5 rounded-sm">
+                          PVP
+                        </span>
+                        <span className="font-mono text-[9px] uppercase tracking-wider text-text-subtle">
+                          Онлайн-режим
+                        </span>
+                      </div>
+                      <h3 className="font-display font-semibold text-lg sm:text-xl text-white group-hover:text-neon-400 transition-colors duration-300 inline-flex items-center gap-2">
+                        Доминион
+                        <span className="opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 text-neon-400 text-sm">→</span>
+                      </h3>
+                      <p className="mt-1 text-xs sm:text-sm text-white/70 leading-relaxed">
+                        Аниме-монополия: покупайте тайтлы, улучшайте франшизы и бросайте кубики в реальном времени
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3 self-start sm:self-center flex-shrink-0">
+                      <span className="btn-primary btn-shine text-xs !py-2.5 !px-5 inline-flex items-center gap-1.5 font-bold">
+                        Войти в игру
+                        <span className="text-sm">→</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+
             {[
               { title: 'Битва', desc: 'Угадывай рейтинг', code: 'PVP', to: '/battle', img: '/img000/Battle.png' },
               { title: 'Тир-лист', desc: 'Готовые шаблоны или импорт', code: 'TIR', to: '/tier-templates', img: '/img000/tierlist.png' },
@@ -609,7 +663,7 @@ export default function Landing() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                     <div className="absolute inset-0 hatch opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                     <span className="absolute top-2.5 right-3 font-mono text-[10px] font-bold text-white/25 group-hover:text-neon-400/70 transition-colors duration-300">
-                      {String(i + 1).padStart(2, '0')}
+                      {String(i + 2).padStart(2, '0')}
                     </span>
                     <span className="absolute top-2.5 left-3 font-mono text-[8px] tracking-[0.2em] text-white/30 group-hover:text-neon-400/60 transition-colors duration-300">
                       {item.code}

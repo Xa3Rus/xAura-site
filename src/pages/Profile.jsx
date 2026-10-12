@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect, useContext, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AuthContext } from '../context/AuthContext'
@@ -7,17 +7,17 @@ import { getAuraLevel } from '../utils/aura'
 import { shikimoriImg } from '../utils/imgUrl'
 import { parseTierListData } from '../utils/tierLists'
 import ProfileHeader from '../components/profile/ProfileHeader'
+import Avatar from '../components/Avatar'
 import RadarChart from '../components/charts/RadarChart'
 import ActivityChart from '../components/charts/ActivityChart'
-import Achievements from '../components/profile/Achievements'
 import { achievementsProgress } from '../components/profile/Achievements'
 import {
-  TabBar, StatCard, RatingGrid, ScoreHistogram,
-  EmptyState, scoreColor, SectionTitle, DossierPanel, Corners,
+  TabBar, StatCard, ScoreHistogram,
+  EmptyState, ArchiveRatingGrid, SectionTitle, DossierPanel, Corners,
 } from '../components/profile/SharedBits'
 
 export default function Profile() {
-  const { user } = useContext(AuthContext)
+  const { user, updateAvatar } = useContext(AuthContext)
   const navigate = useNavigate()
   const [ratings, setRatings] = useState([])
   const [tierLists, setTierLists] = useState([])
@@ -28,6 +28,10 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState('ratings')
   const [confirmModal, setConfirmModal] = useState(null)
   const [dailyCount, setDailyCount] = useState(0)
+  const [friends, setFriends] = useState([])
+  const [avatarBusy, setAvatarBusy] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
+  const avatarInputRef = useRef(null)
 
   useEffect(() => {
     if (user) loadData()
@@ -35,13 +39,23 @@ export default function Profile() {
   }, [user])
 
   const loadData = async () => {
-    const [ratingsRes, tierListsRes, battleRes, dailyRes] = await Promise.all([
+    const [ratingsRes, tierListsRes, battleRes, dailyRes, friendsRes] = await Promise.all([
       supabase.from('ratings').select('*').eq('user_id', user.id),
       supabase.from('tier_lists').select('*').eq('user_id', user.id),
       supabase.from('battle_games').select('score').eq('user_id', user.id),
       supabase.from('daily_results').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+      // таблица friendships появляется после sql/avatars_friends.sql — ошибка не ломает профиль
+      supabase.from('friendships').select('requester_id, addressee_id').eq('status', 'accepted')
+        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`),
     ])
     setDailyCount(dailyRes.count || 0)
+    if (friendsRes.data) {
+      const otherIds = friendsRes.data.map((f) => (f.requester_id === user.id ? f.addressee_id : f.requester_id))
+      if (otherIds.length) {
+        const { data: friendProfiles } = await supabase.from('profiles').select('id, username, avatar_url').in('id', otherIds)
+        setFriends(friendProfiles || [])
+      }
+    }
     setRatings((ratingsRes.data || []).sort((a, b) => (b.average_score || 0) - (a.average_score || 0)))
     setTierLists(tierListsRes.data || [])
     if (battleRes.data?.length) {
@@ -100,6 +114,65 @@ export default function Profile() {
     navigate('/rate', { state: { selectedAnime: anime } })
   }
 
+  // === Аватар ===
+  const compressImage = (file, max = 512) =>
+    new Promise((resolve, reject) => {
+      const img = new Image()
+      const objectUrl = URL.createObjectURL(file)
+      img.onload = () => {
+        const scale = Math.min(1, max / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(img.width * scale)
+        canvas.height = Math.round(img.height * scale)
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(objectUrl)
+          blob ? resolve(blob) : reject(new Error('Не удалось обработать изображение'))
+        }, 'image/png')
+      }
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Не удалось прочитать файл')) }
+      img.src = objectUrl
+    })
+
+  const handleAvatarFile = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      return setAvatarError('Только JPG, PNG или WebP')
+    }
+    if (file.size > 5 * 1024 * 1024) return setAvatarError('Файл больше 5 МБ')
+    setAvatarBusy(true)
+    setAvatarError('')
+    try {
+      const blob = await compressImage(file)
+      const path = `${user.id}/avatar.png`
+      const { error: upErr } = await supabase.storage
+        .from('avatars')
+        .upload(path, blob, { contentType: 'image/png', upsert: true })
+      if (upErr) throw upErr
+      const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+      const url = `${data.publicUrl}?v=${Date.now()}`
+      const { error: dbErr } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', user.id)
+      if (dbErr) throw dbErr
+      updateAvatar(url)
+    } catch (err) {
+      setAvatarError(err?.message || 'Не удалось загрузить аватар')
+    } finally {
+      setAvatarBusy(false)
+    }
+  }
+
+  const removeAvatar = async () => {
+    if (avatarBusy) return
+    setAvatarBusy(true)
+    setAvatarError('')
+    await supabase.storage.from('avatars').remove([`${user.id}/avatar.png`])
+    await supabase.from('profiles').update({ avatar_url: null }).eq('id', user.id)
+    updateAvatar(null)
+    setAvatarBusy(false)
+  }
+
   // Средний покритерийный профиль пользователя (для радара)
   const avgScores = ratings.length ? ratings.reduce((acc, r) => {
     acc.drawing += Number(r.drawing || 0)
@@ -122,6 +195,7 @@ export default function Profile() {
     { id: 'ratings', label: 'Оценки', count: ratings.length },
     { id: 'tierlists', label: 'Тир-листы', count: tierLists.length },
     { id: 'battle', label: 'Битва', count: battleStats?.total ?? 0 },
+    { id: 'friends', label: 'Друзья', count: friends.length },
   ]
 
   const achieveStats = {
@@ -132,6 +206,9 @@ export default function Profile() {
     bestScore: battleStats?.best ?? 0,
     animeCount: ratings.length,
     level: aura.level,
+    friends: friends.length,
+    dailyCount,
+    modesPlayed: [ratings.length > 0, tierLists.length > 0, (battleStats?.total ?? 0) > 0, dailyCount > 0, friends.length > 0].filter(Boolean).length,
   }
 
   // сильнейший критерий и самый «горячий» месяц для аннотаций
@@ -158,74 +235,37 @@ export default function Profile() {
         <ProfileHeader
           username={user?.username}
           email={user?.email}
+          avatarUrl={user?.avatar_url}
           aura={aura}
           isOwner
           idCode={user?.id?.slice(0, 8).toUpperCase()}
+          avatarBusy={avatarBusy}
+          avatarError={avatarError}
+          onPickAvatar={() => avatarInputRef.current?.click()}
+          onRemoveAvatar={removeAvatar}
+        />
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={handleAvatarFile}
         />
 
         {/* 01 // Сводка */}
-        <SectionTitle index="01" title="Сводка" note={`аура ${aura.xp.toLocaleString('ru')} xp · ур. ${aura.level}`} />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
-          <StatCard label="Оценок" value={ratings.length} color="#BBF351" delay={0} />
-          <StatCard label="Тир-листов" value={tierLists.length} color="#00E5FF" delay={0.05} />
-          <StatCard label="Битв" value={battleStats?.total ?? 0} color="#33EBD4" sub={battleRank ? `РАНГ ${battleRank}` : undefined} delay={0.1} />
-          <StatCard label="Ср. балл" value={avgRating} color="#FF9F0A" delay={0.15} />
-        </div>
+        <SectionTitle index="01" title="Сводка" />
+        <DossierPanel accent="#BBF351" className="p-5 sm:p-6 mb-10">
+          <Corners inset={5} size={9} color="rgba(187,243,81,0.35)" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-5">
+            <div><span className="dossier-note block mb-1">оценок</span><span className="font-display font-bold text-3xl text-neon-400">{ratings.length}</span></div>
+            <div><span className="dossier-note block mb-1">битв</span><span className="font-display font-bold text-3xl text-mint-400">{battleStats?.total ?? 0}</span></div>
+            <div><span className="dossier-note block mb-1">тир-листов</span><span className="font-display font-bold text-3xl text-cyan-300">{tierLists.length}</span></div>
+            <div><span className="dossier-note block mb-1">ср. балл</span><span className="font-display font-bold text-3xl text-orange-300">{avgRating}</span></div>
+          </div>
+        </DossierPanel>
 
-        {/* 02 // Аналитика */}
-        {ratings.length > 0 && (
-          <>
-            <SectionTitle
-              index="02"
-              title="Аналитика"
-              note={topAxis ? `сильная сторона: ${AXIS_NAMES[topAxis[0]]} ${topAxis[1].toFixed(1)}` : undefined}
-            />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-              {/* Радар 6 критериев */}
-              <DossierPanel cut="cut-sm" className="p-5">
-                <Corners inset={4} size={8} color="rgba(187,243,81,0.35)" />
-                <div className="flex items-center justify-between mb-2">
-                  <span className="dossier-note">профиль критика</span>
-                  <span className="dossier-note">6 осей</span>
-                </div>
-                <div className="flex items-center justify-center">
-                  <RadarChart values={avgScores} className="w-full max-w-[280px]" />
-                </div>
-              </DossierPanel>
-
-              {/* Гистограмма + активность */}
-              <DossierPanel cut="cut-sm" className="p-5 flex flex-col gap-5">
-                <Corners inset={4} size={8} color="rgba(187,243,81,0.35)" />
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="dossier-note">распределение</span>
-                    <span className="dossier-note">шкала 1–10</span>
-                  </div>
-                  <ScoreHistogram ratings={ratings} />
-                </div>
-                <div className="border-t border-dashed border-brand-medium/40 pt-4">
-                  <span className="dossier-note block mb-3">активность</span>
-                  <ActivityChart items={ratings.map((r) => r.created_at)} />
-                </div>
-              </DossierPanel>
-
-              {/* Достижения */}
-              <DossierPanel cut="cut-sm" className="p-5">
-                <Corners inset={4} size={8} color="rgba(187,243,81,0.35)" />
-                <div className="flex items-center justify-between mb-3">
-                  <span className="dossier-note">достижения</span>
-                  <span className="font-mono text-[9px] font-bold text-neon-400">
-                    {achievementsProgress(achieveStats).unlocked}/{achievementsProgress(achieveStats).total}
-                  </span>
-                </div>
-                <Achievements stats={achieveStats} />
-              </DossierPanel>
-            </div>
-          </>
-        )}
-
-        {/* 03 // Архив */}
-        <SectionTitle index={ratings.length > 0 ? '03' : '02'} title="Архив" note={`${ratings.length + tierLists.length + (battleStats?.total ?? 0)} записей`} />
+        {/* 02 // Архив */}
+        <SectionTitle index="02" title="Архив" note={`${ratings.length + tierLists.length + (battleStats?.total ?? 0)} записей`} />
         <TabBar tabs={tabs} active={activeTab} onChange={setActiveTab} />
 
         <div className="mt-6">
@@ -233,7 +273,7 @@ export default function Profile() {
             ratings.length === 0 ? (
               <EmptyState icon="★" text="Вы ещё не оценили ни одного аниме" to="/catalog" linkText="Перейти к каталогу" />
             ) : (
-              <RatingGrid ratings={ratings} isOwner onDelete={handleDeleteRating} onRerate={handleReRate} />
+              <ArchiveRatingGrid ratings={ratings} isOwner onDelete={handleDeleteRating} onRerate={handleReRate} />
             )
           )}
 
@@ -373,6 +413,32 @@ export default function Profile() {
                   <Link to="/battle" className="btn-primary btn-shine text-xs">Играть</Link>
                 </div>
               </DossierPanel>
+            )
+          )}
+
+          {activeTab === 'friends' && (
+            friends.length === 0 ? (
+              <EmptyState icon="∞" text="Пока нет друзей — отправь заявку или прими входящую" to="/friends" linkText="Управление друзьями" />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {friends.map((f) => (
+                  <motion.div
+                    key={f.id}
+                    className="group flex items-center gap-3 px-4 py-3 border border-brand-medium/60 bg-[#070905] hover:border-neon-400/50 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/user/${f.id}`)}
+                  >
+                    <Avatar url={f.avatar_url} name={f.username} size={36} />
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-sm font-medium text-text-secondary group-hover:text-neon-400 transition-colors truncate">{f.username}</span>
+                      <span className="dossier-note">в друзьях</span>
+                    </div>
+                    <span className="dossier-note group-hover:text-neon-400 transition-colors">профиль →</span>
+                  </motion.div>
+                ))}
+                <Link to="/friends" className="flex items-center justify-center px-4 py-3 border border-dashed border-brand-medium/40 text-xs text-text-subtle font-mono hover:border-neon-400/50 hover:text-neon-400 transition-colors cut-sm">
+                  + управлять друзьями
+                </Link>
+              </div>
             )
           )}
         </div>

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { AuthContext } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import { getAuraLevel } from '../utils/aura'
+import Avatar from './Avatar'
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext)
@@ -84,7 +85,7 @@ export default function Navbar() {
     searchTimeout.current = setTimeout(async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('id, username')
+        .select('id, username, avatar_url')
         .ilike('username', `%${value.trim()}%`)
         .limit(5)
       setSearchResults(data || [])
@@ -105,28 +106,28 @@ export default function Navbar() {
     navigate('/')
   }
 
-  const isActive = (path) => location.pathname === path
+  const isActive = (path) => location.pathname === path || (path !== '/' && location.pathname.startsWith(path + '/'))
 
   const navLinks = [
     { to: '/catalog', label: 'Каталог' },
   ]
 
   const featureLinks = [
+    { to: '/dominion', label: 'Доминион', desc: 'Аниме-монополия PvP', badge: 'PvP' },
     { to: '/daily', label: 'Челлендж дня', desc: 'Общий для всех' },
     { to: '/tier-templates', label: 'Тир-лист', desc: 'Выбери шаблон' },
     { to: '/battle', label: 'Битва', desc: 'Угадывай рейтинг' },
     { to: '/anime-oped', label: 'Угадай OP/ED', desc: 'По музыке' },
     { to: '/screenshot-quiz', label: 'Угадай кадр', desc: 'По скриншоту' },
     { to: '/draft', label: 'Драфт сезона', desc: 'Фэнтези-лига' },
+    { to: '/achievements', label: 'Достижения', desc: 'Коллекция артефактов' },
   ]
-
-  const avatarLetter = user?.username?.[0]?.toUpperCase() || 'U'
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
       scrolled
-        ? 'bg-surface-0/85 backdrop-blur-2xl border-b border-neon-400/20 shadow-neon'
-        : 'bg-transparent border-b border-transparent'
+        ? 'bg-[#070905] border-b border-neon-400/15 shadow-[0_8px_28px_rgba(0,0,0,0.28)]'
+        : 'bg-[#070905]/95 backdrop-blur-md border-b border-brand-medium/40'
     }`}>
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8">
         <div className="flex items-center justify-between h-14">
@@ -146,7 +147,7 @@ export default function Navbar() {
                   className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-300 relative ${
                     isActive(link.to)
                       ? 'text-neon-400'
-                      : 'text-text-muted hover:text-text'
+                      : 'text-text-secondary hover:text-text'
                   }`}
                 >
                   {link.label}
@@ -166,7 +167,7 @@ export default function Navbar() {
                   className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-300 flex items-center gap-1.5 ${
                     featureLinks.some(l => isActive(l.to))
                       ? 'text-neon-400'
-                      : 'text-text-muted hover:text-text'
+                      : 'text-text-secondary hover:text-text'
                   }`}
                 >
                   Развлечения
@@ -189,27 +190,32 @@ export default function Navbar() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -4, scale: 0.98 }}
                       transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute top-full mt-2 left-0 w-60 rounded-xl overflow-hidden glass border border-neon-400/10 shadow-neon-lg z-50"
+                      className="dropdown-surface absolute top-full mt-2 left-0 w-60 overflow-hidden"
                     >
-                      <div className="py-1.5 px-4 border-b border-brand-medium/30">
-                        <span className="dossier-note">развлечения · 4 модуля</span>
+                      <div className="py-2.5 px-4 border-b border-brand-medium/50">
+                        <span className="dossier-note text-text-secondary">развлечения · {featureLinks.length} модулей</span>
                       </div>
                       {featureLinks.map((link) => (
                         <Link
                           key={link.to}
                           to={link.to}
                           onClick={() => setFeaturesOpen(false)}
-                          className={`flex items-center justify-between px-4 py-2.5 transition-all duration-200 group/item ${
+                          className={`flex items-center justify-between px-4 py-3 transition-all duration-200 group/item ${
                             isActive(link.to)
                               ? 'bg-neon-400/10'
                               : 'hover:bg-surface-2/50'
                           }`}
                         >
                           <div className="flex flex-col">
-                            <span className={`text-[13px] font-medium ${isActive(link.to) ? 'text-neon-400' : 'text-text-secondary group-hover/item:text-text'} transition-colors`}>
+                            <span className={`text-[13px] font-medium ${isActive(link.to) ? 'text-neon-400' : 'text-text-secondary group-hover/item:text-text'} transition-colors flex items-center gap-2`}>
                               {link.label}
+                              {link.badge && (
+                                <span className="px-1.5 py-0.5 rounded font-mono text-[9px] uppercase tracking-wider bg-neon-400/15 text-neon-400 border border-neon-400/30">
+                                  {link.badge}
+                                </span>
+                              )}
                             </span>
-                            <span className="text-[10px] text-text-muted mt-0.5">{link.desc}</span>
+                            <span className="block text-[10px] text-text-secondary mt-1 leading-snug">{link.desc}</span>
                           </div>
                           <span className={`text-xs opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all duration-200 ${isActive(link.to) ? 'text-neon-400 opacity-100 translate-x-0' : 'text-neon-400'}`}>
                             →
@@ -231,7 +237,7 @@ export default function Navbar() {
                   onChange={(e) => handleSearch(e.target.value)}
                   onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
                   placeholder="Найти пользователя..."
-                  className="w-44 rounded-sm px-3 py-1.5 pl-8 pr-12 font-mono text-[11px] text-text placeholder-text-muted focus:outline-none transition-all duration-500 bg-surface-1/80 border border-neon-400/10 focus:border-neon-400/50 focus:shadow-[0_0_0_3px_rgba(187,243,81,0.12)] focus:w-56 backdrop-blur-sm"
+                  className="w-44 rounded-sm px-3 py-1.5 pl-8 pr-12 font-mono text-[11px] text-text placeholder-text-muted focus:outline-none transition-all duration-500 bg-surface-1 border border-brand-medium/60 focus:border-neon-400/50 focus:shadow-[0_0_0_3px_rgba(187,243,81,0.12)] focus:w-56"
                 />
                 <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -249,7 +255,7 @@ export default function Navbar() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -4, scale: 0.98 }}
                     transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute top-full mt-2 left-0 w-56 rounded-xl overflow-hidden glass border border-neon-400/10 shadow-neon-lg z-50"
+                    className="dropdown-surface absolute top-full mt-2 left-0 w-56 overflow-hidden"
                   >
                     {searchResults.length > 0 ? searchResults.map((u) => (
                       <button
@@ -257,9 +263,7 @@ export default function Navbar() {
                         onClick={() => handleUserClick(u.id)}
                         className="w-full px-3.5 py-2.5 flex items-center gap-3 hover:bg-surface-2/50 transition-colors duration-200 text-left group/item"
                       >
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all group-hover/item:shadow-glow-neon bg-neon-400/10 border border-neon-400/20">
-                          <span className="text-[10px] font-bold text-neon-400">{u.username[0].toUpperCase()}</span>
-                        </div>
+                        <Avatar url={u.avatar_url} name={u.username} size={28} className="transition-all group-hover/item:shadow-glow-neon" />
                         <span className="text-xs text-text-secondary truncate group-hover/item:text-text transition-colors">{u.username}</span>
                       </button>
                     )) : searched ? (
@@ -282,8 +286,8 @@ export default function Navbar() {
                       : 'border-transparent hover:bg-surface-2/50 hover:border-neon-400/15'
                   }`}
                 >
-                  <div className="relative w-7 h-7 rounded-lg flex items-center justify-center bg-neon-400/10 border border-neon-400/25">
-                    <span className="text-[11px] font-bold text-neon-400 font-display">{avatarLetter}</span>
+                  <div className="relative">
+                    <Avatar url={user?.avatar_url} name={user?.username} size={28} />
                     {aura && (
                       <span className="absolute -bottom-1 -right-1 px-1 rounded bg-neon-400 text-black font-mono text-[8px] font-bold leading-tight">
                         {aura.level}
@@ -305,18 +309,14 @@ export default function Navbar() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -4, scale: 0.98 }}
                       transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute top-full mt-2 right-0 w-52 rounded-xl overflow-hidden glass border border-neon-400/10 shadow-neon-lg z-50"
+                      className="dropdown-surface absolute top-full mt-2 right-0 w-52 overflow-hidden"
                     >
                       {aura && (
                         <div className="px-4 py-3 border-b border-neon-400/10">
-                          <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center justify-between">
                             <span className="font-mono text-[10px] text-text-muted">{aura.title}</span>
                             <span className="font-mono text-[10px] text-neon-400">LVL {aura.level}</span>
                           </div>
-                          <div className="relative h-1.5 bg-surface-3 overflow-hidden">
-                            <div className="absolute inset-y-0 left-0 chevron-fill opacity-70" style={{ width: `${aura.progress}%` }} />
-                          </div>
-                          <p className="mt-1 font-mono text-[9px] text-text-subtle">{aura.xp} XP · до след. уровня {aura.next}</p>
                         </div>
                       )}
                       <Link
@@ -325,6 +325,22 @@ export default function Navbar() {
                         className={`flex items-center justify-between px-4 py-2.5 text-[13px] transition-colors duration-200 ${isActive('/profile') ? 'text-neon-400 bg-neon-400/10' : 'text-text-secondary hover:bg-surface-2/50 hover:text-text'}`}
                       >
                         Профиль
+                        <span className="text-xs opacity-0 group-hover:opacity-100">→</span>
+                      </Link>
+                      <Link
+                        to="/friends"
+                        onClick={() => setUserMenuOpen(false)}
+                        className={`flex items-center justify-between px-4 py-2.5 text-[13px] transition-colors duration-200 ${isActive('/friends') ? 'text-neon-400 bg-neon-400/10' : 'text-text-secondary hover:bg-surface-2/50 hover:text-text'}`}
+                      >
+                        Друзья
+                        <span className="text-xs opacity-0 group-hover:opacity-100">→</span>
+                      </Link>
+                      <Link
+                        to="/achievements"
+                        onClick={() => setUserMenuOpen(false)}
+                        className={`flex items-center justify-between px-4 py-2.5 text-[13px] transition-colors duration-200 ${isActive('/achievements') ? 'text-neon-400 bg-neon-400/10' : 'text-text-secondary hover:bg-surface-2/50 hover:text-text'}`}
+                      >
+                        Достижения
                         <span className="text-xs opacity-0 group-hover:opacity-100">→</span>
                       </Link>
                       <button
@@ -380,8 +396,8 @@ export default function Navbar() {
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center gap-3 p-3 mb-3 rounded-xl bg-surface-1 border border-neon-400/10"
                 >
-                  <div className="relative w-9 h-9 rounded-lg flex items-center justify-center bg-neon-400/10 border border-neon-400/25 flex-shrink-0">
-                    <span className="text-sm font-bold text-neon-400 font-display">{avatarLetter}</span>
+                  <div className="relative flex-shrink-0">
+                    <Avatar url={user?.avatar_url} name={user?.username} size={36} />
                     {aura && (
                       <span className="absolute -bottom-1 -right-1 px-1 rounded bg-neon-400 text-black font-mono text-[8px] font-bold leading-tight">
                         {aura.level}
@@ -405,16 +421,14 @@ export default function Navbar() {
                   className="input !text-xs"
                 />
                 {showDropdown && (
-                  <div className="absolute top-full mt-1 left-0 right-0 rounded-xl overflow-hidden z-50 glass border border-neon-400/10 shadow-neon-lg">
+                  <div className="dropdown-surface absolute top-full mt-1 left-0 right-0 overflow-hidden">
                     {searchResults.length > 0 ? searchResults.map((u) => (
                       <button
                         key={u.id}
                         onClick={() => { handleUserClick(u.id); setMenuOpen(false) }}
                         className="w-full px-3.5 py-2.5 flex items-center gap-3 hover:bg-surface-2/50 transition-colors text-left"
                       >
-                        <div className="w-7 h-7 rounded-lg bg-neon-400/10 border border-neon-400/20 flex items-center justify-center flex-shrink-0">
-                          <span className="text-[10px] font-bold text-neon-400">{u.username[0].toUpperCase()}</span>
-                        </div>
+                        <Avatar url={u.avatar_url} name={u.username} size={28} />
                         <span className="text-xs text-text-secondary truncate">{u.username}</span>
                       </button>
                     )) : searched ? (
@@ -430,7 +444,7 @@ export default function Navbar() {
                   to={link.to}
                   onClick={() => setMenuOpen(false)}
                   className={`block py-2.5 px-3 rounded-lg text-sm transition-all duration-200 ${
-                    isActive(link.to) ? 'text-neon-400 bg-neon-400/10' : 'text-text-muted hover:text-text hover:bg-surface-2/50'
+                    isActive(link.to) ? 'text-neon-400 bg-neon-400/10' : 'text-text-secondary hover:text-text hover:bg-surface-2/50'
                   }`}
                 >
                   {link.label}
@@ -443,13 +457,26 @@ export default function Navbar() {
                   key={link.to}
                   to={link.to}
                   onClick={() => setMenuOpen(false)}
-                  className={`block py-2.5 px-3 rounded-lg text-sm transition-all duration-200 ${
-                    isActive(link.to) ? 'text-neon-400 bg-neon-400/10' : 'text-text-muted hover:text-text hover:bg-surface-2/50'
+                  className={`flex items-center justify-between py-2.5 px-3 rounded-lg text-sm transition-all duration-200 ${
+                    isActive(link.to) ? 'text-neon-400 bg-neon-400/10' : 'text-text-secondary hover:text-text hover:bg-surface-2/50'
                   }`}
                 >
-                  {link.label}
+                  <span>{link.label}</span>
+                  {link.badge && (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-neon-400/20 text-neon-400 border border-neon-400/30">
+                      {link.badge}
+                    </span>
+                  )}
                 </Link>
               ))}
+
+              {user && (
+                <>
+                  <div className="py-1.5 px-3 text-[10px] text-text-muted uppercase tracking-wider font-medium">Команда</div>
+                  <Link to="/friends" onClick={() => setMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-sm text-text-secondary hover:text-text hover:bg-surface-2/50">Друзья</Link>
+                  <Link to="/achievements" onClick={() => setMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-sm text-text-secondary hover:text-text hover:bg-surface-2/50">Достижения</Link>
+                </>
+              )}
 
               {user ? (
                 <>
@@ -458,7 +485,7 @@ export default function Navbar() {
                 </>
               ) : (
                 <>
-                  <Link to="/login" onClick={() => setMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-sm text-text-muted hover:text-text hover:bg-surface-2/50">Вход</Link>
+                  <Link to="/login" onClick={() => setMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-sm text-text-secondary hover:text-text hover:bg-surface-2/50">Вход</Link>
                   <Link to="/register" onClick={() => setMenuOpen(false)} className="block btn-primary btn-shine text-center mt-2">Регистрация</Link>
                 </>
               )}

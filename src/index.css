@@ -59,6 +59,12 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: 0 0 0 1px rgba(187, 243, 81, 0.35), 0 0 20px -4px rgba(187, 243, 81, 0.25);
   }
 
+  @media (max-width: 768px) {
+    .card, .card-hover {
+      box-shadow: 0 0 0 1px rgba(187, 243, 81, 0.2), 0 2px 8px -2px rgba(0, 0, 0, 0.5) !important;
+    }
+  }
+
   /* Neon primary button: outline style, lime text — no solid fills */
   .btn-primary {
     @apply font-medium text-sm rounded-lg transition-all duration-300
@@ -197,9 +203,9 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .glass {
-    background: rgba(0, 0, 0, 0.88);
+    background: rgba(7, 9, 5, 0.96);
     backdrop-filter: blur(12px);
-    border: 1px solid #1A1A1A;
+    border: 1px solid #2D4A0F;
   }
 
   .glass-hover:hover {
@@ -416,13 +422,32 @@ h1, h2, h3, h4, h5, h6 {
   background-size: 14px 14px;
 }
 
+/* Единая поверхность выпадающих меню: не просвечивает сквозь контент */
+.dropdown-surface {
+  z-index: 60;
+  background: #070905;
+  border: 1px solid rgba(187, 243, 81, 0.28);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(0, 0, 0, 0.55);
+  isolation: isolate;
+}
+
+.dropdown-surface button,
+.dropdown-surface a {
+  line-height: 1.35;
+}
+
+.dropdown-surface button:hover,
+.dropdown-surface a:hover {
+  background: #111A0A;
+}
+
 /* Техническая аннотация: мелкий разреженный моно-текст */
 .dossier-note {
   font-family: 'Source Code Pro', monospace;
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #525252;
+  color: #9A9A9A;
 }
 
 /* Секционный заголовок досье: номер + линия + правая аннотация */
@@ -480,7 +505,49 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(187, 243, 81, 0.06);
 }
 
-/* Respect reduced-motion preferences */
+/* Aura Core — декоративная акцентная рамка вокруг аватара */
+.aura-core {
+  position: relative;
+  width: 118px;
+  height: 136px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aura-core-ring {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(50% 0, 93% 10%, 100% 50%, 93% 90%, 50% 100%, 7% 90%, 0 50%, 7% 10%);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--aura-accent) 65%, transparent), color-mix(in srgb, var(--aura-accent) 18%, transparent) 60%, rgba(45, 74, 15, 0.55));
+  opacity: 0.8;
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--aura-accent) 25%, transparent));
+}
+
+.aura-core-ring::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  background: #070905;
+  clip-path: inherit;
+}
+
+.aura-core-avatar {
+  position: relative;
+  width: 88px;
+  height: 104px;
+  overflow: hidden;
+  background: #0A0D07;
+  border: none;
+  z-index: 1;
+}
+
+@media (max-width: 420px) {
+  .aura-core { width: 98px; height: 116px; }
+  .aura-core-avatar { width: 76px; height: 92px; }
+}
+
+
 @media (prefers-reduced-motion: reduce) {
   .animate-scroll {
     animation: none;

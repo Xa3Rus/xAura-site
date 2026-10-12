@@ -39,7 +39,7 @@ export default function Select({ value, onChange, options, placeholder = 'Выб
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute top-full mt-1 left-0 right-0 max-h-60 overflow-y-auto rounded-xl z-50 bg-surface-1 border border-neon-400/10 shadow-soft-lg"
+            className="dropdown-surface absolute top-full mt-1 left-0 right-0 max-h-60 overflow-y-auto"
           >
             {options.map((opt) => (
               <button

@@ -29,11 +29,15 @@ export function AuthProvider({ children }) {
   }, [])
 
   const loadProfile = async (userId, email) => {
-    const { data } = await supabase.from('profiles').select('username').eq('id', userId).single()
+    const { data } = await supabase.from('profiles').select('username, avatar_url').eq('id', userId).single()
     if (data) {
-      setUser({ id: userId, username: data.username, email })
+      setUser({ id: userId, username: data.username, avatar_url: data.avatar_url || null, email })
     }
     setLoading(false)
+  }
+
+  const updateAvatar = (avatarUrl) => {
+    setUser((prev) => (prev ? { ...prev, avatar_url: avatarUrl } : prev))
   }
 
   const register = async (username, email, password) => {
@@ -67,7 +71,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateAvatar }}>
       {children}
     </AuthContext.Provider>
   )

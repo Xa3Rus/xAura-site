@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import { getAuraCharacter } from '../../data/auraCharacters'
 import { Corners, DossierPanel } from './SharedBits'
 
-// Hero-шапка профиля: досье оператора с приборной шкалой XP и картой персонажа
-export default function ProfileHeader({ username, email, aura, isOwner = false, shareUrl, idCode }) {
+// Hero-шапка профиля: досье оператора с картой персонажа уровня
+export default function ProfileHeader({
+  username, email, aura, isOwner = false, shareUrl, idCode,
+  avatarUrl, avatarBusy, avatarError, onPickAvatar, onRemoveAvatar,
+}) {
   const [copied, setCopied] = useState(false)
   const char = getAuraCharacter(aura.level)
 
@@ -48,32 +50,36 @@ export default function ProfileHeader({ username, email, aura, isOwner = false, 
 
         <div className="relative px-5 sm:px-8 pt-6 pb-5">
           <div className="flex flex-col lg:flex-row gap-7">
-            {/* Левая колонка: аватар в рамке + приборная шкала XP */}
+            {/* Левая колонка: аватар в Aura Core + данные оператора */}
             <div className="flex items-start gap-5 min-w-0">
-              {/* Аватар */}
+              {/* Уникальное ядро Aura вокруг аватара */}
               <div className="relative flex-shrink-0">
-                <Corners inset={-5} color={`${char.accent}99`} size={12} />
-                <div className="relative w-[88px] h-[104px] sm:w-[100px] sm:h-[118px] overflow-hidden scanlines bg-[#0A0D07] border border-brand-medium">
-                  <div className="absolute inset-0 hatch opacity-40" />
-                  <div
-                    className="absolute inset-0 flex items-center justify-center font-display font-bold text-4xl sm:text-[42px]"
-                    style={{ color: char.accent }}
-                  >
-                    {username?.[0]?.toUpperCase()}
-                  </div>
-                  {/* Нижний срез с уровнем */}
-                  <div
-                    className="absolute bottom-0 inset-x-0 h-6 flex items-center justify-between px-2 bg-black/85 border-t"
-                    style={{ borderColor: `${char.accent}55` }}
-                  >
-                    <span className="font-mono text-[8px] font-bold" style={{ color: char.accent }}>LVL</span>
-                    <span className="font-display font-bold text-sm leading-none" style={{ color: char.accent }}>
-                      {aura.level}
-                    </span>
+                <div className="aura-core" style={{ '--aura-accent': char.accent }}>
+                  <div className="aura-core-ring" />
+                  <div className="aura-core-avatar">
+                    <div className="absolute inset-0 hatch opacity-40" />
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={username} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none' }} />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center font-display font-bold text-4xl sm:text-[42px]" style={{ color: char.accent }}>
+                        {username?.[0]?.toUpperCase()}
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 inset-x-0 h-6 flex items-center justify-between px-2 bg-black/85">
+                      <span className="font-mono text-[8px] font-bold" style={{ color: char.accent }}>LVL</span>
+                      <span className="font-display font-bold text-sm leading-none" style={{ color: char.accent }}>{aura.level}</span>
+                    </div>
+                    {avatarBusy && <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10"><div className="w-5 h-5 rounded-full border-2 border-neon-400/30 border-t-neon-400 animate-spin" /></div>}
                   </div>
                 </div>
-                {/* Вертикальная риска-шкала рядом с аватаром */}
-                <div className="absolute -right-3 top-0 bottom-7 w-2 gauge-ticks opacity-50 hidden sm:block" />
+                {/* Управление аватаром — только владелец */}
+                {isOwner && (
+                  <div className="mt-1.5 flex items-center justify-center gap-2">
+                    <button onClick={onPickAvatar} disabled={avatarBusy} className="font-mono text-[9px] font-bold tracking-[0.14em] uppercase text-text-muted hover:text-neon-400 transition-colors disabled:opacity-40">{avatarUrl ? 'сменить' : 'загрузить'}</button>
+                    {avatarUrl && <button onClick={onRemoveAvatar} disabled={avatarBusy} className="font-mono text-[9px] font-bold tracking-[0.14em] uppercase text-text-subtle hover:text-danger transition-colors disabled:opacity-40">убрать</button>}
+                  </div>
+                )}
+                {avatarError && <p className="mt-1 text-[9px] font-mono text-danger text-center max-w-[100px] leading-tight">{avatarError}</p>}
               </div>
 
               {/* Имя + XP-шкала */}
@@ -92,43 +98,17 @@ export default function ProfileHeader({ username, email, aura, isOwner = false, 
                   <p className="dossier-note mb-3 truncate normal-case tracking-normal text-[10px]">{email}</p>
                 )}
 
-                {/* Приборная шкала XP */}
-                <div className="mt-3 max-w-[420px]">
-                  <div className="flex items-end justify-between mb-1.5">
-                    <span className="dossier-note" style={{ color: '#707070' }}>
-                      AURA · <span className="text-neon-400 font-bold">{aura.xp.toLocaleString('ru')}</span> XP
-                    </span>
-                    <span className="font-mono text-[9px] font-bold tracking-widest" style={{ color: char.accent }}>
-                      {aura.next ? `→ LVL ${aura.level + 1}` : 'MAX'}
-                    </span>
-                  </div>
-
-                  <div className="relative h-[18px] bg-[#0A0D07] border border-brand-medium overflow-hidden">
-                    {/* риски шкалы поверх */}
-                    <div className="absolute inset-0 gauge-ticks opacity-70 z-10 pointer-events-none" />
-                    <motion.div
-                      className="absolute inset-y-0 left-0 chevron-fill"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${aura.progress}%` }}
-                      transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 0.25 }}
-                    />
-                    {/* подпись прогресса внутри шкалы */}
-                    <span className="absolute inset-y-0 left-2 flex items-center font-mono text-[8px] font-bold text-black/80 tracking-wider z-20">
-                      {aura.progress}%
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between mt-1.5">
-                    <span className="dossier-note">
-                      {aura.next ? `осталось ${aura.next.toLocaleString('ru')} XP` : 'максимальный уровень'}
-                    </span>
-                    <button
-                      onClick={onShare}
-                      className="font-mono text-[9px] font-bold tracking-[0.14em] uppercase text-neon-400 hover:text-neon-300 transition-colors cursor-pointer"
-                    >
-                      {copied ? '✓ скопировано' : '⇄ профиль'}
-                    </button>
-                  </div>
+                {/* Компактная строка ауры + поделиться */}
+                <div className="mt-3 flex items-center flex-wrap gap-x-4 gap-y-1.5">
+                  <span className="dossier-note">
+                    AURA · <span className="text-neon-400 font-bold">{aura.xp.toLocaleString('ru')}</span> XP · УР. {aura.level}
+                  </span>
+                  <button
+                    onClick={onShare}
+                    className="font-mono text-[9px] font-bold tracking-[0.14em] uppercase text-neon-400 hover:text-neon-300 transition-colors cursor-pointer"
+                  >
+                    {copied ? '✓ скопировано' : '⇄ профиль'}
+                  </button>
                 </div>
               </div>
             </div>
@@ -138,8 +118,7 @@ export default function ProfileHeader({ username, email, aura, isOwner = false, 
               <div className="flex items-stretch gap-0">
                 {/* Карточка персонажа */}
                 <div
-                  className="relative w-[168px] overflow-hidden bg-[#0A0D07] border transition-colors duration-300"
-                  style={{ borderColor: `${char.accent}55` }}
+                  className="relative w-[168px] overflow-hidden bg-[#0A0D07] transition-colors duration-300"
                 >
                   <div className="relative w-full aspect-[4/3] overflow-hidden">
                     <picture>
@@ -160,14 +139,14 @@ export default function ProfileHeader({ username, email, aura, isOwner = false, 
                       spirit
                     </span>
                   </div>
-                  <div className="px-2.5 py-2 border-t" style={{ borderColor: `${char.accent}33` }}>
+                  <div className="px-2.5 py-2">
                     <p className="font-display font-bold text-[13px] text-white leading-none truncate">{char.name}</p>
                     <p className="dossier-note mt-1 truncate">{char.anime}</p>
                   </div>
                 </div>
 
                 {/* Боковая аннотация карточки */}
-                <div className="hidden sm:flex flex-col justify-between w-7 border-r border-brand-medium py-1 pr-1">
+                <div className="hidden sm:flex flex-col justify-between w-7 py-1 pr-1">
                   <span
                     className="font-mono text-[7px] font-bold tracking-widest"
                     style={{ writingMode: 'vertical-rl', color: `${char.accent}cc` }}

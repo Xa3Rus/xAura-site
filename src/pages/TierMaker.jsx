@@ -792,7 +792,7 @@ export default function TierMaker() {
               </button>
             </div>
             {showAddSearch && addResults.length > 0 && (
-              <div className="absolute top-full mt-1 left-0 right-0 max-h-64 overflow-y-auto rounded-xl z-50 bg-surface-1 border border-neon-400/10 shadow-xl">
+              <div className="dropdown-surface absolute top-full mt-1 left-0 right-0 max-h-64 overflow-y-auto">
                 {addResults.map((a) => (
                   <button
                     key={a.id}
@@ -828,7 +828,7 @@ export default function TierMaker() {
               </div>
             )}
             {showAddSearch && addSearch.length >= 2 && addResults.length === 0 && (
-              <div className="absolute top-full mt-1 left-0 right-0 rounded-xl z-50 p-3 text-center bg-surface-1 border border-neon-400/10">
+              <div className="dropdown-surface absolute top-full mt-1 left-0 right-0 p-3 text-center">
                 <span className="text-xs text-text-muted">Ничего не найдено</span>
               </div>
             )}

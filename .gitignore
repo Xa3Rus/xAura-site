@@ -20,3 +20,7 @@ step*.png
 verify-*.png
 shot-*.png
 shot-*.jpg
+
+# Caches and internal tool artifacts
+.parse-cache.json
+.superpowers/

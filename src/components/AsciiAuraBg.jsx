@@ -25,6 +25,10 @@ export default function AsciiAuraBg() {
   const canvasRef = useRef(null)
 
   useEffect(() => {
+    // Не запускать на мобильных экранах или устройствах без мыши (экономия 30-40% CPU/GPU)
+    const isMobile = window.innerWidth < 768 || window.matchMedia('(hover: none) and (pointer: coarse)').matches
+    if (isMobile) return
+
     const canvas = canvasRef.current
     if (!canvas) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -38,10 +42,20 @@ export default function AsciiAuraBg() {
     let ripples = []
     let scanners = []
     let raf = null
+    let isTabVisible = !document.hidden
     const start = performance.now()
     let lastDraw = start
     let lastAutoRipple = 0
     let resizeTimer = null
+
+    const handleVisibilityChange = () => {
+      isTabVisible = !document.hidden
+      if (isTabVisible && !raf) {
+        lastDraw = performance.now()
+        raf = requestAnimationFrame(loop)
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     const mouse = { x: -9999, y: -9999, ex: -9999, ey: -9999, lastMove: 0, amp: 0 }
 
@@ -305,8 +319,11 @@ export default function AsciiAuraBg() {
     }
 
     function loop(now) {
+      if (!isTabVisible) {
+        raf = null
+        return
+      }
       raf = requestAnimationFrame(loop)
-      if (document.hidden) return
       const elapsed = now - lastDraw
       if (elapsed < 1000 / TARGET_FPS) return
       const dt = Math.min(elapsed / 1000, 0.1)
@@ -340,7 +357,8 @@ export default function AsciiAuraBg() {
     window.addEventListener('resize', onResize)
 
     return () => {
-      cancelAnimationFrame(raf)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (raf) cancelAnimationFrame(raf)
       clearTimeout(resizeTimer)
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseout', onMouseOut)
@@ -350,11 +368,10 @@ export default function AsciiAuraBg() {
   }, [])
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="ascii-aura-canvas fixed inset-0 pointer-events-none"
-      style={{ zIndex: 0 }}
-      aria-hidden="true"
-    />
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+      {/* Легковесный CSS-фон на мобилках */}
+      <div className="absolute inset-0 md:hidden bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(187,243,81,0.06),rgba(0,0,0,0))]" />
+      <canvas ref={canvasRef} className="ascii-aura-canvas hidden md:block w-full h-full" />
+    </div>
   )
 }

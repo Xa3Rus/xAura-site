@@ -12,6 +12,8 @@ import TierMaker from './pages/TierMaker'
 import TierTemplatesSelect from './pages/TierTemplatesSelect'
 import Profile from './pages/Profile'
 import PublicProfile from './pages/PublicProfile'
+import Friends from './pages/Friends'
+import AchievementsPage from './pages/AchievementsPage'
 import TierListDetail from './pages/TierListDetail'
 import BattlePage from './pages/BattlePage'
 import AnimeOPED from './pages/AnimeOPED'
@@ -67,6 +69,22 @@ export default function App() {
           }
         />
         <Route path="/user/:userId" element={<PublicProfile />} />
+        <Route
+          path="/friends"
+          element={
+            <ProtectedRoute>
+              <Friends />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/achievements"
+          element={
+            <ProtectedRoute>
+              <AchievementsPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/tierlist/:listId" element={<TierListDetail />} />
         <Route path="/battle" element={
           <ProtectedRoute>

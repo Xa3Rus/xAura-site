@@ -16,6 +16,7 @@ import {
   calcStreak,
 } from '../utils/daily'
 import BattleCard from '../components/BattleCard'
+import Avatar from '../components/Avatar'
 import { Corners, DossierPanel } from '../components/profile/SharedBits'
 import Loader from '../components/Loader'
 
@@ -69,7 +70,7 @@ function Readout({ value, label, color = NEON }) {
 }
 
 // Мини-таблица дня: очки, ники, подсветка своей строки
-function Leaderboard({ rows, myUserId, myRankRow }) {
+function Leaderboard({ rows, myUserId, myRankRow, avatarMap }) {
   const medals = ['🥇', '🥈', '🥉']
   if (!rows.length) {
     return <p className="text-sm text-text-dim font-mono py-4 text-center">Сегодня ещё никто не играл — будь первым</p>
@@ -91,9 +92,7 @@ function Leaderboard({ rows, myUserId, myRankRow }) {
             <span className="w-7 text-center font-display font-bold text-sm text-text-muted">
               {medals[i] || i + 1}
             </span>
-            <span className="w-7 h-7 rounded-full bg-surface-3 border border-brand-medium/30 flex items-center justify-center font-display font-bold text-xs text-text shrink-0">
-              {(row.username || '?')[0].toUpperCase()}
-            </span>
+            <Avatar url={avatarMap?.[row.user_id]} name={row.username} size={28} shape="rounded-full" className="border border-brand-medium/30" />
             <span className="flex-1 text-sm text-text truncate">
               {row.username || 'Аноним'}{mine && <span className="text-neon-400"> — ты</span>}
             </span>
@@ -139,6 +138,7 @@ export default function DailyChallenge() {
 
   const [myResult, setMyResult] = useState(null)
   const [leaderboard, setLeaderboard] = useState([])
+  const [avatarMap, setAvatarMap] = useState({})
   const [streak, setStreak] = useState(0)
   const [dbError, setDbError] = useState(false)
 
@@ -175,8 +175,9 @@ export default function DailyChallenge() {
       const rows = board.data || []
       if (rows.length) {
         const ids = [...new Set(rows.map((r) => r.user_id))]
-        const { data: profiles } = await supabase.from('profiles').select('id, username').in('id', ids)
+        const { data: profiles } = await supabase.from('profiles').select('id, username, avatar_url').in('id', ids)
         const nameOf = Object.fromEntries((profiles || []).map((p) => [p.id, p.username]))
+        setAvatarMap(Object.fromEntries((profiles || []).map((p) => [p.id, p.avatar_url])))
         setLeaderboard(rows.map((r) => ({ ...r, username: nameOf[r.user_id] })))
       }
       setLoading(false)
@@ -228,8 +229,9 @@ export default function DailyChallenge() {
     const rows = board.data || []
     if (rows.length) {
       const ids = [...new Set(rows.map((r) => r.user_id))]
-      const { data: profiles } = await supabase.from('profiles').select('id, username').in('id', ids)
+      const { data: profiles } = await supabase.from('profiles').select('id, username, avatar_url').in('id', ids)
       const nameOf = Object.fromEntries((profiles || []).map((p) => [p.id, p.username]))
+      setAvatarMap(Object.fromEntries((profiles || []).map((p) => [p.id, p.avatar_url])))
       setLeaderboard(rows.map((r) => ({ ...r, username: nameOf[r.user_id] })))
     }
     setStreak(calcStreak((history.data || []).map((r) => r.date_key)))
@@ -374,7 +376,7 @@ export default function DailyChallenge() {
 
               <div>
                 <span className="dossier-note block mb-3">ТАБЛИЦА ДНЯ</span>
-                <Leaderboard rows={leaderboard} myUserId={user.id} myRankRow={null} />
+                <Leaderboard rows={leaderboard} myUserId={user.id} myRankRow={null} avatarMap={avatarMap} />
               </div>
             </div>
           </DossierPanel>
@@ -416,8 +418,20 @@ export default function DailyChallenge() {
             {revealing && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                 className="max-w-3xl mx-auto flex items-center justify-center gap-3 text-sm font-mono px-4 py-2.5 border cut-sm bg-surface-1 border-brand-medium/25">
+                <img
+                  src={shikimoriImg(battlePairs[roundIdx][0].image?.original)}
+                  alt=""
+                  className="w-7 h-10 rounded-sm object-cover"
+                  onError={(e) => { e.target.style.display = 'none' }}
+                />
                 <span style={{ color: NEON }}>{titleOf(battlePairs[roundIdx][0])} · {Number(battlePairs[roundIdx][0].score).toFixed(2)}</span>
                 <span className="text-text-subtle">vs</span>
+                <img
+                  src={shikimoriImg(battlePairs[roundIdx][1].image?.original)}
+                  alt=""
+                  className="w-7 h-10 rounded-sm object-cover"
+                  onError={(e) => { e.target.style.display = 'none' }}
+                />
                 <span style={{ color: CYAN }}>{titleOf(battlePairs[roundIdx][1])} · {Number(battlePairs[roundIdx][1].score).toFixed(2)}</span>
               </motion.div>
             )}
@@ -486,9 +500,24 @@ export default function DailyChallenge() {
                       onClick={() => pickShot(opt.id)}
                       disabled={revealing}
                       whileTap={!revealing ? { scale: 0.98 } : undefined}
-                      className={`relative text-left px-4 py-3 border cut-sm transition-colors ${cls} ${revealing ? 'cursor-default' : 'cursor-pointer'}`}>
-                      <span className="font-mono text-[10px] text-text-subtle mr-2">{i + 1}</span>
-                      <span className="text-sm text-text">{titleOf(opt)}</span>
+                      className={`relative flex items-center gap-3 text-left px-4 py-2.5 border cut-sm transition-colors ${cls} ${revealing ? 'cursor-default' : 'cursor-pointer'}`}>
+                      {shikimoriImg(opt.image?.original) ? (
+                        <img
+                          src={shikimoriImg(opt.image.original)}
+                          alt=""
+                          loading="lazy"
+                          className="w-9 h-12 rounded-sm object-cover flex-shrink-0"
+                          onError={(e) => { e.target.style.display = 'none' }}
+                        />
+                      ) : (
+                        <span className="w-9 h-12 rounded-sm bg-surface-3 flex items-center justify-center flex-shrink-0 font-display font-bold text-text-muted">
+                          {titleOf(opt)[0]}
+                        </span>
+                      )}
+                      <span className="flex-1 min-w-0">
+                        <span className="font-mono text-[10px] text-text-subtle mr-2">{i + 1}</span>
+                        <span className="text-sm text-text">{titleOf(opt)}</span>
+                      </span>
                       {revealing && isAnswer && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neon-400 font-display font-bold">✓</span>}
                       {revealing && isPicked && !isAnswer && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#FF2D78] font-display font-bold">✕</span>}
                     </motion.button>
@@ -531,7 +560,7 @@ export default function DailyChallenge() {
 
               <div>
                 <span className="dossier-note block mb-3">ТАБЛИЦА ДНЯ</span>
-                <Leaderboard rows={leaderboard} myUserId={user.id} myRankRow={myRankRow} />
+                <Leaderboard rows={leaderboard} myUserId={user.id} myRankRow={myRankRow} avatarMap={avatarMap} />
               </div>
             </div>
           </DossierPanel>

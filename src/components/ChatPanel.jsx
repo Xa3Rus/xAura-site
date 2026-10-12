@@ -70,8 +70,7 @@ export default function ChatPanel({ messages, players, currentUserId, onSend, on
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="absolute top-full left-0 mt-1 rounded-xl overflow-hidden z-50 w-48"
-              style={{ background: '#0A0A0A', border: '1px solid rgba(187,243,81,0.15)' }}
+              className="dropdown-surface absolute top-full left-0 mt-1 overflow-hidden w-48"
             >
               {otherPlayers.map((p) => (
                 <button

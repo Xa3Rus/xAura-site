@@ -25,12 +25,37 @@ export function createRoom(hostId, hostName, settings = {}) {
     settings: {
       seasonKey: settings.seasonKey || null,
       seasonLabel: settings.seasonLabel || '',
+      visibility: settings.visibility === 'closed' ? 'closed' : 'open', // open — видна в браузере лобби
     },
     draftState: null,
     createdAt: Date.now(),
   }
   rooms.set(code, room)
   return room
+}
+
+// Смена видимости — только для хоста
+export function setVisibility(code, userId, visibility) {
+  const room = getRoom(code)
+  if (!room) return { error: 'Комната не найдена' }
+  if (room.hostId !== userId) return { error: 'Только хост может менять видимость' }
+  room.settings.visibility = visibility === 'closed' ? 'closed' : 'open'
+  return { room }
+}
+
+// Список открытых лобби для браузера комнат
+export function listOpenRooms() {
+  return [...rooms.values()]
+    .filter((r) => r.status === 'waiting' && r.settings.visibility === 'open')
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .map((r) => ({
+      code: r.code,
+      hostName: r.players.find((p) => p.id === r.hostId)?.name || '—',
+      players: r.players.filter((p) => p.connected).length,
+      maxPlayers: MAX_PLAYERS,
+      seasonLabel: r.settings.seasonLabel || '',
+      createdAt: r.createdAt,
+    }))
 }
 
 export function joinRoom(code, userId, username) {
